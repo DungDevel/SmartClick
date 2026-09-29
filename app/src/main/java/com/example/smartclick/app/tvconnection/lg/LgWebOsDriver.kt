@@ -1,0 +1,168 @@
+package com.example.smartclick.app.tvconnection.lg
+
+import com.example.smartclick.app.domain.connection.Credentials
+import com.example.smartclick.app.domain.connection.Fingerprint
+import com.example.smartclick.app.domain.connection.IProtocolDriver
+import com.example.smartclick.app.domain.connection.ITvController
+import com.example.smartclick.app.domain.connection.PairingFailure
+import com.example.smartclick.app.domain.connection.PairingStep
+import com.example.smartclick.app.domain.connection.RawCandidate
+import com.example.smartclick.app.domain.model.TvCapability
+import com.example.smartclick.app.domain.model.TvDevice
+import com.example.smartclick.app.domain.model.TvProtocol
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
+import org.json.JSONObject
+import java.security.SecureRandom
+import javax.inject.Inject
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+
+class LgWebOsDriver @Inject constructor() : IProtocolDriver {
+    override val protocol: TvProtocol = TvProtocol.LG_WEBOS
+
+    override val capabilities: Set<TvCapability> = setOf(
+        TvCapability.VOLUME,
+        TvCapability.KEYBOARD_TEXT,
+        TvCapability.INSTALLED_APPS
+    )
+
+    private val tofuTrustManager = com.example.smartclick.app.tvconnection.security.PinningTrustManager(expectedSha256 = null, isPairing = true)
+
+    private val sslContext = SSLContext.getInstance("TLSv1.2").apply {
+        init(null, arrayOf<TrustManager>(tofuTrustManager), SecureRandom())
+    }
+
+    private val pairingClient = OkHttpClient.Builder()
+        .sslSocketFactory(sslContext.socketFactory, tofuTrustManager)
+        .hostnameVerifier { _, _ -> true }
+        .build()
+
+    override suspend fun fingerprint(candidate: RawCandidate): Fingerprint? = withContext(Dispatchers.IO) {
+        if (candidate.protocolHint != TvProtocol.UNKNOWN && candidate.protocolHint != TvProtocol.LG_WEBOS) {
+            return@withContext null
+        }
+
+        if (candidate.protocolHint == TvProtocol.LG_WEBOS || candidate.openPorts.contains(3000) || candidate.openPorts.contains(3001)) {
+            val fallbackId = candidate.usn ?: candidate.location?.hashCode()?.toString() ?: java.util.UUID.randomUUID().toString()
+            return@withContext Fingerprint(
+                protocol = TvProtocol.LG_WEBOS,
+                stableId = "lg-$fallbackId",
+                displayName = candidate.serviceName ?: "LG WebOS TV",
+                confidence = if (candidate.protocolHint == TvProtocol.LG_WEBOS) Fingerprint.Confidence.HIGH else Fingerprint.Confidence.LOW,
+                macAddress = ""
+            )
+        }
+        null
+    }
+
+    override fun pair(device: TvDevice): Flow<PairingStep> = callbackFlow {
+        trySend(PairingStep.ConfirmOnTv(30_000L))
+
+        // Prefer WSS (3001) if we don't know, but typically we can try WS (3000). For now let's use 3000 to avoid SSL issues if 3001 is closed.
+        // Or default to 3000, 3001 is newer. Let's use ws://ip:3000 for standard pairing.
+        val wsUrl = "ws://${device.ipAddress}:3000"
+        val request = Request.Builder().url(wsUrl).build()
+
+        val listener = object : WebSocketListener() {
+            var certHashToSave: String? = null
+
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                val certs = response.handshake?.peerCertificates
+                if (!certs.isNullOrEmpty()) {
+                    val cert = certs[0]
+                    val md = java.security.MessageDigest.getInstance("SHA-256")
+                    certHashToSave = md.digest(cert.encoded).joinToString("") { "%02x".format(it) }
+                }
+
+                val payload = JSONObject().apply {
+                    put("forcePairing", false)
+                    put("manifest", JSONObject().apply {
+                        put("permissions", org.json.JSONArray(listOf(
+                            "LAUNCH", "LAUNCH_WEBAPP", "APP_TO_APP", "CLOSE", "TEST_OPEN", "TEST_PROTECTED",
+                            "CONTROL_AUDIO", "CONTROL_DISPLAY", "CONTROL_INPUT_JOYSTICK", "CONTROL_INPUT_MEDIA_RECORDING",
+                            "CONTROL_INPUT_MEDIA_PLAYBACK", "CONTROL_INPUT_TV", "CONTROL_POWER", "READ_APP_STATUS",
+                            "READ_CURRENT_CHANNEL", "READ_INPUT_DEVICE_LIST", "READ_NETWORK_STATE", "READ_RUNNING_APPS",
+                            "READ_TV_CHANNEL_LIST", "WRITE_NOTIFICATION_TOAST", "READ_POWER_STATE", "READ_COUNTRY_INFO"
+                        )))
+                        put("manifestVersion", 1)
+                    })
+                }
+
+                val req = JSONObject().apply {
+                    put("type", "register")
+                    put("id", "register_0")
+                    put("payload", payload)
+                }
+                webSocket.send(req.toString())
+            }
+
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                try {
+                    val json = JSONObject(text)
+                    val type = json.optString("type")
+                    if (type == "registered") {
+                        val payload = json.optJSONObject("payload")
+                        val clientKey = payload?.optString("client-key")
+                        if (clientKey != null) {
+                            val credsMap = mutableMapOf("client-key" to clientKey)
+                            if (certHashToSave != null) {
+                                credsMap["cert_sha256"] = certHashToSave!!
+                            }
+                            trySend(PairingStep.Succeeded(Credentials(credsMap)))
+                            webSocket.close(1000, "Paired")
+                            close()
+                        }
+                    } else if (type == "error") {
+                        trySend(PairingStep.Failed(PairingFailure.RejectedOnTv))
+                        webSocket.close(1000, "Error")
+                        close()
+                    }
+                } catch (e: Exception) {
+                    // Ignore
+                }
+            }
+
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                trySend(PairingStep.Failed(PairingFailure.Network(t.message ?: "WS Failure")))
+                close()
+            }
+        }
+
+        pairingClient.newWebSocket(request, listener)
+
+        awaitClose { }
+    }.flowOn(Dispatchers.IO)
+
+    override fun createController(device: TvDevice, credentials: Credentials?): ITvController {
+        val clientKey = credentials?.protocolValues?.get("client-key")
+        val certSha256 = credentials?.protocolValues?.get("cert_sha256")
+
+        val controllerClient = if (certSha256 != null) {
+            try {
+                val trustManager = com.example.smartclick.app.tvconnection.security.PinningTrustManager(certSha256)
+                val newSslContext = javax.net.ssl.SSLContext.getInstance("TLSv1.2").apply {
+                    init(null, arrayOf<javax.net.ssl.TrustManager>(trustManager), java.security.SecureRandom())
+                }
+                pairingClient.newBuilder()
+                    .sslSocketFactory(newSslContext.socketFactory, trustManager)
+                    .build()
+            } catch (e: Exception) {
+                pairingClient
+            }
+        } else {
+            pairingClient
+        }
+
+        return LgWebOsController(clientKey, controllerClient)
+    }
+}

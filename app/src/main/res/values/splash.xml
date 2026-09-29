@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Set the splash screen background -->
+        <item name="windowSplashScreenBackground">@android:color/black</item>
+
+        <!-- App icon -->
+        <!-- We use the default app icon or set specifically -->
+
+        <!-- Reference to the primary application theme -->
+        <item name="postSplashScreenTheme">@style/Theme.SmartClick</item>
+    </style>
+</resources>

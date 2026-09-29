@@ -1,0 +1,201 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SmartClick</string>
+
+    <!-- General / Common -->
+    <string name="back">Back</string>
+    <string name="selected">Selected</string>
+    <string name="go">Go</string>
+    <string name="stop">Stop</string>
+    <string name="exit">Exit</string>
+    <string name="skip">Skip</string>
+    <string name="continue_btn">Continue</string>
+    <string name="try_again">Try Again</string>
+    <string name="refresh">Refresh</string>
+    <string name="delete">Delete</string>
+
+    <!-- Tabs -->
+    <string name="tab_remote">Remote</string>
+    <string name="tab_channels">Channels</string>
+    <string name="tab_cast">Cast</string>
+    <string name="tab_settings">Settings</string>
+    <string name="tab_apps">Apps</string>
+
+    <!-- Onboarding / Welcome -->
+    <string name="universal_remote_subtitle">The Ultimate Universal Remote</string>
+    <string name="get_started">Get Started</string>
+    <string name="universal_control">Universal Control</string>
+    <string name="works_with_brands">Works with all TV brands</string>
+    <string name="voice_commands">Voice Commands</string>
+    <string name="hands_free_nav">Hands-free navigation</string>
+    <string name="cast_media">Cast Media</string>
+    <string name="share_media">Share your local media to TV</string>
+    <string name="control_tv_desc">Control your TV easily</string>
+
+    <!-- Onboarding / Brand & Language -->
+    <string name="select_tv_brand">Select TV Brand</string>
+    <string name="what_brand_tv">What brand is your TV?</string>
+    <string name="connect_tv">Connect TV</string>
+    <string name="choose_language">Choose Language</string>
+    <string name="choose_language_desc">Select your preferred language</string>
+
+    <!-- Scanning & Connection -->
+    <string name="scanning_network">Scanning Network...</string>
+    <string name="looking_for_tvs">Looking for TVs on your Wi-Fi</string>
+    <string name="tv_not_found_try_manually">TV not found? Try adding manually.</string>
+    <string name="not_found_title">No TV Found</string>
+    <string name="cannot_find_tvs_network">We couldn\'t find any TVs on your network.</string>
+    <string name="enter_ip_manually">Enter IP Manually</string>
+    <string name="skip_for_now">Skip for Now</string>
+    <string name="scanning_for_devices">Scanning for devices...</string>
+    <string name="searching_nearby_tvs">Searching for nearby TVs...</string>
+    <string name="make_sure_tv_on">Make sure your TV is on and connected to the same Wi-Fi.</string>
+    <string name="failed_to_connect">Failed to connect: %1$s</string>
+    <string name="connection_lost_reconnecting">Connection lost. Reconnecting... (Attempt %1$d)</string>
+    <string name="select_device">Select Device</string>
+    <string name="connect_to_tv">Connect to TV</string>
+    <string name="no_tv_connected">No TV Connected</string>
+    <string name="remove_device_title">Remove Device</string>
+    <string name="remove_device_message">Are you sure you want to remove this device?</string>
+    <string name="yes">Yes</string>
+    <string name="cancel">Cancel</string>
+    <string name="no_devices_found">No devices found</string>
+
+    <!-- WiFi State -->
+    <string name="wifi_off_title">Wi-Fi is Off</string>
+    <string name="wifi_off_message">Please connect to a Wi-Fi network to scan for TVs.</string>
+    <string name="wifi_off_remote_message">Wi-Fi is disconnected. Remote commands may not work.</string>
+    <string name="no_wifi_network">Not on Wi-Fi</string>
+    <string name="no_wifi_network_message">You are connected via mobile data. Connect to Wi-Fi to control your TV.</string>
+
+    <!-- Remote -->
+    <string name="power">Power</string>
+    <string name="mute">Mute</string>
+    <string name="lock">Lock</string>
+    <string name="voice_search">Voice Search</string>
+    <string name="vol">Vol</string>
+    <string name="ch">Ch</string>
+    <string name="shot">Shot</string>
+    <string name="config">Config</string>
+    <string name="send_text_to_tv">Send text to TV</string>
+
+    <!-- Channels & Cast -->
+    <string name="apps_desc">Your TV apps</string>
+    <string name="your_tv_apps">Your TV Apps</string>
+    <string name="channels">Channels</string>
+    <string name="popular">Popular</string>
+    <string name="recommended">Recommended</string>
+    <string name="cast_title">Cast Media</string>
+    <string name="cast_desc">Share your screen or media</string>
+    <string name="casting_to_tv">Casting to %1$s</string>
+
+    <!-- Settings & Auth -->
+    <string name="account_information">Account Information</string>
+    <string name="language">Language</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="terms_and_conditions">Terms &amp; Conditions</string>
+    <string name="appearance">Appearance</string>
+    <string name="haptic_feedback">Haptic Feedback</string>
+    <string name="vibrate_on_tap">Vibrate on Tap</string>
+    <string name="provide_physical_feedback">Provide physical feedback for UI interactions</string>
+
+    <!-- Account -->
+    <string name="guest">Guest</string>
+    <string name="premium_member">Premium Member</string>
+    <string name="sign_in_to_backup">Sign in to backup devices</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="log_in">Log In</string>
+    <string name="continue_with_google">Continue with Google</string>
+    <string name="account">Account</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="not_signed_in">Not Signed In</string>
+    <string name="sign_in_to_sync">Sign in to sync your remotes across devices</string>
+    <string name="sign_in">Sign In</string>
+    <string name="create_account">Create Account</string>
+
+    <!-- Premium -->
+    <string name="pro">PRO</string>
+    <string name="premium">Premium</string>
+    <string name="free">Free</string>
+    <string name="upgrade_to_premium">Upgrade to Premium</string>
+    <string name="unlimited_devices">Unlimited devices &amp; no ads</string>
+    <string name="update_now">Upgrade Now</string>
+    <string name="smartclick_premium">SmartClick Premium</string>
+    <string name="unlock_all_features">Unlock all premium features</string>
+    <string name="start_free_trial">Start your free trial</string>
+    <string name="best_value">BEST VALUE</string>
+
+    <plurals name="cast_items">
+        <item quantity="one">Cast %1$d item</item>
+        <item quantity="other">Cast %1$d items</item>
+    </plurals>
+    <string name="connected">Connected</string>
+    <string name="connecting">Connecting...</string>
+    <string name="failed">Failed</string>
+    <string name="no_device">No device connected</string>
+    <!-- Appearance / Themes -->
+    <string name="theme_dark">Galaxy Dark</string>
+    <string name="theme_dark_desc">Deep space, easy on eyes</string>
+    <string name="theme_light">Clean Light</string>
+    <string name="theme_light_desc">Bright and minimal</string>
+    <string name="theme_system">System Default</string>
+    <string name="theme_system_desc">Follows your device setting</string>
+    <!-- Pairing -->
+    <string name="enter_pin_title">Enter PIN</string>
+    <string name="enter_pin_message">Please enter the PIN shown on your TV.</string>
+    <string name="submit">Submit</string>
+    <string name="confirm_on_tv_title">Confirm on TV</string>
+    <string name="confirm_on_tv_message">Please accept the connection request on your TV screen.</string>
+    <string name="pairing_rejected">Connection rejected on TV.</string>
+    <string name="pairing_timeout">Connection timed out.</string>
+    <string name="pairing_wrong_pin">Incorrect PIN.</string>
+    <string name="pairing_network_control_disabled">Network control is disabled on your TV. Please enable it in the TV settings.</string>
+
+
+    <!-- Unsupported Device Banner -->
+    <string name="unsupported_device_count">%1$d unsupported device(s) found on network.</string>
+    <string name="cant_find_tv_tap">Can\'t find your TV? Tap for manual IP or support.</string>
+    <string name="tv_not_found_question">TV not found?</string>
+    <string name="tv_not_found_desc">If your TV isn\'t showing up, you can connect via IP address, or request support for this brand (this will anonymously log the device signature).</string>
+    <string name="ip_address_label">IP Address</string>
+    <string name="connect_ip">Connect IP</string>
+    <string name="request_support">Request Support</string>
+
+    <string name="login_welcome_back">Welcome Back</string>
+    <string name="login_forgot_password">Forgot password?</string>
+    <string name="login_or">OR</string>
+    <string name="login_dont_have_account">Don\'t have an account?</string>
+    <string name="sign_up">Sign Up</string>
+    
+    <string name="restore_purchase_terms">Restore purchase · Terms &amp; Privacy</string>
+    <string name="failed_to_load_plans">Failed to load plans. Tap to retry.</string>
+    <string name="perk_unlimited_devices">Unlimited devices</string>
+    <string name="perk_channels_library">Channels library</string>
+    <string name="perk_priority_support">Priority support</string>
+    
+    <string name="welcome_title">Control Your TV
+Effortlessly
+</string>
+    
+    <string name="manage_your_profile">Manage your profile</string>
+    <string name="data_and_privacy">Data &amp; privacy</string>
+    <string name="legal_information">Legal information</string>
+    <string name="system_default">System Default</string>
+    <string name="system">System</string>
+    <string name="on_text">On</string>
+    <string name="off_text">Off</string>
+    <string name="user_name_default">User</string>
+    <string name="user_email_default">user@example.com</string>
+    <string name="app_version_info">SmartClick v2.0.0 · © 2026</string>
+    
+    <string name="dir_up">Up</string>
+    <string name="dir_down">Down</string>
+    <string name="dir_left">Left</string>
+    <string name="dir_right">Right</string>
+    <string name="ok_btn">OK</string>
+
+
+    <string name="remove">Remove</string>
+    <string name="disconnect">Disconnect</string>
+</resources>

@@ -1,0 +1,124 @@
+<resources>
+    <string name="app_name">SmartClick</string>
+    
+    <!-- Onboarding -->
+    <string name="welcome_title">SmartClick</string>
+    <string name="scanning_for_devices">Đang tìm kiếm thiết bị...</string>
+    <string name="not_found_title">Không tìm thấy thiết bị</string>
+    <string name="try_again">Thử lại</string>
+    
+    <!-- Bottom Navbar -->
+    <string name="tab_remote">Điều khiển</string>
+    <string name="tab_channels">Kênh</string>
+    <string name="tab_cast">Phát</string>
+    <string name="tab_settings">Cài đặt</string>
+
+    <!-- Remote Screen -->
+    <string name="delete">Xóa</string>
+    <string name="shot">Chụp</string>
+    <string name="config">Cấu hình</string>
+    <string name="voice_search">Tìm kiếm giọng nói</string>
+    <string name="send_text_to_tv">Gửi văn bản tới TV</string>
+    <string name="exit">Thoát</string>
+    <string name="select_device">Chọn thiết bị</string>
+    <string name="vol">VOL</string>
+    <string name="ch">CH</string>
+
+    <!-- Content Descriptions -->
+    <string name="back">Quay lại</string>
+    <string name="refresh">Làm mới</string>
+    <string name="selected">Đã chọn</string>
+    <string name="power">Nguồn</string>
+    <string name="mute">Tắt tiếng</string>
+    <string name="lock">Khóa</string>
+    <string name="go">Đi tới</string>
+
+    <!-- Settings & Auth -->
+    <string name="email">Email</string>
+    <string name="password">Mật khẩu</string>
+    <string name="log_in">Đăng nhập</string>
+    <string name="continue_with_google">Tiếp tục với Google</string>
+    <string name="account">Tài khoản</string>
+    <string name="premium">Premium</string>
+    <string name="free">Miễn phí</string>
+    <string name="sign_out">Đăng xuất</string>
+    <string name="not_signed_in">Chưa đăng nhập</string>
+    <string name="sign_in_to_sync">Đăng nhập để đồng bộ các thiết bị</string>
+    <string name="sign_in">Đăng nhập</string>
+    <string name="create_account">Tạo tài khoản</string>
+    <string name="appearance">Giao diện</string>
+    <string name="haptic_feedback">Phản hồi xúc giác</string>
+    <string name="vibrate_on_tap">Rung khi chạm</string>
+    <string name="provide_physical_feedback">Cung cấp phản hồi vật lý khi chạm nút trên điều khiển.</string>
+    <string name="privacy_policy">Chính sách Bảo mật</string>
+    <string name="premium_member">Thành viên Premium</string>
+    <string name="guest">Khách</string>
+    <string name="sign_in_to_backup">Đăng nhập để sao lưu thiết bị</string>
+    <string name="pro">PRO</string>
+    <string name="account_information">Thông tin tài khoản</string>
+    <string name="language">Ngôn ngữ</string>
+    <string name="terms_and_conditions">Điều khoản &amp; Điều kiện</string>
+    <string name="upgrade_to_premium">Nâng cấp Premium ⭐</string>
+    <string name="unlimited_devices">Không giới hạn thiết bị, kênh, không quảng cáo</string>
+    <string name="update_now">Nâng cấp ngay</string>
+    
+    <!-- Premium -->
+    <string name="smartclick_premium">SmartClick Premium</string>
+    <string name="unlock_all_features">Mở khóa tất cả tính năng</string>
+    <string name="start_free_trial">Bắt đầu dùng thử miễn phí</string>
+    <string name="best_value">Giá trị tốt nhất</string>
+
+    <!-- Components -->
+    <string name="no_tv_connected">Chưa kết nối TV</string>
+    <string name="connect_to_tv">Kết nối với Smart TV của bạn để bắt đầu sử dụng tính năng này.</string>
+    <string name="connection_lost_reconnecting">Mất kết nối. Đang thử kết nối lại... (Lần %1$d)</string>
+
+    <string name="control_tv_title">Điều khiển TV\nDễ dàng</string>
+    <string name="control_tv_desc">SmartClick biến điện thoại của bạn thành một chiếc điều khiển từ xa phổ quát mạnh mẽ cho bất kỳ Smart TV nào.</string>
+    <string name="get_started">Bắt đầu</string>
+    <string name="universal_control">Điều khiển đa năng</string>
+    <string name="works_with_brands">Hoạt động với hơn 500 thương hiệu TV</string>
+    <string name="voice_commands">Ra lệnh bằng giọng nói</string>
+    <string name="hands_free_nav">Điều hướng rảnh tay</string>
+    <string name="cast_media">Phát phương tiện</string>
+    <string name="share_media">Chia sẻ hình ảnh &amp; video ngay lập tức</string>
+
+    <string name="scanning_network">Đang quét mạng</string>
+    <string name="looking_for_tvs">Đang tìm kiếm Smart TV...</string>
+    <string name="tv_not_found_try_manually">Không tìm thấy TV? Thử thủ công</string>
+
+    <string name="tab_apps">Ứng dụng</string>
+    <string name="apps_desc">Các ứng dụng đã cài trên TV của bạn</string>
+    <string name="your_tv_apps">Ứng dụng TV của bạn</string>
+    <string name="channels">Kênh</string>
+
+    <string name="popular">Phổ biến</string>
+    <string name="recommended">Đề xuất</string>
+
+    <string name="cast_title">Phát</string>
+    <string name="cast_desc">Chọn hình ảnh hoặc video để phát lên TV</string>
+    <string name="casting_to_tv">Đang phát tới %1$s</string>
+    <string name="stop">Dừng</string>
+    <plurals name="cast_items">
+        <item quantity="one">Phát %1$d mục lên TV</item>
+        <item quantity="other">Phát %1$d mục lên TV</item>
+    </plurals>
+
+    <string name="searching_nearby_tvs">Đang tìm kiếm TV gần đây...</string>
+    <string name="make_sure_tv_on">Hãy chắc chắn rằng TV của bạn đã được bật và kết nối cùng chung một mạng Wi-Fi với điện thoại.</string>
+    <string name="cannot_find_tvs_network">Chúng tôi không thể tìm thấy bất kỳ Smart TV nào trên mạng của bạn. Hãy đảm bảo TV và điện thoại kết nối cùng một mạng Wi-Fi.</string>
+    <string name="enter_ip_manually">Nhập IP thủ công</string>
+    <string name="skip_for_now">Bỏ qua lúc này</string>
+
+    <string name="choose_language">Chọn ngôn ngữ</string>
+    <string name="choose_language_desc">Chọn ngôn ngữ ưa thích của bạn</string>
+    <string name="continue_btn">Tiếp tục</string>
+
+    <string name="select_tv_brand">Chọn hãng TV</string>
+    <string name="what_brand_tv">TV của bạn là hãng nào?</string>
+    <string name="connect_tv">Kết nối TV</string>
+    <string name="skip">Bỏ qua</string>
+    <string name="universal_remote_subtitle">Điều khiển Smart TV Đa năng</string>
+
+    <string name="failed_to_connect">Kết nối thất bại: %1$s</string>
+</resources>

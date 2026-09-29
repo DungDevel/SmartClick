@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "brands": [
+    { "id": "samsung", "displayName": "Samsung",
+      "probePlan": [
+        { "tier": 1, "protocols": ["SAMSUNG_TIZEN"], "timeoutMs": 4000 },
+        { "tier": 2, "protocols": ["SAMSUNG_LEGACY", "ANDROID_TV_V2", "DIAL_ONLY"], "timeoutMs": 6000 }
+      ] },
+    { "id": "lg", "displayName": "LG",
+      "probePlan": [
+        { "tier": 1, "protocols": ["LG_WEBOS"], "timeoutMs": 4000 },
+        { "tier": 2, "protocols": ["LG_NETCAST", "DIAL_ONLY"], "timeoutMs": 6000 }
+      ] },
+    { "id": "sony", "displayName": "Sony",
+      "probePlan": [
+        { "tier": 1, "protocols": ["ANDROID_TV_V2"], "timeoutMs": 4000 },
+        { "tier": 2, "protocols": ["ANDROID_TV_V1", "SONY_BRAVIA", "DIAL_ONLY"], "timeoutMs": 6000 }
+      ] },
+    { "id": "tcl", "displayName": "TCL",
+      "probePlan": [
+        { "tier": 1, "protocols": ["ROKU_ECP", "ANDROID_TV_V2"], "timeoutMs": 4000 },
+        { "tier": 2, "protocols": ["FIRE_TV", "ANDROID_TV_V1"], "timeoutMs": 6000 }
+      ] },
+    { "id": "hisense", "displayName": "Hisense",
+      "probePlan": [
+        { "tier": 1, "protocols": ["VIDAA_MQTT", "ANDROID_TV_V2", "ROKU_ECP"], "timeoutMs": 4000 },
+        { "tier": 2, "protocols": ["FIRE_TV"], "timeoutMs": 6000 }
+      ] },
+    { "id": "philips", "displayName": "Philips",
+      "probePlan": [
+        { "tier": 1, "protocols": ["ANDROID_TV_V2"], "timeoutMs": 4000 },
+        { "tier": 2, "protocols": ["PHILIPS_JOINTSPACE", "ANDROID_TV_V1"], "timeoutMs": 6000 }
+      ] },
+    { "id": "panasonic", "displayName": "Panasonic",
+      "probePlan": [
+        { "tier": 1, "protocols": ["ANDROID_TV_V2", "FIRE_TV"], "timeoutMs": 4000 },
+        { "tier": 2, "protocols": ["PANASONIC_VIERA"], "timeoutMs": 6000 }
+      ] },
+    { "id": "vizio", "displayName": "Vizio",
+      "probePlan": [
+        { "tier": 1, "protocols": ["VIZIO_SMARTCAST"], "timeoutMs": 4000 }
+      ] },
+    { "id": "sharp", "displayName": "Sharp",
+      "probePlan": [
+        { "tier": 1, "protocols": ["FIRE_TV", "ROKU_ECP", "ANDROID_TV_V2"], "timeoutMs": 4000 }
+      ] },
+    { "id": "toshiba", "displayName": "Toshiba",
+      "probePlan": [
+        { "tier": 1, "protocols": ["FIRE_TV", "ROKU_ECP", "ANDROID_TV_V2"], "timeoutMs": 4000 }
+      ] },
+    { "id": "xiaomi", "displayName": "Xiaomi",
+      "probePlan": [
+        { "tier": 1, "protocols": ["ANDROID_TV_V2"], "timeoutMs": 4000 },
+        { "tier": 2, "protocols": ["FIRE_TV", "ANDROID_TV_V1"], "timeoutMs": 6000 }
+      ] },
+    { "id": "roku", "displayName": "Roku",
+      "probePlan": [
+        { "tier": 1, "protocols": ["ROKU_ECP"], "timeoutMs": 4000 }
+      ] },
+    { "id": "apple_tv", "displayName": "Apple TV",
+      "probePlan": [
+        { "tier": 1, "protocols": ["APPLE_COMPANION"], "timeoutMs": 4000 }
+      ] },
+    { "id": "amazon", "displayName": "Amazon",
+      "probePlan": [
+        { "tier": 1, "protocols": ["FIRE_TV"], "timeoutMs": 4000 }
+      ] },
+    { "id": "chromecast", "displayName": "Chromecast",
+      "probePlan": [
+        { "tier": 1, "protocols": ["ANDROID_TV_V2"], "timeoutMs": 4000 },
+        { "tier": 2, "protocols": ["FIRE_TV", "ANDROID_TV_V1"], "timeoutMs": 6000 }
+      ] },
+    { "id": "others", "displayName": "Other", "probePlan": "ALL" }
+  ],
+  "protocolFlags": {
+    "ROKU_ECP": { "enabled": true, "minAppVersion": 1 }
+  }
+}

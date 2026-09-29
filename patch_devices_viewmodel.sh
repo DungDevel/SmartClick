@@ -1,0 +1,2 @@
+#!/bin/bash
+sed -i 's/import com.example.smartclick.app.domain.usecase.ConnectToTvUseCase/import com.example.smartclick.app.domain.usecase.ConnectToTvUseCase\nimport com.example.smartclick.app.domain.usecase.PairTvUseCase\nimport com.example.smartclick.app.domain.connection.PairingStep\nimport kotlinx.coroutines.Job/' app/src/main/java/com/example/smartclick/app/features/devices/DevicesViewModel.kt
