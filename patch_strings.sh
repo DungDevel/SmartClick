@@ -1,4 +1,0 @@
-awk '/<!-- Pairing -->/{printed=1} 
-     /<\/resources>/{if(!printed){print "    <!-- Pairing -->\n    <string name=\"enter_pin_title\">Enter PIN</string>\n    <string name=\"enter_pin_message\">Please enter the PIN shown on your TV.</string>\n    <string name=\"submit\">Submit</string>\n    <string name=\"confirm_on_tv_title\">Confirm on TV</string>\n    <string name=\"confirm_on_tv_message\">Please accept the connection request on your TV screen.</string>\n    <string name=\"pairing_rejected\">Connection rejected on TV.</string>\n    <string name=\"pairing_timeout\">Connection timed out.</string>\n    <string name=\"pairing_wrong_pin\">Incorrect PIN.</string>\n    <string name=\"pairing_network_control_disabled\">Network control is disabled on your TV. Please enable it in the TV settings.</string>\n"} print; next} 
-     1' app/src/main/res/values/strings.xml > temp.xml
-mv temp.xml app/src/main/res/values/strings.xml

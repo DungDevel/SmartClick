@@ -1,2 +1,0 @@
-# Modify DeviceFoundScreen.kt
-
