@@ -13,3 +13,13 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Script and log junk
+*.sh
+*.ps1
+*.py
+*.log
+count_*.txt
+full_log.txt
+build_log.txt
+
