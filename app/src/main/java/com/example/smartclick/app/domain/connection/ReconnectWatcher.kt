@@ -1,4 +1,4 @@
-package com.example.smartclick.app.tvconnection
+package com.example.smartclick.app.domain.connection
 
 import com.example.smartclick.app.di.ApplicationScope
 import com.example.smartclick.app.domain.usecase.ConnectToTvUseCase

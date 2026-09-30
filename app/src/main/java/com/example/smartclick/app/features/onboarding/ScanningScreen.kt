@@ -24,6 +24,8 @@ import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import com.example.smartclick.app.features.devices.DevicesViewModel
 import com.example.smartclick.app.features.devices.ScanState
 import com.example.smartclick.app.domain.connection.NetworkState
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 
 @Composable
 fun ScanningScreen(
@@ -103,7 +105,13 @@ fun ScanningScreen(
                         .clip(CircleShape)
                         .background(colors.primaryGradient)
                 ) {
-                    Text(text = "📶", fontSize = 32.sp, modifier = Modifier.align(Alignment.Center))
+                    Image(
+                        painter = painterResource(R.drawable.wifi),
+                        contentDescription = stringResource(R.string.wifi),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(32.dp)
+                    )
                 }
             }
 

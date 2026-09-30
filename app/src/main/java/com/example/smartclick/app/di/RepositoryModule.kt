@@ -37,4 +37,9 @@ abstract class RepositoryModule {
     abstract fun bindBrandProfileRepository(
         impl: com.example.smartclick.app.data.brandprofile.AssetBrandProfileRepository
     ): com.example.smartclick.app.domain.repository.IBrandProfileRepository
+
+    @Binds
+    abstract fun bindDiscoveryOrchestrator(
+        impl: com.example.smartclick.app.tvconnection.discovery.DiscoveryOrchestrator
+    ): com.example.smartclick.app.domain.connection.IDiscoveryOrchestrator
 }

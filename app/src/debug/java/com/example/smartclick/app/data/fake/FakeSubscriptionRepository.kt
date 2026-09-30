@@ -43,4 +43,14 @@ class FakeSubscriptionRepository @Inject constructor() : ISubscriptionRepository
     override suspend fun subscribe(plan: SubscriptionPlan) {
         _currentPlan.value = plan
     }
+
+    override fun launchBillingFlow(activity: Any, planId: String) {
+        // Fake billing success
+        _currentPlan.value = SubscriptionPlan.PREMIUM
+    }
+
+    override fun restorePurchases() {
+        // Fake restore
+        _currentPlan.value = SubscriptionPlan.PREMIUM
+    }
 }

@@ -1,4 +1,4 @@
-@rem
+﻿@rem
 @rem Copyright 2015 the original author or authors.
 @rem
 @rem Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,13 @@
 if "%OS%"=="Windows_NT" setlocal
 
 set DIRNAME=%~dp0
-if "%DIRNAME%"=="" set DIRNAME=.
+set TMP=%DIRNAME%build\tmp
+set TEMP=%DIRNAME%build\tmp
+mkdir %TMP% 2>nul
+if "%DIRNAME%"=="" set DIRNAME=%~dp0
+set TMP=%DIRNAME%build\tmp
+set TEMP=%DIRNAME%build\tmp
+mkdir %TMP% 2>nul
 @rem This is normally unused
 set APP_BASE_NAME=%~n0
 set APP_HOME=%DIRNAME%

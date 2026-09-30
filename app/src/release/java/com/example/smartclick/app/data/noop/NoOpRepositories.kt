@@ -14,7 +14,10 @@ class NoOpAuthRepository : IAuthRepository {
 class NoOpSubscriptionRepository : ISubscriptionRepository {
     override val isPremium: Flow<Boolean> = flowOf(false)
     override val currentPlan: Flow<SubscriptionPlan> = flowOf(SubscriptionPlan.FREE)
-    override suspend fun updatePlan(plan: SubscriptionPlan) {}
+    override suspend fun availablePlans(): List<PricingPlan> = emptyList()
+    override suspend fun subscribe(plan: SubscriptionPlan) {}
+    override fun launchBillingFlow(activity: Any, planId: String) {}
+    override fun restorePurchases() {}
 }
 
 class NoOpChannelRegistryRepository : IChannelRegistryRepository {

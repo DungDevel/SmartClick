@@ -25,7 +25,7 @@ import androidx.compose.ui.res.stringResource
 @Composable
 fun BottomActions() {
     val colors = SmartClickThemeTokens.colors
-    val context = LocalContext.current
+    
 
     // Delete / Shot / Config
     Row(
@@ -36,6 +36,7 @@ fun BottomActions() {
             .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
+        val context = LocalContext.current
         listOf(
             stringResource(R.string.delete) to R.drawable.trash,
             stringResource(R.string.shot) to R.drawable.camera,
@@ -45,7 +46,9 @@ fun BottomActions() {
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(10.dp))
-                    .clickable { Toast.makeText(context, "Unmapped", Toast.LENGTH_SHORT).show() },
+                    .clickable {
+                        Toast.makeText(context, context.getString(R.string.feature_coming_soon, label), Toast.LENGTH_SHORT).show()
+                    },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
@@ -67,7 +70,8 @@ fun BottomActions() {
     }
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Voice Search
+    // Voice Search is hidden until P9 is implemented
+    /*
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -75,7 +79,7 @@ fun BottomActions() {
             .clip(RoundedCornerShape(12.dp))
             .background(colors.acc.copy(alpha = 0.15f))
             .border(1.dp, colors.acc, RoundedCornerShape(12.dp))
-            .clickable { Toast.makeText(context, "Unmapped", Toast.LENGTH_SHORT).show() },
+            .clickable {  },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -93,5 +97,6 @@ fun BottomActions() {
             fontWeight = FontWeight.SemiBold
         )
     }
+    */
     Spacer(modifier = Modifier.height(24.dp))
 }

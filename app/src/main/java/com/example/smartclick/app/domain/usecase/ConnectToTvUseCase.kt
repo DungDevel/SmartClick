@@ -8,7 +8,7 @@ import com.example.smartclick.app.domain.repository.ISubscriptionRepository
 import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.ITvCredentialStore
 import com.example.smartclick.app.domain.connection.ConnectOutcome
-import com.example.smartclick.app.tvconnection.discovery.DriverRegistry
+import com.example.smartclick.app.domain.connection.DriverRegistry
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 

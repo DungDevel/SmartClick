@@ -14,4 +14,10 @@ interface ISubscriptionRepository {
     suspend fun availablePlans(): List<PricingPlan>
 
     suspend fun subscribe(plan: SubscriptionPlan)
+
+    /** Trigger Google Play Billing flow */
+    fun launchBillingFlow(activity: Any, planId: String)
+
+    /** Khôi phục lại giao dịch (Restore) */
+    fun restorePurchases()
 }

@@ -167,16 +167,16 @@
     <string name="login_or">HOẶC</string>
     <string name="login_dont_have_account">Chưa có tài khoản?</string>
     <string name="sign_up">Đăng ký</string>
-    
+
     <string name="restore_purchase_terms">Khôi phục mua hàng · Điều khoản &amp; Bảo mật</string>
     <string name="failed_to_load_plans">Không tải được gói. Chạm để thử lại.</string>
     <string name="perk_unlimited_devices">Không giới hạn thiết bị</string>
     <string name="perk_channels_library">Thư viện Kênh</string>
     <string name="perk_priority_support">Hỗ trợ ưu tiên</string>
-    
+
     <string name="welcome_title">Điều khiển TV của bạn
 một cách dễ dàng</string>
-    
+
     <string name="manage_your_profile">Quản lý hồ sơ của bạn</string>
     <string name="data_and_privacy">Dữ liệu &amp; quyền riêng tư</string>
     <string name="legal_information">Thông tin pháp lý</string>
@@ -187,7 +187,7 @@ một cách dễ dàng</string>
     <string name="user_name_default">Người dùng</string>
     <string name="user_email_default">user@example.com</string>
     <string name="app_version_info">SmartClick v2.0.0 · © 2026</string>
-    
+
     <string name="dir_up">Lên</string>
     <string name="dir_down">Xuống</string>
     <string name="dir_left">Trái</string>
@@ -196,4 +196,19 @@ một cách dễ dàng</string>
 
     <string name="disconnect">Ngắt kết nối</string>
     <string name="remove">Gỡ bỏ</string>
+    <string name="feature_coming_soon">%1$s: tính năng sắp ra mắt!</string>
+    <string name="feature_coming_soon_no_args">Tính năng sắp ra mắt!</string>
+
+    <!-- Extra Buttons -->
+    <string name="btn_first">Bắt đầu</string>
+    <string name="btn_headphones">Tai nghe</string>
+    <string name="btn_mic">Mic</string>
+    <string name="btn_repeat">Lặp lại</string>
+    <string name="btn_chat">Trò chuyện</string>
+    <string name="btn_favorite">Yêu thích</string>
+    <string name="btn_volume">Âm lượng</string>
+    <string name="btn_menu">Menu</string>
+    <string name="btn_home">Trang chủ</string>
+    <string name="btn_input">Đầu vào</string>
+    <string name="wifi">Wi-Fi</string>
 </resources>

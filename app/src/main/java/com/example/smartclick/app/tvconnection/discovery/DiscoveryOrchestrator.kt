@@ -12,6 +12,7 @@ import com.example.smartclick.app.domain.connection.RawCandidate
 import com.example.smartclick.app.domain.model.TvProtocol
 import com.example.smartclick.app.domain.repository.IBrandProfileRepository
 import com.example.smartclick.app.di.IoDispatcher
+import com.example.smartclick.app.domain.connection.IDiscoveryOrchestrator
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -40,13 +41,13 @@ class DiscoveryOrchestrator @Inject constructor(
     private val probeFactory: ProbeFactory,
     private val fingerprintEngine: DeviceFingerprintEngine,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
-) {
+) : IDiscoveryOrchestrator {
 
     /**
      * Nhận dạng một TV từ IP nhập thủ công.
      * Tạo một RawCandidate giả lập và chạy fingerprinting.
      */
-    suspend fun identifyManualIp(ip: String): TvDevice? {
+    override suspend fun identifyManualIp(ip: String): TvDevice? {
         Log.d(TAG, "Manually identifying device at IP: $ip")
         val candidate = RawCandidate(
             ipAddress = ip,
@@ -58,7 +59,7 @@ class DiscoveryOrchestrator @Inject constructor(
         return fingerprintEngine.identify(candidate, null)
     }
 
-    fun scanForDevices(brandId: String): Flow<List<TvDevice>> = callbackFlow {
+    override fun scanForDevices(brandId: String): Flow<List<TvDevice>> = callbackFlow {
         val network = wifiNetworkProvider.getActiveWifiNetwork()
         if (network == null) {
             Log.w(TAG, "No active Wi-Fi network for discovery")

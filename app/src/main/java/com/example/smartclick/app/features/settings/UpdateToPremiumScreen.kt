@@ -141,8 +141,13 @@ fun UpdateToPremiumScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
+            val context = androidx.compose.ui.platform.LocalContext.current
             Button(
-                onClick = { viewModel.onStartFreeTrial() },
+                onClick = {
+                    (context as? android.app.Activity)?.let { activity ->
+                        viewModel.onStartFreeTrial(activity, selectedPlanId)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(52.dp).shadow(8.dp, RoundedCornerShape(14.dp), spotColor = colors.acGlow),
                 colors = ButtonDefaults.buttonColors(containerColor = colors.acc),
                 shape = RoundedCornerShape(14.dp)
@@ -174,11 +179,6 @@ private fun PricingPlansRow(
     onSelectPlan: (String) -> Unit
 ) {
     val colors = SmartClickThemeTokens.colors
-    val premiumPerks = listOf(
-        stringResource(R.string.perk_unlimited_devices),
-        stringResource(R.string.perk_channels_library),
-        stringResource(R.string.perk_priority_support)
-    )
 
     Row(
         modifier = Modifier.fillMaxWidth(),

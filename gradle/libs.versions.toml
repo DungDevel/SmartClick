@@ -1,4 +1,6 @@
 [versions]
+# Kotlin 1.9.24 corresponds to KSP 1.9.24-1.0.20
+ksp = "1.9.24-1.0.20"
 agp = "8.9.1"
 kotlin = "1.9.24"
 coreKtx = "1.12.0"
@@ -53,6 +55,7 @@ play-billing = { group = "com.android.billingclient", name = "billing-ktx", vers
 
 protobuf-lite = { group = "com.google.protobuf", name = "protobuf-javalite", version = "3.25.3" }
 [plugins]
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }

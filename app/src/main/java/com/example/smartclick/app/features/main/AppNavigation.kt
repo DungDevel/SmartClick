@@ -13,11 +13,13 @@ import com.example.smartclick.app.features.onboarding.DeviceFoundScreen
 import com.example.smartclick.app.features.onboarding.NotFoundScreen
 import com.example.smartclick.app.features.onboarding.ScanningScreen
 import com.example.smartclick.app.features.devices.DevicesViewModel
+import com.example.smartclick.app.features.onboarding.SplashScreen
 import com.example.smartclick.app.features.onboarding.WelcomeScreen
 import com.example.smartclick.app.features.onboarding.LanguageScreen
 import com.example.smartclick.app.features.settings.UpdateToPremiumScreen
 
 object NavRoutes {
+    const val SPLASH = "splash"
     const val WELCOME = "welcome"
     const val LANGUAGE = "language"
     const val BRAND = "brand"
@@ -36,8 +38,8 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
 
-    // Map "onboarding" string alias from MainActivity to WELCOME route
-    val initialRoute = if (startDestination == "onboarding") NavRoutes.WELCOME else startDestination
+    // Map "onboarding" string alias from MainActivity to SPLASH route
+    val initialRoute = if (startDestination == "onboarding") NavRoutes.SPLASH else startDestination
 
     // Persist that onboarding is finished, then land on the main app.
     val goToMain: () -> Unit = {
@@ -51,6 +53,15 @@ fun AppNavigation(
         navController = navController,
         startDestination = initialRoute
     ) {
+        composable(NavRoutes.SPLASH) {
+            SplashScreen(
+                onNext = {
+                    navController.navigate(NavRoutes.WELCOME) {
+                        popUpTo(NavRoutes.SPLASH) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(NavRoutes.WELCOME) {
             WelcomeScreen(
                 onNext = { navController.navigate(NavRoutes.LANGUAGE) }

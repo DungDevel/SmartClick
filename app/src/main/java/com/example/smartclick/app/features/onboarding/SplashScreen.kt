@@ -36,6 +36,7 @@ import com.example.smartclick.app.core.ui.theme.Typography
 import kotlinx.coroutines.delay
 
 @Composable
+
 fun SplashScreen(
     onNext: () -> Unit
 ) {

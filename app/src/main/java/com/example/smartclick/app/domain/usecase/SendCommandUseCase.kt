@@ -3,7 +3,7 @@ package com.example.smartclick.app.domain.usecase
 import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.TvConnectionState
-import com.example.smartclick.app.tvconnection.ReconnectWatcher
+import com.example.smartclick.app.domain.connection.ReconnectWatcher
 import javax.inject.Inject
 
 class SendCommandUseCase @Inject constructor(

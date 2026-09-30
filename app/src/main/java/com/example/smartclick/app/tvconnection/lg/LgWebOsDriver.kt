@@ -53,10 +53,12 @@ class LgWebOsDriver @Inject constructor() : IProtocolDriver {
         }
 
         if (candidate.protocolHint == TvProtocol.LG_WEBOS || candidate.openPorts.contains(3000) || candidate.openPorts.contains(3001)) {
-            val fallbackId = candidate.usn ?: candidate.location?.hashCode()?.toString() ?: java.util.UUID.randomUUID().toString()
+            val fallbackId = candidate.usn ?: candidate.location?.hashCode()?.toString()
+            val stableId = if (fallbackId != null) "lg-$fallbackId" else "lg-${candidate.ipAddress}"
+            val finalConf = if (fallbackId != null) Fingerprint.Confidence.MEDIUM else Fingerprint.Confidence.LOW
             return@withContext Fingerprint(
                 protocol = TvProtocol.LG_WEBOS,
-                stableId = "lg-$fallbackId",
+                stableId = stableId,
                 displayName = candidate.serviceName ?: "LG WebOS TV",
                 confidence = if (candidate.protocolHint == TvProtocol.LG_WEBOS) Fingerprint.Confidence.HIGH else Fingerprint.Confidence.LOW,
                 macAddress = ""
@@ -68,9 +70,8 @@ class LgWebOsDriver @Inject constructor() : IProtocolDriver {
     override fun pair(device: TvDevice): Flow<PairingStep> = callbackFlow {
         trySend(PairingStep.ConfirmOnTv(30_000L))
 
-        // Prefer WSS (3001) if we don't know, but typically we can try WS (3000). For now let's use 3000 to avoid SSL issues if 3001 is closed.
-        // Or default to 3000, 3001 is newer. Let's use ws://ip:3000 for standard pairing.
-        val wsUrl = "ws://${device.ipAddress}:3000"
+        // Prefer WSS (3001) for modern LG WebOS. Fallback logic can be implemented, but trying 3001 first is safer.
+        val wsUrl = "wss://${device.ipAddress}:3001"
         val request = Request.Builder().url(wsUrl).build()
 
         val listener = object : WebSocketListener() {

@@ -5,7 +5,7 @@ import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.tvconnection.ActiveTvSession
 import com.example.smartclick.app.domain.connection.ITvController
 import com.example.smartclick.app.domain.connection.TvConnectionState
-import com.example.smartclick.app.tvconnection.ReconnectWatcher
+import com.example.smartclick.app.domain.connection.ReconnectWatcher
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

@@ -64,65 +64,71 @@ class DevicesViewModel @Inject constructor(
     private var currentPairingDevice: TvDevice? = null
     private var pairingJob: Job? = null
 
-    private val manualScanTrigger = MutableSharedFlow<Unit>(replay = 1)
-
     private val _unsupportedDeviceCount = MutableStateFlow(0)
     val unsupportedDeviceCount: StateFlow<Int> = _unsupportedDeviceCount.asStateFlow()
 
     private val _unknownDevices = MutableStateFlow<List<TvDevice>>(emptyList())
 
+    private val _discoveredDevices = MutableStateFlow<List<TvDevice>>(emptyList())
+    private var scanJob: Job? = null
+
     init {
-        manualScanTrigger.tryEmit(Unit)
+        startScan()
     }
 
-    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-    private val discoveredDevices = manualScanTrigger
-        .flatMapLatest {
-            if (wifiNetworkProvider.getCurrentState() !is NetworkState.WifiConnected) return@flatMapLatest flowOf(emptyList<TvDevice>())
-
-            flow {
-                _scanState.value = ScanState.Scanning(0)
-                var currentProgress = 0
-                val timeoutLimit = 150
-                var listFound = emptyList<TvDevice>()
-
-                // Actual scan flow
-                val scanFlow = scanTvDevicesUseCase(_targetBrand.value)
-
-                // Run scan collecting with timeout loop
-                kotlinx.coroutines.coroutineScope {
-                    val scanJob = launch {
-                        scanFlow.collect { list ->
-                            listFound = list
-                            val unknownList = list.filter { it.protocol == com.example.smartclick.app.domain.model.TvProtocol.UNKNOWN }
-                            _unsupportedDeviceCount.value = unknownList.size
-                            _unknownDevices.value = unknownList
-                        }
-                    }
-
-                    while (currentProgress < 100) {
-                        kotlinx.coroutines.delay(100)
-                        currentProgress = (currentProgress + (100f / timeoutLimit)).toInt().coerceAtMost(100)
-                        _scanState.value = ScanState.Scanning(currentProgress)
-
-                        if (listFound.isNotEmpty() && currentProgress > 30) {
-                            // Ensure animation runs a bit before short circuit
-                            break
-                        }
-                    }
-
-                    scanJob.cancel()
-                }
-
-                if (listFound.isNotEmpty()) {
-                    _scanState.value = ScanState.Found
-                } else {
-                    _scanState.value = ScanState.NotFound
-                }
-
-                emit(listFound)
+    private fun startScan() {
+        scanJob?.cancel()
+        scanJob = viewModelScope.launch {
+            if (wifiNetworkProvider.getCurrentState() !is NetworkState.WifiConnected) {
+                _discoveredDevices.value = emptyList()
+                return@launch
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+            _scanState.value = ScanState.Scanning(0)
+            var elapsedTicks = 0
+            val totalTicks = 100 // 100 ticks × 100ms = 10 seconds max scan time
+            var listFound = emptyList<TvDevice>()
+
+            // Actual scan flow
+            val scanFlow = scanTvDevicesUseCase(_targetBrand.value)
+
+            // Run scan collecting with timeout loop
+            kotlinx.coroutines.coroutineScope {
+                val collectJob = launch {
+                    scanFlow.collect { list ->
+                        listFound = list
+                        val unknownList = list.filter { it.protocol == com.example.smartclick.app.domain.model.TvProtocol.UNKNOWN }
+                        _unsupportedDeviceCount.value = unknownList.size
+                        _unknownDevices.value = unknownList
+                    }
+                }
+
+                while (elapsedTicks < totalTicks) {
+                    kotlinx.coroutines.delay(100)
+                    elapsedTicks++
+                    val currentProgress = (elapsedTicks * 100 / totalTicks).coerceAtMost(100)
+                    _scanState.value = ScanState.Scanning(currentProgress)
+
+                    if (listFound.isNotEmpty() && currentProgress > 30) {
+                        // Found devices — let the animation run a bit then short circuit
+                        break
+                    }
+                }
+
+                collectJob.cancel()
+            }
+
+            _discoveredDevices.value = listFound
+
+            if (listFound.isNotEmpty()) {
+                _scanState.value = ScanState.Found
+            } else {
+                _scanState.value = ScanState.NotFound
+            }
+        }
+    }
+
+    private val discoveredDevices: StateFlow<List<TvDevice>> = _discoveredDevices.asStateFlow()
 
     val combinedDevices: StateFlow<List<DeviceRowUi>> = combine(
         tvDeviceRepository.getPairedDevices(),
@@ -162,7 +168,7 @@ class DevicesViewModel @Inject constructor(
     }
 
     fun refreshScan() {
-        manualScanTrigger.tryEmit(Unit)
+        startScan()
     }
 
     fun connectToDevice(device: TvDevice) {

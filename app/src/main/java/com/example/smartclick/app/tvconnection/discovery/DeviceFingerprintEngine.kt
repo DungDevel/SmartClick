@@ -1,6 +1,7 @@
 package com.example.smartclick.app.tvconnection.discovery
 
 import com.example.smartclick.app.domain.connection.RawCandidate
+import com.example.smartclick.app.domain.connection.DriverRegistry
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.model.TvProtocol
 import kotlinx.coroutines.async

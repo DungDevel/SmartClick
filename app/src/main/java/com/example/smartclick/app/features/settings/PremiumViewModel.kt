@@ -42,12 +42,12 @@ class PremiumViewModel @Inject constructor(
         }
     }
 
-    fun onStartFreeTrial() {
-        // TODO(P5-2): Kết nối Google Play BillingClient để mua gói thật.
+    fun onStartFreeTrial(activity: Any, planId: String = "premium_monthly") {
+        subscriptionRepository.launchBillingFlow(activity, planId)
     }
 
     fun onRestorePurchase() {
-        // TODO(P5-2): Gọi queryPurchasesAsync để khôi phục giao dịch.
+        subscriptionRepository.restorePurchases()
     }
 
     fun retry() {

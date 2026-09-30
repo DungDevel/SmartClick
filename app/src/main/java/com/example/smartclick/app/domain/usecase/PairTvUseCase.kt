@@ -3,7 +3,7 @@ package com.example.smartclick.app.domain.usecase
 import com.example.smartclick.app.domain.connection.PairingStep
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.model.TvProtocol
-import com.example.smartclick.app.tvconnection.discovery.DriverRegistry
+import com.example.smartclick.app.domain.connection.DriverRegistry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject

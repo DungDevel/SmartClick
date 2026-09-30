@@ -1,5 +1,6 @@
 package com.example.smartclick.app.tvconnection.security
 
+import android.annotation.SuppressLint
 import java.security.KeyStore
 import java.security.MessageDigest
 import java.security.cert.CertificateException
@@ -12,6 +13,7 @@ import javax.net.ssl.X509TrustManager
  * - During pairing ([isPairing] = true), it accepts the self-signed certificate.
  * - For connection, it strictly verifies against the [expectedSha256].
  */
+@SuppressLint("CustomX509TrustManager", "TrustAllX509TrustManager")
 class PinningTrustManager(private val expectedSha256: String?, private val isPairing: Boolean = false) : X509TrustManager {
 
     private val systemTrustManager: X509TrustManager

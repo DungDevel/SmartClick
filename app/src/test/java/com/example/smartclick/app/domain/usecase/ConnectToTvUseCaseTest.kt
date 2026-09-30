@@ -10,7 +10,7 @@ import com.example.smartclick.app.domain.connection.ITvController
 import com.example.smartclick.app.domain.connection.IProtocolDriver
 import com.example.smartclick.app.domain.connection.ITvCredentialStore
 import com.example.smartclick.app.domain.connection.ConnectOutcome
-import com.example.smartclick.app.tvconnection.discovery.DriverRegistry
+import com.example.smartclick.app.domain.connection.DriverRegistry
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every

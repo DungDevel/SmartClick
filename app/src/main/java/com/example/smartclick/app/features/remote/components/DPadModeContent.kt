@@ -32,10 +32,10 @@ fun DPadModeContent(dispatchCommand: (RemoteCommand) -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         val navButtons = listOf(
-            "Menu" to Pair(R.drawable.menu, RemoteCommand.Menu),
+            stringResource(R.string.btn_menu) to Pair(R.drawable.menu, RemoteCommand.Menu),
             stringResource(R.string.back) to Pair(R.drawable.left_arrow, RemoteCommand.Back),
-            "Home" to Pair(R.drawable.home, RemoteCommand.Home),
-            "Input" to Pair(R.drawable.map, RemoteCommand.Input)
+            stringResource(R.string.btn_home) to Pair(R.drawable.home, RemoteCommand.Home),
+            stringResource(R.string.btn_input) to Pair(R.drawable.map, RemoteCommand.Input)
         )
         navButtons.forEach { (label, data) ->
             val iconRes = data.first
@@ -130,21 +130,22 @@ fun DPadModeContent(dispatchCommand: (RemoteCommand) -> Unit) {
     Spacer(modifier = Modifier.height(16.dp))
 
     // Extra icon grid (2 rows x 4)
-    val context = LocalContext.current
+    
     val extraRows = listOf(
         listOf(
-            "First" to R.drawable.backward,
+            stringResource(R.string.btn_first) to R.drawable.backward,
             stringResource(R.string.back) to R.drawable.left_arrow,
-            "Headphones" to R.drawable.podcast,
-            "Mic" to R.drawable.microphone
+            stringResource(R.string.btn_headphones) to R.drawable.podcast,
+            stringResource(R.string.btn_mic) to R.drawable.microphone
         ),
         listOf(
-            "Repeat" to R.drawable.repost,
-            "Chat" to R.drawable.chat,
-            "Favorite" to R.drawable.star,
-            "Volume" to R.drawable.volume
+            stringResource(R.string.btn_repeat) to R.drawable.repost,
+            stringResource(R.string.btn_chat) to R.drawable.chat,
+            stringResource(R.string.btn_favorite) to R.drawable.star,
+            stringResource(R.string.btn_volume) to R.drawable.volume
         )
     )
+    val context = LocalContext.current
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         extraRows.forEach { row ->
             Row(
@@ -155,7 +156,9 @@ fun DPadModeContent(dispatchCommand: (RemoteCommand) -> Unit) {
                     RemoteSquareButton(
                         icon = icon,
                         contentDescription = desc,
-                        onClick = { Toast.makeText(context, "Unmapped", Toast.LENGTH_SHORT).show() }
+                        onClick = {
+                            Toast.makeText(context, context.getString(R.string.feature_coming_soon, desc), Toast.LENGTH_SHORT).show()
+                        }
                     )
                 }
             }

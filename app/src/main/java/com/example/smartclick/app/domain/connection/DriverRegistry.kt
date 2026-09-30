@@ -1,4 +1,4 @@
-package com.example.smartclick.app.tvconnection.discovery
+package com.example.smartclick.app.domain.connection
 
 import com.example.smartclick.app.domain.connection.IProtocolDriver
 import com.example.smartclick.app.domain.model.TvProtocol

@@ -248,7 +248,9 @@ fun RemoteScreen(
                         .size(45.dp)
                         .background(colors.surfEl, CircleShape)
                         .border(1.dp, colors.bord, CircleShape)
-                        .clickable { android.widget.Toast.makeText(context, "Lock Unmapped", android.widget.Toast.LENGTH_SHORT).show() },
+                        .clickable {
+                            android.widget.Toast.makeText(context, context.getString(R.string.feature_coming_soon, context.getString(R.string.lock)), android.widget.Toast.LENGTH_SHORT).show()
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Image(

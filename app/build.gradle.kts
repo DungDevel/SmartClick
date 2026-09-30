@@ -2,7 +2,7 @@
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.protobuf)
-    id("kotlin-kapt")
+    alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
 }
 
@@ -37,11 +37,11 @@ android {
     }
 }
 
-kapt {
-    arguments {
-        arg("room.schemaLocation", "$projectDir/schemas")
-    }
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
+    
+        
 
 // E1: cá»•ng cháº·n chuá»—i tiáº¿ng Anh hardcode trong UI Compose.
 // QuÃ©t cÃ¡c Text("...") / label = "..." / contentDescription = "..." cÃ²n Ä‘á»ƒ literal.
@@ -51,16 +51,14 @@ tasks.register("checkHardcodedStrings") {
 
     val uiDir = file("src/main/java/com/example/smartclick/app")
     doLast {
-        // Báº¯t: Text("Chá»¯ cÃ³ chá»¯ cÃ¡i"), contentDescription = "..."
-        // LÆ°u Ã½: KHÃ”NG quÃ©t `label = "..."` vÃ¬ Ä‘Ã³ lÃ  label cá»§a animation inspector
-        // (rememberInfiniteTransition / animateFloat), khÃ´ng pháº£i text hiá»ƒn thá»‹.
-        // Label tháº­t cá»§a Material3 lÃ  `label = { Text("...") }` -> Ä‘Ã£ bá»‹ pattern Text(...) báº¯t.
+        // Bắt: Text("Chữ có chữ cái"), contentDescription = "..."
         val patterns = listOf(
-            Regex("""Text\(\s*"[^"]*[A-Za-z]{2,}[^"]*"""),
+            Regex("""Text\(\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
             Regex("""contentDescription\s*=\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
             Regex("""Toast\.makeText\([^,]+,\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
             Regex("""title\s*=\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
-            Regex("""placeholder\s*=\s*\{\s*Text\(\s*"[^"]*[A-Za-z]{2,}[^"]*"""")
+            Regex("""placeholder\s*=\s*\{\s*Text\(\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
+            Regex("""label\s*=\s*\{\s*Text\(\s*"[^"]*[A-Za-z]{2,}[^"]*"""")
         )
         // Cho phÃ©p: emoji/kÃ½ tá»± Ä‘Æ¡n, vÃ  cÃ¡c chuá»—i ká»¹ thuáº­t Ä‘Ã£ whitelisted
         val allow = Regex("""Text\(\s*"[^A-Za-z]*"""")
@@ -103,14 +101,14 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
 
     implementation(libs.okhttp3)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    kapt(libs.androidx.room.compiler)
+    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.play.billing)

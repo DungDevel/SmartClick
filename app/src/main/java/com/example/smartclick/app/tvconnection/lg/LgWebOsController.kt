@@ -17,7 +17,7 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONObject
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 class LgWebOsController(
     private val clientKey: String?,
@@ -25,6 +25,7 @@ class LgWebOsController(
 ) : ITvController {
 
     private var webSocket: WebSocket? = null
+    private var pointerSocket: WebSocket? = null
 
     private val _connectionState = MutableStateFlow<TvConnectionState>(TvConnectionState.Idle)
     override val connectionState: StateFlow<TvConnectionState> = _connectionState.asStateFlow()
@@ -39,17 +40,18 @@ class LgWebOsController(
     )
 
     private var commandIdCounter = 1
+    private val pendingRequests = mutableMapOf<String, kotlinx.coroutines.CancellableContinuation<JSONObject>>()
 
-    override suspend fun connect(device: TvDevice): Result<Unit> = suspendCoroutine { cont ->
+    override suspend fun connect(device: TvDevice): Result<Unit> = suspendCancellableCoroutine { cont ->
         if (_connectionState.value is TvConnectionState.Connected) {
             cont.resume(Result.success(Unit))
-            return@suspendCoroutine
+            return@suspendCancellableCoroutine
         }
 
         _device = device
         _connectionState.value = TvConnectionState.Connecting(ConnectProgress.CONNECTING_SOCKET)
 
-        val wsUrl = "ws://${device.ipAddress}:3000"
+        val wsUrl = "wss://${device.ipAddress}:3001"
         val request = Request.Builder().url(wsUrl).build()
         var hasResumed = false
 
@@ -85,18 +87,32 @@ class LgWebOsController(
                 try {
                     val json = JSONObject(text)
                     val type = json.optString("type")
+                    val id = json.optString("id")
+
+                    if (id.isNotEmpty()) {
+                        val continuation = pendingRequests.remove(id)
+                        continuation?.resume(json)
+                    }
+
                     if (type == "registered") {
                         if (!hasResumed) {
                             hasResumed = true
                             _connectionState.value = TvConnectionState.Connected(device)
                             cont.resume(Result.success(Unit))
                         }
+                        setupPointerInputSocket(webSocket)
                     } else if (type == "error") {
                         val errorDesc = json.optString("error", "Unknown error")
                         if (!hasResumed) {
                             hasResumed = true
                             _connectionState.value = TvConnectionState.Failed(errorDesc)
                             cont.resume(Result.failure(Exception("Rejected by TV: $errorDesc")))
+                        }
+                    } else if (type == "response") {
+                        val payload = json.optJSONObject("payload")
+                        if (payload?.has("socketPath") == true) {
+                            val socketPath = payload.getString("socketPath")
+                            connectPointerSocket(socketPath)
                         }
                     }
                 } catch (e: Exception) {
@@ -110,6 +126,8 @@ class LgWebOsController(
                     hasResumed = true
                     cont.resume(Result.failure(Exception("Closed: $reason")))
                 }
+                pointerSocket?.close(1000, "Main closed")
+                pointerSocket = null
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
@@ -118,15 +136,35 @@ class LgWebOsController(
                     hasResumed = true
                     cont.resume(Result.failure(t))
                 }
+                pointerSocket?.close(1000, "Main failed")
+                pointerSocket = null
             }
         }
 
         webSocket = okHttpClient.newWebSocket(request, listener)
     }
 
+    private fun setupPointerInputSocket(webSocket: WebSocket) {
+        val req = JSONObject().apply {
+            put("type", "request")
+            put("id", "req_pointer")
+            put("uri", "ssap://com.webos.service.networkinput/getPointerInputSocket")
+        }
+        webSocket.send(req.toString())
+    }
+
+    private fun connectPointerSocket(socketPath: String) {
+        val request = Request.Builder().url(socketPath).build()
+        pointerSocket = okHttpClient.newWebSocket(request, object: WebSocketListener() {
+            // we just keep the socket open
+        })
+    }
+
     override suspend fun disconnect() {
         webSocket?.close(1000, "User requested disconnect")
         webSocket = null
+        pointerSocket?.close(1000, "User requested disconnect")
+        pointerSocket = null
         _connectionState.value = TvConnectionState.Idle
         _device = null
     }
@@ -145,7 +183,30 @@ class LgWebOsController(
             return if (sent) Result.success(Unit) else Result.failure(Exception("Failed to send socket payload"))
         }
 
-        // Handle specific endpoints that need payloads
+        // Pointer socket commands for Dpad
+        val pointerKey = when (command) {
+            RemoteCommand.DPadUp -> "UP"
+            RemoteCommand.DPadDown -> "DOWN"
+            RemoteCommand.DPadLeft -> "LEFT"
+            RemoteCommand.DPadRight -> "RIGHT"
+            RemoteCommand.Ok -> "ENTER"
+            RemoteCommand.Back -> "BACK"
+            RemoteCommand.Home -> "HOME"
+            is RemoteCommand.PointerMove -> null // Special case if we implement actual mouse motion
+            is RemoteCommand.PointerClick -> "ENTER"
+            else -> null
+        }
+
+        if (pointerKey != null) {
+            val pSocket = pointerSocket
+            if (pSocket == null) {
+                return Result.failure(Exception("Pointer socket not ready"))
+            } else {
+                pSocket.send("type:button\nname:$pointerKey\n\n")
+                return Result.success(Unit)
+            }
+        }
+
         when (command) {
             RemoteCommand.Mute -> {
                 val req = JSONObject().apply {
@@ -157,20 +218,83 @@ class LgWebOsController(
                 val sent = ws.send(req.toString())
                 return if (sent) Result.success(Unit) else Result.failure(Exception("Failed to send mute payload"))
             }
-            // For complex keys (D-pad), it technically needs the Pointer Input Socket for newer TVs.
-            // But we will use best-effort fallback to basic URIs if available or fail.
-            else -> return Result.failure(Exception("Unsupported command on LG WebOS without pointer socket"))
+            is RemoteCommand.PointerMove -> {
+                pointerSocket?.send("type:move\ndx:${command.dx}\ndy:${command.dy}\ndown:0\n\n")
+                return Result.success(Unit)
+            }
+            is RemoteCommand.Text -> {
+                 val req = JSONObject().apply {
+                    put("type", "request")
+                    put("id", commandIdCounter++.toString())
+                    put("uri", "ssap://com.webos.service.ime/insertText")
+                    put("payload", JSONObject().apply {
+                        put("text", command.text)
+                        put("replace", 0)
+                    })
+                }
+                ws.send(req.toString())
+                return Result.success(Unit)
+            }
+            RemoteCommand.Backspace -> {
+                 val req = JSONObject().apply {
+                    put("type", "request")
+                    put("id", commandIdCounter++.toString())
+                    put("uri", "ssap://com.webos.service.ime/deleteCharacters")
+                    put("payload", JSONObject().apply {
+                        put("count", 1)
+                    })
+                }
+                ws.send(req.toString())
+                return Result.success(Unit)
+            }
+            else -> return Result.failure(Exception("Unsupported command on LG WebOS"))
         }
     }
 
     override suspend fun getApps(): Result<List<TvApp>> {
-        // ssap://com.webos.applicationManager/listLaunchPoints
-        return Result.success(emptyList())
+        val ws = webSocket ?: return Result.failure(Exception("Not connected"))
+
+        val id = commandIdCounter++.toString()
+        val req = JSONObject().apply {
+            put("type", "request")
+            put("id", id)
+            put("uri", "ssap://com.webos.applicationManager/listApps")
+        }
+
+        return try {
+            val responseJson = suspendCancellableCoroutine<JSONObject> { cont ->
+                pendingRequests[id] = cont
+                if (!ws.send(req.toString())) {
+                    pendingRequests.remove(id)
+                    cont.resumeWith(Result.failure(Exception("Failed to send socket payload")))
+                }
+                cont.invokeOnCancellation {
+                    pendingRequests.remove(id)
+                }
+            }
+
+            val payload = responseJson.optJSONObject("payload")
+            val appsArray = payload?.optJSONArray("apps")
+            val resultList = mutableListOf<TvApp>()
+
+            if (appsArray != null) {
+                for (i in 0 until appsArray.length()) {
+                    val appObj = appsArray.optJSONObject(i) ?: continue
+                    val appId = appObj.optString("id")
+                    val title = appObj.optString("title")
+                    val iconUrl = appObj.optString("icon")
+                    if (appId.isNotEmpty() && title.isNotEmpty()) {
+                        resultList.add(TvApp(id = appId, name = title, iconUrl = iconUrl))
+                    }
+                }
+            }
+            Result.success(resultList)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun launchApp(appId: String): Result<Unit> {
-        // ssap://system.launcher/launch
-        // {"id": "appId"}
         val ws = webSocket ?: return Result.failure(Exception("Not connected"))
         val req = JSONObject().apply {
             put("type", "request")

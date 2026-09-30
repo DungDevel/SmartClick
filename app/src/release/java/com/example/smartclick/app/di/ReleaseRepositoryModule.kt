@@ -1,6 +1,7 @@
 package com.example.smartclick.app.di
 
 import com.example.smartclick.app.data.noop.*
+import com.example.smartclick.app.data.repository.PlayBillingRepository
 import com.example.smartclick.app.domain.repository.*
 import dagger.Module
 import dagger.Provides
@@ -17,7 +18,7 @@ object ReleaseRepositoryModule {
 
     @Provides
     @Singleton
-    fun provideSubscriptionRepository(): ISubscriptionRepository = NoOpSubscriptionRepository()
+    fun provideSubscriptionRepository(playBilling: PlayBillingRepository): ISubscriptionRepository = playBilling
 
     @Provides
     @Singleton

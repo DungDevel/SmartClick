@@ -1,1 +1,0 @@
-sed -i 's/val isHapticEnabled/val controlsEnabled = connectionState is TvConnectionState.Connected\n    val isHapticEnabled/g' app/src/main/java/com/example/smartclick/app/features/remote/RemoteScreen.kt

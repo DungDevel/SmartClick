@@ -1,5 +1,6 @@
 package com.example.smartclick.app.tvconnection.discovery
 
+import com.example.smartclick.app.domain.connection.DriverRegistry
 import com.example.smartclick.app.domain.connection.Fingerprint
 import com.example.smartclick.app.domain.connection.IProtocolDriver
 import com.example.smartclick.app.domain.connection.RawCandidate
