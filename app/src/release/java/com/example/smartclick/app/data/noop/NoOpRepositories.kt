@@ -14,6 +14,7 @@ class NoOpAuthRepository : IAuthRepository {
 class NoOpSubscriptionRepository : ISubscriptionRepository {
     override val isPremium: Flow<Boolean> = flowOf(false)
     override val currentPlan: Flow<SubscriptionPlan> = flowOf(SubscriptionPlan.FREE)
+    override val billingMessages: Flow<String> = kotlinx.coroutines.flow.emptyFlow()
     override suspend fun availablePlans(): List<PricingPlan> = emptyList()
     override suspend fun subscribe(plan: SubscriptionPlan) {}
     override fun launchBillingFlow(activity: Any, planId: String) {}

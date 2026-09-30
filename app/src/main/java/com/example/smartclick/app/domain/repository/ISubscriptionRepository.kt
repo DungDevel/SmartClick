@@ -10,6 +10,9 @@ interface ISubscriptionRepository {
     /** Tiện ích: true khi người dùng đang có gói PREMIUM. */
     val isPremium: Flow<Boolean>
 
+    /** Thông điệp trạng thái thanh toán (Lỗi, Pending, v.v...) */
+    val billingMessages: Flow<String>
+
     /** Danh sách gói hiển thị trên Paywall. Play Billing sẽ thay thế ở P5. */
     suspend fun availablePlans(): List<PricingPlan>
 
