@@ -1,4 +1,4 @@
-plugins {
+﻿plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.protobuf)
@@ -23,6 +23,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    kotlin {
+        jvmToolchain(17)
+    }
     kotlinOptions {
         jvmTarget = "17"
     }
@@ -40,23 +43,26 @@ kapt {
     }
 }
 
-// E1: cổng chặn chuỗi tiếng Anh hardcode trong UI Compose.
-// Quét các Text("...") / label = "..." / contentDescription = "..." còn để literal.
+// E1: cá»•ng cháº·n chuá»—i tiáº¿ng Anh hardcode trong UI Compose.
+// QuÃ©t cÃ¡c Text("...") / label = "..." / contentDescription = "..." cÃ²n Ä‘á»ƒ literal.
 tasks.register("checkHardcodedStrings") {
     group = "verification"
     description = "Fails the build if hardcoded UI string literals remain in Compose screens (E1)."
 
     val uiDir = file("src/main/java/com/example/smartclick/app")
     doLast {
-        // Bắt: Text("Chữ có chữ cái"), contentDescription = "..."
-        // Lưu ý: KHÔNG quét `label = "..."` vì đó là label của animation inspector
-        // (rememberInfiniteTransition / animateFloat), không phải text hiển thị.
-        // Label thật của Material3 là `label = { Text("...") }` -> đã bị pattern Text(...) bắt.
+        // Báº¯t: Text("Chá»¯ cÃ³ chá»¯ cÃ¡i"), contentDescription = "..."
+        // LÆ°u Ã½: KHÃ”NG quÃ©t `label = "..."` vÃ¬ Ä‘Ã³ lÃ  label cá»§a animation inspector
+        // (rememberInfiniteTransition / animateFloat), khÃ´ng pháº£i text hiá»ƒn thá»‹.
+        // Label tháº­t cá»§a Material3 lÃ  `label = { Text("...") }` -> Ä‘Ã£ bá»‹ pattern Text(...) báº¯t.
         val patterns = listOf(
             Regex("""Text\(\s*"[^"]*[A-Za-z]{2,}[^"]*"""),
-            Regex("""contentDescription\s*=\s*"[^"]*[A-Za-z]{2,}[^"]*"""")
+            Regex("""contentDescription\s*=\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
+            Regex("""Toast\.makeText\([^,]+,\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
+            Regex("""title\s*=\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
+            Regex("""placeholder\s*=\s*\{\s*Text\(\s*"[^"]*[A-Za-z]{2,}[^"]*"""")
         )
-        // Cho phép: emoji/ký tự đơn, và các chuỗi kỹ thuật đã whitelisted
+        // Cho phÃ©p: emoji/kÃ½ tá»± Ä‘Æ¡n, vÃ  cÃ¡c chuá»—i ká»¹ thuáº­t Ä‘Ã£ whitelisted
         val allow = Regex("""Text\(\s*"[^A-Za-z]*"""")
         val offenders = mutableListOf<String>()
 

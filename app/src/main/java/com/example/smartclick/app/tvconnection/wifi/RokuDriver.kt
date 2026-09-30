@@ -99,7 +99,7 @@ class RokuDriver @Inject constructor(
 
         // Cố gắng fallback nếu request lỗi nhưng có hint từ SSDP/mDNS
         if (candidate.protocolHint == TvProtocol.ROKU_ECP) {
-            val fallbackId = candidate.usn ?: candidate.location?.hashCode()?.toString() ?: java.util.UUID.randomUUID().toString()
+            val fallbackId = candidate.usn ?: candidate.serviceName ?: return@withContext null
             return@withContext Fingerprint(
                 protocol = TvProtocol.ROKU_ECP,
                 stableId = "roku-$fallbackId",
