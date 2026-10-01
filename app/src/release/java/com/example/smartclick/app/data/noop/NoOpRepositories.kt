@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.flowOf
 
 class NoOpAuthRepository : IAuthRepository {
     override val currentUser: Flow<UserAccount?> = flowOf(null)
-    override suspend fun login(userId: String): Result<Unit> = Result.success(Unit)
-    override suspend fun logout(): Result<Unit> = Result.success(Unit)
+    override suspend fun login(userId: String) {}
+    override suspend fun logout() {}
 }
 
 class NoOpSubscriptionRepository : ISubscriptionRepository {
@@ -22,9 +22,10 @@ class NoOpSubscriptionRepository : ISubscriptionRepository {
 }
 
 class NoOpChannelRegistryRepository : IChannelRegistryRepository {
-    override suspend fun getInstalledChannels(deviceId: String): List<TvApp> = emptyList()
+    override fun getSupportedChannels(): Flow<List<AppLaunchConfig>> = flowOf(emptyList())
+    override fun getTvChannels(category: ChannelCategory): Flow<List<TvChannel>> = flowOf(emptyList())
 }
 
 class NoOpMediaRepository : IMediaRepository {
-    override suspend fun getLocalMedia(page: Int, limit: Int): List<MediaItem> = emptyList()
+    override fun getLocalMedia(): Flow<List<MediaItem>> = flowOf(emptyList())
 }
