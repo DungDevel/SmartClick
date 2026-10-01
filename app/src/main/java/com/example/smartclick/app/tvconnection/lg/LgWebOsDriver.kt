@@ -42,7 +42,10 @@ class LgWebOsDriver @Inject constructor() : IProtocolDriver {
         init(null, arrayOf<TrustManager>(tofuTrustManager), SecureRandom())
     }
 
-    private val pairingClient = OkHttpClient.Builder()
+    // Test seam: `internal var` thay cho `private val` để unit test có thể thay OkHttpClient giả
+    // và kiểm thử xử lý message ghép nối mà không cần mạng thật. Production vẫn dùng TOFU client dựng ở đây
+    // (giống cách LgWebOsController nhận okHttpClient qua constructor để test được).
+    internal var pairingClient: OkHttpClient = OkHttpClient.Builder()
         .sslSocketFactory(sslContext.socketFactory, tofuTrustManager)
         .hostnameVerifier { _, _ -> true }
         .build()
