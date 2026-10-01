@@ -36,7 +36,9 @@ class LgWebOsController(
     override val capabilities: Set<TvCapability> = setOf(
         TvCapability.VOLUME,
         TvCapability.KEYBOARD_TEXT,
-        TvCapability.INSTALLED_APPS
+        TvCapability.INSTALLED_APPS,
+        TvCapability.POINTER,
+        TvCapability.CHANNEL_CONTROL
     )
 
     private var commandIdCounter = 1

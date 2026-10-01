@@ -34,7 +34,9 @@ class SamsungTizenController(
 
     override val capabilities: Set<TvCapability> = setOf(
         TvCapability.VOLUME,
-        TvCapability.DIGITS
+        TvCapability.DIGITS,
+        TvCapability.CHANNEL_CONTROL,
+        TvCapability.SEARCH_CONTENT
     )
 
     override suspend fun connect(device: TvDevice): Result<Unit> = suspendCoroutine { cont ->

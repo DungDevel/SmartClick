@@ -21,7 +21,9 @@ class AndroidTvDriver @Inject constructor() : IProtocolDriver {
         TvCapability.VOLUME,
         TvCapability.KEYBOARD_TEXT,
         TvCapability.INSTALLED_APPS,
-        TvCapability.POINTER
+        TvCapability.POINTER,
+        TvCapability.CHANNEL_CONTROL,
+        TvCapability.SEARCH_CONTENT
     )
 
     private var pairingSession: AndroidTvPairingSession? = null

@@ -48,7 +48,9 @@ class AndroidTvRemoteSession(
 
     override val capabilities: Set<TvCapability> = setOf(
         TvCapability.VOLUME,
-        TvCapability.POINTER
+        TvCapability.POINTER,
+        TvCapability.CHANNEL_CONTROL,
+        TvCapability.SEARCH_CONTENT
     )
 
     private var socket: SSLSocket? = null

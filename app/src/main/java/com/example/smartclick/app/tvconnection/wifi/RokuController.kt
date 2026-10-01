@@ -47,7 +47,9 @@ class RokuController @Inject constructor(
     override val capabilities: Set<TvCapability> = setOf(
         TvCapability.VOLUME,
         TvCapability.KEYBOARD_TEXT,
-        TvCapability.INSTALLED_APPS
+        TvCapability.INSTALLED_APPS,
+        TvCapability.CHANNEL_CONTROL,
+        TvCapability.SEARCH_CONTENT
     )
 
     private val emptyBody = "".toRequestBody("text/plain".toMediaType())
@@ -309,6 +311,9 @@ class RokuController @Inject constructor(
             is RemoteCommand.Rewind -> "Rev"
             is RemoteCommand.Numpad -> "Lit_${cmd.digit}"
             is RemoteCommand.Backspace -> "Backspace"
+            is RemoteCommand.ChannelUp -> "ChannelUp"
+            is RemoteCommand.ChannelDown -> "ChannelDown"
+            is RemoteCommand.SearchContent -> "Search"
             is RemoteCommand.Text -> null // Handled separately
             is RemoteCommand.PointerMove -> null // Handled separately
             is RemoteCommand.PointerClick -> "Select"

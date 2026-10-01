@@ -33,7 +33,9 @@ class RokuDriver @Inject constructor(
     override val capabilities: Set<TvCapability> = setOf(
         TvCapability.VOLUME,
         TvCapability.KEYBOARD_TEXT,
-        TvCapability.INSTALLED_APPS // Roku hỗ trợ launch app và cài đặt app list
+        TvCapability.INSTALLED_APPS, // Roku hỗ trợ launch app và cài đặt app list
+        TvCapability.CHANNEL_CONTROL,
+        TvCapability.SEARCH_CONTENT
     )
 
     override suspend fun fingerprint(candidate: RawCandidate): Fingerprint? = withContext(Dispatchers.IO) {

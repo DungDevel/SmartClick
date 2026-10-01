@@ -35,7 +35,9 @@ class SamsungTizenDriver @Inject constructor() : IProtocolDriver {
 
     override val capabilities: Set<TvCapability> = setOf(
         TvCapability.VOLUME,
-        TvCapability.DIGITS
+        TvCapability.DIGITS,
+        TvCapability.CHANNEL_CONTROL,
+        TvCapability.SEARCH_CONTENT
     )
 
     private val applicationName = "SmartClick"

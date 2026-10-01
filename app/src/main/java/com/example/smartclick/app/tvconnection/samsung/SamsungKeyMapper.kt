@@ -25,6 +25,9 @@ object SamsungKeyMapper {
             RemoteCommand.Rewind -> "KEY_REWIND"
             is RemoteCommand.Numpad -> "KEY_${command.digit}"
             RemoteCommand.Backspace -> "KEY_RETURN" // Some use return for backspace in fields
+            RemoteCommand.ChannelUp -> "KEY_CHUP"
+            RemoteCommand.ChannelDown -> "KEY_CHDOWN"
+            is RemoteCommand.SearchContent -> "KEY_SEARCH"
             // Other commands like Text and Pointer are handled differently or not supported natively by simple keys.
             else -> null
         }

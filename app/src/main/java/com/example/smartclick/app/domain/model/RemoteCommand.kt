@@ -22,6 +22,13 @@ sealed class RemoteCommand {
     object FastForward : RemoteCommand()
     object Rewind : RemoteCommand()
 
+    // Channel controls
+    object ChannelUp : RemoteCommand()
+    object ChannelDown : RemoteCommand()
+
+    // Search
+    data class SearchContent(val query: String) : RemoteCommand()
+
     data class Numpad(val digit: Int) : RemoteCommand()
     data class Text(val text: String) : RemoteCommand()
     object Backspace : RemoteCommand()

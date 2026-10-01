@@ -6,5 +6,7 @@ enum class TvCapability {
     POINTER,
     KEYBOARD_TEXT,
     INSTALLED_APPS,
-    CAST
+    CAST,
+    CHANNEL_CONTROL,
+    SEARCH_CONTENT
 }

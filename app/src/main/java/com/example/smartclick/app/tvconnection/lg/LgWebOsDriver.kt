@@ -33,7 +33,9 @@ class LgWebOsDriver @Inject constructor() : IProtocolDriver {
     override val capabilities: Set<TvCapability> = setOf(
         TvCapability.VOLUME,
         TvCapability.KEYBOARD_TEXT,
-        TvCapability.INSTALLED_APPS
+        TvCapability.INSTALLED_APPS,
+        TvCapability.POINTER,
+        TvCapability.CHANNEL_CONTROL
     )
 
     private val tofuTrustManager = com.example.smartclick.app.tvconnection.security.PinningTrustManager(expectedSha256 = null, isPairing = true)
@@ -58,7 +60,6 @@ class LgWebOsDriver @Inject constructor() : IProtocolDriver {
         if (candidate.protocolHint == TvProtocol.LG_WEBOS || candidate.openPorts.contains(3000) || candidate.openPorts.contains(3001)) {
             val fallbackId = candidate.usn ?: candidate.location?.hashCode()?.toString()
             val stableId = if (fallbackId != null) "lg-$fallbackId" else "lg-${candidate.ipAddress}"
-            val finalConf = if (fallbackId != null) Fingerprint.Confidence.MEDIUM else Fingerprint.Confidence.LOW
             return@withContext Fingerprint(
                 protocol = TvProtocol.LG_WEBOS,
                 stableId = stableId,

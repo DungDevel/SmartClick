@@ -38,6 +38,9 @@ object AndroidTvKeyMapper {
                 9 -> RemoteKeyCode.KEYCODE_9
                 else -> null
             }
+            is RemoteCommand.ChannelUp -> RemoteKeyCode.KEYCODE_CHANNEL_UP
+            is RemoteCommand.ChannelDown -> RemoteKeyCode.KEYCODE_CHANNEL_DOWN
+            is RemoteCommand.SearchContent -> RemoteKeyCode.KEYCODE_SEARCH
             // Text, PointerMove, PointerClick need special handling
             is RemoteCommand.Text,
             is RemoteCommand.PointerMove,

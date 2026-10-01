@@ -10,8 +10,14 @@ import javax.net.ssl.X509TrustManager
 
 /**
  * TrustManager that implements TOFU (Trust On First Use) and Certificate Pinning.
- * - During pairing ([isPairing] = true), it accepts the self-signed certificate.
- * - For connection, it strictly verifies against the [expectedSha256].
+ *
+ * - During pairing ([isPairing] = true), it inherently accepts any server certificate (including self-signed)
+ *   provided by the TV to capture its thumbprint. This creates a minor TOFU vulnerability window where
+ *   an active MitM attack during the initial few seconds of pairing could become the trusted anchor.
+ *   This is standard industry practice for smart TV pairing in a local network without pre-shared CA chains.
+ *
+ * - For connection, it strictly verifies the peer certificate's SHA-256 hash against the [expectedSha256].
+ *   This hard-pinning completely defends against subsequent MitM attacks on the local network.
  */
 @SuppressLint("CustomX509TrustManager", "TrustAllX509TrustManager")
 class PinningTrustManager(private val expectedSha256: String?, private val isPairing: Boolean = false) : X509TrustManager {
