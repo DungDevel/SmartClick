@@ -23,3 +23,6 @@ count_*.txt
 full_log.txt
 build_log.txt
 
+.idea/
+*.txt
+.claude/

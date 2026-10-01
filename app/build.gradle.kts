@@ -43,8 +43,8 @@ ksp {
     
         
 
-// E1: cá»•ng cháº·n chuá»—i tiáº¿ng Anh hardcode trong UI Compose.
-// QuÃ©t cÃ¡c Text("...") / label = "..." / contentDescription = "..." cÃ²n Ä‘á»ƒ literal.
+// E1: cổng chặn chuỗi tiếng Anh hardcode trong UI Compose.
+// Quét các Text("...") / label = "..." / contentDescription = "..." còn để literal.
 tasks.register("checkHardcodedStrings") {
     group = "verification"
     description = "Fails the build if hardcoded UI string literals remain in Compose screens (E1)."
@@ -60,7 +60,7 @@ tasks.register("checkHardcodedStrings") {
             Regex("""placeholder\s*=\s*\{\s*Text\(\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
             Regex("""label\s*=\s*\{\s*Text\(\s*"[^"]*[A-Za-z]{2,}[^"]*"""")
         )
-        // Cho phÃ©p: emoji/kÃ½ tá»± Ä‘Æ¡n, vÃ  cÃ¡c chuá»—i ká»¹ thuáº­t Ä‘Ã£ whitelisted
+        // Cho phép: emoji/ký tự đơn, và các chuỗi kỹ thuật đã whitelisted
         val allow = Regex("""Text\(\s*"[^A-Za-z]*"""")
         val offenders = mutableListOf<String>()
 
