@@ -122,6 +122,7 @@ class RokuDriver @Inject constructor(
             TvCapability.INSTALLED_APPS,
             TvCapability.CHANNEL_CONTROL,
             TvCapability.SEARCH_CONTENT,
+            TvCapability.OPEN_SEARCH_UI,
             TvCapability.DIGITS
         )
     }

@@ -24,7 +24,7 @@ object SamsungKeyMapper {
             RemoteCommand.FastForward -> "KEY_FF"
             RemoteCommand.Rewind -> "KEY_REWIND"
             is RemoteCommand.Numpad -> "KEY_${command.digit}"
-            RemoteCommand.Backspace -> "KEY_RETURN" // Some use return for backspace in fields
+            RemoteCommand.Backspace -> null // Was KEY_RETURN, but that acts as Back. Removed to avoid confusion.
             RemoteCommand.ChannelUp -> "KEY_CHUP"
             RemoteCommand.ChannelDown -> "KEY_CHDOWN"
             is RemoteCommand.OpenSearchUi -> "KEY_SEARCH"

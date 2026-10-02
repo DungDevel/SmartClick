@@ -23,10 +23,9 @@ class MainActivity : AppCompatActivity() {
     private val viewModel: MainActivityViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
         // Optional: Install splash screen for Android 12+ API
         installSplashScreen().setKeepOnScreenCondition { viewModel.settings.value == null }
+        super.onCreate(savedInstanceState)
 
         setContent {
             val settings by viewModel.settings.collectAsState()

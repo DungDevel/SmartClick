@@ -117,6 +117,33 @@ class AndroidTvRemoteSession(
                         .build()
                 ).build()
             sendMsg(resp)
+        } else if (msg.hasRemoteConfigure()) {
+            // Android TV v2 handshake initial configuration
+            val resp = RemoteMessage.newBuilder()
+                .setRemoteConfigure(
+                    com.example.smartclick.app.tvconnection.androidtv.proto.RemoteConfigure.newBuilder()
+                        .setCode1(622)
+                        .setDeviceInfo(
+                            com.example.smartclick.app.tvconnection.androidtv.proto.RemoteDeviceInfo.newBuilder()
+                                .setModel("SmartClick")
+                                .setVendor("SmartClick")
+                                .setUnknown1(1)
+                                .setUnknown2("1")
+                                .setPackageName("com.example.smartclick")
+                                .setAppVersion("1.0.0")
+                                .build()
+                        ).build()
+                ).build()
+            sendMsg(resp)
+        } else if (msg.hasRemoteSetActive()) {
+            // Last handshake step to activate session
+            val resp = RemoteMessage.newBuilder()
+                .setRemoteSetActive(
+                    com.example.smartclick.app.tvconnection.androidtv.proto.RemoteSetActive.newBuilder()
+                        .setActive(622)
+                        .build()
+                ).build()
+            sendMsg(resp)
         }
     }
 

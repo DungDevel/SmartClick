@@ -292,7 +292,8 @@ fun RemoteScreen(
                         val isPointerSupported = capabilities.contains(TvCapability.POINTER)
                         var fallbackDx by remember { mutableFloatStateOf(0f) }
                         var fallbackDy by remember { mutableFloatStateOf(0f) }
-                        val swipeThreshold = 50f
+                        val density = androidx.compose.ui.platform.LocalDensity.current
+                        val swipeThreshold = remember(density) { with(density) { 50.dp.toPx() } }
                         var lastSwipeTime by remember { mutableLongStateOf(0L) }
 
                         TouchPad(
@@ -305,23 +306,24 @@ fun RemoteScreen(
                                     val now = System.currentTimeMillis()
                                     if (now - lastSwipeTime > 150L) {
                                         var handled = false
-                                        if (fallbackDx > swipeThreshold) {
-                                            dispatchCommand(RemoteCommand.DPadRight); handled = true
-                                        } else if (fallbackDx < -swipeThreshold) {
-                                            dispatchCommand(RemoteCommand.DPadLeft); handled = true
+                                        // Prevents crossing/diagonal swiping by picking the larger magnitude
+                                        if (kotlin.math.abs(fallbackDx) > kotlin.math.abs(fallbackDy)) {
+                                            if (fallbackDx > swipeThreshold) {
+                                                dispatchCommand(RemoteCommand.DPadRight); handled = true
+                                            } else if (fallbackDx < -swipeThreshold) {
+                                                dispatchCommand(RemoteCommand.DPadLeft); handled = true
+                                            }
+                                        } else {
+                                            if (fallbackDy > swipeThreshold) {
+                                                dispatchCommand(RemoteCommand.DPadDown); handled = true
+                                            } else if (fallbackDy < -swipeThreshold) {
+                                                dispatchCommand(RemoteCommand.DPadUp); handled = true
+                                            }
                                         }
-                                        if (handled) fallbackDx = 0f
 
-                                        handled = false
-                                        if (fallbackDy > swipeThreshold) {
-                                            dispatchCommand(RemoteCommand.DPadDown); handled = true
-                                        } else if (fallbackDy < -swipeThreshold) {
-                                            dispatchCommand(RemoteCommand.DPadUp); handled = true
-                                        }
                                         if (handled) {
+                                            fallbackDx = 0f
                                             fallbackDy = 0f
-                                            lastSwipeTime = now
-                                        } else if (fallbackDx == 0f) {
                                             lastSwipeTime = now
                                         }
                                     }
@@ -353,7 +355,7 @@ fun RemoteScreen(
                                     dispatchCommand(RemoteCommand.Numpad(it))
                                 }
                             },
-                            onExit = { dispatchCommand(RemoteCommand.Back) },
+                            onExit = { viewModel.setMode(RemoteMode.DPAD) },
                             onDelete = { dispatchCommand(RemoteCommand.Backspace) }
                         )
                     }
