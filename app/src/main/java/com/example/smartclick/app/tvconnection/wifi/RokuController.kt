@@ -44,13 +44,7 @@ class RokuController @Inject constructor(
     private var currentDevice: TvDevice? = null
     override val device: TvDevice? get() = currentDevice
 
-    override val capabilities: Set<TvCapability> = setOf(
-        TvCapability.VOLUME,
-        TvCapability.KEYBOARD_TEXT,
-        TvCapability.INSTALLED_APPS,
-        TvCapability.CHANNEL_CONTROL,
-        TvCapability.SEARCH_CONTENT
-    )
+    override val capabilities: Set<TvCapability> = RokuDriver.ROKU_CAPABILITIES
 
     private val emptyBody = "".toRequestBody("text/plain".toMediaType())
 
@@ -158,6 +152,11 @@ class RokuController @Inject constructor(
                                 }
                                 lastRes
                             }
+                        }
+                        is RemoteCommand.SearchContent -> {
+                            val encodedQuery = URLEncoder.encode(command.query, "UTF-8").replace("+", "%20")
+                            val url = "http://${dev.ipAddress}:8060/search/browse?keyword=$encodedQuery"
+                            postToRoku(url)
                         }
                         else -> {
                             val key = mapCommandToRokuKey(command)
@@ -313,7 +312,8 @@ class RokuController @Inject constructor(
             is RemoteCommand.Backspace -> "Backspace"
             is RemoteCommand.ChannelUp -> "ChannelUp"
             is RemoteCommand.ChannelDown -> "ChannelDown"
-            is RemoteCommand.SearchContent -> "Search"
+            is RemoteCommand.SearchContent -> null // Handled separately
+            is RemoteCommand.OpenSearchUi -> "Search"
             is RemoteCommand.Text -> null // Handled separately
             is RemoteCommand.PointerMove -> null // Handled separately
             is RemoteCommand.PointerClick -> "Select"

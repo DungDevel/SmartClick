@@ -28,6 +28,7 @@ sealed class RemoteCommand {
 
     // Search
     data class SearchContent(val query: String) : RemoteCommand()
+    object OpenSearchUi : RemoteCommand()
 
     data class Numpad(val digit: Int) : RemoteCommand()
     data class Text(val text: String) : RemoteCommand()

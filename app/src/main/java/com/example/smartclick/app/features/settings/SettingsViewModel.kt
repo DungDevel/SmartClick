@@ -2,6 +2,8 @@ package com.example.smartclick.app.features.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import com.example.smartclick.app.domain.model.AppSettings
 import com.example.smartclick.app.domain.model.ThemeMode
 import com.example.smartclick.app.domain.model.UserAccount
@@ -63,6 +65,8 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             settingsRepository.setLanguageTag(languageTag)
         }
+        val localeList = if (languageTag == "sys") LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(languageTag)
+        AppCompatDelegate.setApplicationLocales(localeList)
     }
 
     fun login(userId: String = "1") {

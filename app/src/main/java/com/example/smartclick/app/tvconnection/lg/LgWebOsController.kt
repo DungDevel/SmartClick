@@ -172,8 +172,10 @@ class LgWebOsController(
     }
 
     override suspend fun sendCommand(command: RemoteCommand): Result<Unit> {
-        val mappedUri = LgKeyMapper.mapCommand(command)
         val ws = webSocket ?: return Result.failure(Exception("Not connected"))
+
+
+        val mappedUri = LgKeyMapper.mapCommand(command)
 
         if (mappedUri != null) {
             val req = JSONObject().apply {

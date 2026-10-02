@@ -8,5 +8,6 @@ enum class TvCapability {
     INSTALLED_APPS,
     CAST,
     CHANNEL_CONTROL,
-    SEARCH_CONTENT
+    SEARCH_CONTENT,
+    OPEN_SEARCH_UI
 }

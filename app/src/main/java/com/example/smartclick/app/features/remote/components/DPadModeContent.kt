@@ -20,10 +20,12 @@ import androidx.compose.ui.unit.sp
 import com.example.smartclick.R
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import com.example.smartclick.app.domain.model.RemoteCommand
+import com.example.smartclick.app.domain.model.TvCapability
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.draw.alpha
 
 @Composable
-fun DPadModeContent(dispatchCommand: (RemoteCommand) -> Unit) {
+fun DPadModeContent(dispatchCommand: (RemoteCommand) -> Unit, capabilities: Set<TvCapability>) {
     val colors = SmartClickThemeTokens.colors
 
     // Nav row
@@ -90,12 +92,14 @@ fun DPadModeContent(dispatchCommand: (RemoteCommand) -> Unit) {
         RemoteStepperCard(
             title = stringResource(R.string.vol),
             onMinus = { dispatchCommand(RemoteCommand.VolumeDown) },
-            onPlus = { dispatchCommand(RemoteCommand.VolumeUp) }
+            onPlus = { dispatchCommand(RemoteCommand.VolumeUp) },
+            enabled = capabilities.contains(TvCapability.VOLUME)
         )
         RemoteStepperCard(
             title = stringResource(R.string.ch),
-            onMinus = { dispatchCommand(RemoteCommand.Previous) },
-            onPlus = { dispatchCommand(RemoteCommand.Next) }
+            onMinus = { dispatchCommand(RemoteCommand.ChannelDown) },
+            onPlus = { dispatchCommand(RemoteCommand.ChannelUp) },
+            enabled = capabilities.contains(TvCapability.CHANNEL_CONTROL)
         )
     }
     Spacer(modifier = Modifier.height(16.dp))

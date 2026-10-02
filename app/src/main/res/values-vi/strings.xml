@@ -211,4 +211,6 @@ một cách dễ dàng</string>
     <string name="btn_home">Trang chủ</string>
     <string name="btn_input">Đầu vào</string>
     <string name="wifi">Wi-Fi</string>
+    <string name="command_not_supported">Không hỗ trợ trên TV này</string>
+    <string name="command_not_connected">Chưa kết nối TV</string>
 </resources>

@@ -7,6 +7,7 @@ import com.example.smartclick.app.domain.repository.ISubscriptionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -25,6 +26,8 @@ class PremiumViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(PremiumUiState())
     val uiState: StateFlow<PremiumUiState> = _uiState.asStateFlow()
+
+    val billingMessages: Flow<String> = subscriptionRepository.billingMessages
 
     init {
         loadPlans()

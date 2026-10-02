@@ -17,14 +17,7 @@ class AndroidTvDriver @Inject constructor() : IProtocolDriver {
 
     override val protocol: TvProtocol = TvProtocol.ANDROID_TV_V2
 
-    override val capabilities: Set<TvCapability> = setOf(
-        TvCapability.VOLUME,
-        TvCapability.KEYBOARD_TEXT,
-        TvCapability.INSTALLED_APPS,
-        TvCapability.POINTER,
-        TvCapability.CHANNEL_CONTROL,
-        TvCapability.SEARCH_CONTENT
-    )
+    override val capabilities: Set<TvCapability> = ANDROID_TV_CAPABILITIES
 
     private var pairingSession: AndroidTvPairingSession? = null
 
@@ -61,5 +54,15 @@ class AndroidTvDriver @Inject constructor() : IProtocolDriver {
     override fun createController(device: TvDevice, credentials: Credentials?): ITvController {
         val controlPort = 6466 // Usually the control port is exactly 6466, according to most sources
         return AndroidTvRemoteSession(device.ipAddress, controlPort, AndroidTvCertificateManager.getOrGenerateClientKeyAndCertificate(), credentials?.protocolValues?.get("cert_sha256"))
+    }
+
+    companion object {
+        val ANDROID_TV_CAPABILITIES = setOf(
+            TvCapability.VOLUME,
+            TvCapability.CHANNEL_CONTROL,
+            TvCapability.OPEN_SEARCH_UI,
+            TvCapability.DIGITS
+            // Removed KEYBOARD_TEXT, INSTALLED_APPS, POINTER, SEARCH_CONTENT due to over-promising
+        )
     }
 }

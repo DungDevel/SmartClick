@@ -30,13 +30,7 @@ class RokuDriver @Inject constructor(
 ) : IProtocolDriver {
     override val protocol: TvProtocol = TvProtocol.ROKU_ECP
 
-    override val capabilities: Set<TvCapability> = setOf(
-        TvCapability.VOLUME,
-        TvCapability.KEYBOARD_TEXT,
-        TvCapability.INSTALLED_APPS, // Roku hỗ trợ launch app và cài đặt app list
-        TvCapability.CHANNEL_CONTROL,
-        TvCapability.SEARCH_CONTENT
-    )
+    override val capabilities: Set<TvCapability> = ROKU_CAPABILITIES
 
     override suspend fun fingerprint(candidate: RawCandidate): Fingerprint? = withContext(Dispatchers.IO) {
         if (candidate.protocolHint != TvProtocol.UNKNOWN && candidate.protocolHint != TvProtocol.ROKU_ECP) {
@@ -119,5 +113,16 @@ class RokuDriver @Inject constructor(
 
     override fun createController(device: TvDevice, credentials: Credentials?): ITvController {
         return rokuControllerProvider.get()
+    }
+
+    companion object {
+        val ROKU_CAPABILITIES = setOf(
+            TvCapability.VOLUME,
+            TvCapability.KEYBOARD_TEXT,
+            TvCapability.INSTALLED_APPS,
+            TvCapability.CHANNEL_CONTROL,
+            TvCapability.SEARCH_CONTENT,
+            TvCapability.DIGITS
+        )
     }
 }

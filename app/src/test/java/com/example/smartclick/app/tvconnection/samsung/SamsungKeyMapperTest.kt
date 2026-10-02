@@ -20,6 +20,9 @@ class SamsungKeyMapperTest {
         assertEquals("KEY_DOWN", SamsungKeyMapper.mapCommand(RemoteCommand.DPadDown))
         assertEquals("KEY_LEFT", SamsungKeyMapper.mapCommand(RemoteCommand.DPadLeft))
         assertEquals("KEY_RIGHT", SamsungKeyMapper.mapCommand(RemoteCommand.DPadRight))
+        assertEquals("KEY_CHUP", SamsungKeyMapper.mapCommand(RemoteCommand.ChannelUp))
+        assertEquals("KEY_CHDOWN", SamsungKeyMapper.mapCommand(RemoteCommand.ChannelDown))
+        assertEquals("KEY_SEARCH", SamsungKeyMapper.mapCommand(RemoteCommand.OpenSearchUi))
     }
 
     @Test

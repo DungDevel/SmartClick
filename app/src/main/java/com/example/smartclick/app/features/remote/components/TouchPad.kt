@@ -48,6 +48,7 @@ import kotlin.math.roundToInt
 fun TouchPad(
     modifier: Modifier = Modifier,
     onMove: (dx: Float, dy: Float) -> Unit = { _, _ -> },
+    onDragEnd: () -> Unit = {},
     onTap: () -> Unit = {},
     onLeftClick: () -> Unit = {},
     onRightClick: () -> Unit = {},
@@ -82,8 +83,8 @@ fun TouchPad(
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDragStart = { touch = it },
-                        onDragEnd = { touch = null },
-                        onDragCancel = { touch = null },
+                        onDragEnd = { touch = null; onDragEnd() },
+                        onDragCancel = { touch = null; onDragEnd() },
                         onDrag = { change, drag ->
                             change.consume()
                             touch = Offset(

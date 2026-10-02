@@ -46,14 +46,7 @@ class AndroidTvRemoteSession(
     private var _device: TvDevice? = null
     override val device: TvDevice? get() = _device
 
-    override val capabilities: Set<TvCapability> = setOf(
-        TvCapability.VOLUME,
-        TvCapability.KEYBOARD_TEXT,
-        TvCapability.INSTALLED_APPS,
-        TvCapability.POINTER,
-        TvCapability.CHANNEL_CONTROL,
-        TvCapability.SEARCH_CONTENT
-    )
+    override val capabilities: Set<TvCapability> = AndroidTvDriver.ANDROID_TV_CAPABILITIES
 
     private var socket: SSLSocket? = null
     private var outputStream: OutputStream? = null
@@ -143,25 +136,6 @@ class AndroidTvRemoteSession(
     override suspend fun sendCommand(command: RemoteCommand): Result<Unit> = withContext(Dispatchers.IO) {
         if (socket == null || outputStream == null) {
             return@withContext Result.failure(Exception("Not connected"))
-        }
-
-        // Special handling for text commands
-        if (command is RemoteCommand.SearchContent) {
-            try {
-                val encodedQuery = java.net.URLEncoder.encode(command.query, "UTF-8")
-                // Use Intent URI to open search with query
-                val intentUri = "intent:#Intent;action=android.intent.action.SEARCH;S.query=$encodedQuery;end"
-                val msg = RemoteMessage.newBuilder()
-                    .setRemoteAppLinkLaunchRequest(
-                        com.example.smartclick.app.tvconnection.androidtv.proto.RemoteAppLinkLaunchRequest.newBuilder()
-                            .setAppLink(intentUri)
-                            .build()
-                    ).build()
-                sendMsg(msg)
-                return@withContext Result.success(Unit)
-            } catch (e: Exception) {
-                return@withContext Result.failure(e)
-            }
         }
 
         val keyCode = AndroidTvKeyMapper.mapCommand(command)

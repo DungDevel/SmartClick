@@ -30,6 +30,7 @@ import com.example.smartclick.app.core.ui.components.WifiBanner
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import com.example.smartclick.app.domain.connection.NetworkState
 import com.example.smartclick.app.domain.model.RemoteCommand
+import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.features.remote.components.BottomActions
 import com.example.smartclick.app.features.remote.components.DPad
 import com.example.smartclick.app.features.remote.components.DPadModeContent
@@ -54,9 +55,24 @@ fun RemoteScreen(
     val isHapticEnabled by viewModel.isHapticEnabled.collectAsState()
     val haptic = LocalHapticFeedback.current
     val networkState by viewModel.networkState.collectAsState()
+    val capabilities by viewModel.capabilities.collectAsState()
 
     val isReconnecting = connectionState is TvConnectionState.Reconnecting
     val isWifiOff = networkState !is NetworkState.WifiConnected
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.uiEvents.collect { event ->
+            when (event) {
+                RemoteUiEvent.CommandNotSupported -> {
+                    android.widget.Toast.makeText(context, context.getString(R.string.command_not_supported), android.widget.Toast.LENGTH_SHORT).show()
+                }
+                RemoteUiEvent.CommandNotConnected -> {
+                    android.widget.Toast.makeText(context, context.getString(R.string.command_not_connected), android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
 
     fun dispatchCommand(command: RemoteCommand) {
         if (isHapticEnabled) {
@@ -146,7 +162,7 @@ fun RemoteScreen(
         if (activeDevice == null && !isReconnecting) {
             NoActiveDeviceState(onNavigateToDevices = onNavigateToDevices)
         } else {
-            val context = androidx.compose.ui.platform.LocalContext.current
+            val contextForToast = androidx.compose.ui.platform.LocalContext.current
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.fillMaxSize().alpha(if (controlsEnabled) 1f else 0.4f)) {
             // Mode + action row
@@ -249,7 +265,7 @@ fun RemoteScreen(
                         .background(colors.surfEl, CircleShape)
                         .border(1.dp, colors.bord, CircleShape)
                         .clickable {
-                            android.widget.Toast.makeText(context, context.getString(R.string.feature_coming_soon, context.getString(R.string.lock)), android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(contextForToast, contextForToast.getString(R.string.feature_coming_soon, contextForToast.getString(R.string.lock)), android.widget.Toast.LENGTH_SHORT).show()
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -269,17 +285,52 @@ fun RemoteScreen(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 16.dp, vertical = 16.dp)
             ) {
-                when (activeMode) {
-                    RemoteMode.DPAD -> DPadModeContent(dispatchCommand = ::dispatchCommand)
-
-                    RemoteMode.TOUCHPAD -> {
+                when {
+                    activeMode == RemoteMode.TOUCHPAD -> {
                         var showKeyboard by remember { mutableStateOf(false) }
 
+                        val isPointerSupported = capabilities.contains(TvCapability.POINTER)
+                        var fallbackDx by remember { mutableFloatStateOf(0f) }
+                        var fallbackDy by remember { mutableFloatStateOf(0f) }
+                        val swipeThreshold = 50f
+                        var lastSwipeTime by remember { mutableLongStateOf(0L) }
+
                         TouchPad(
-                            onMove = { dx, dy -> dispatchCommand(RemoteCommand.PointerMove(dx, dy)) },
-                            onTap = { dispatchCommand(RemoteCommand.PointerClick) },
-                            onLeftClick = { dispatchCommand(RemoteCommand.PointerClick) },
-                            onRightClick = { },
+                            onMove = { dx, dy ->
+                                if (isPointerSupported) {
+                                    dispatchCommand(RemoteCommand.PointerMove(dx, dy))
+                                } else {
+                                    fallbackDx += dx
+                                    fallbackDy += dy
+                                    val now = System.currentTimeMillis()
+                                    if (now - lastSwipeTime > 150L) {
+                                        var handled = false
+                                        if (fallbackDx > swipeThreshold) {
+                                            dispatchCommand(RemoteCommand.DPadRight); handled = true
+                                        } else if (fallbackDx < -swipeThreshold) {
+                                            dispatchCommand(RemoteCommand.DPadLeft); handled = true
+                                        }
+                                        if (handled) fallbackDx = 0f
+
+                                        handled = false
+                                        if (fallbackDy > swipeThreshold) {
+                                            dispatchCommand(RemoteCommand.DPadDown); handled = true
+                                        } else if (fallbackDy < -swipeThreshold) {
+                                            dispatchCommand(RemoteCommand.DPadUp); handled = true
+                                        }
+                                        if (handled) {
+                                            fallbackDy = 0f
+                                            lastSwipeTime = now
+                                        } else if (fallbackDx == 0f) {
+                                            lastSwipeTime = now
+                                        }
+                                    }
+                                }
+                            },
+                            onDragEnd = { fallbackDx = 0f; fallbackDy = 0f },
+                            onTap = { dispatchCommand(if (isPointerSupported) RemoteCommand.PointerClick else RemoteCommand.Ok) },
+                            onLeftClick = { dispatchCommand(if (isPointerSupported) RemoteCommand.PointerClick else RemoteCommand.Ok) },
+                            onRightClick = { dispatchCommand(RemoteCommand.Back) },
                             onKeyboardRequest = { showKeyboard = true }
                         )
 
@@ -293,14 +344,23 @@ fun RemoteScreen(
                         }
                     }
 
-                    RemoteMode.NUMPAD -> NumPad(
-                        onDigit = { digit ->
-                            digit.toIntOrNull()?.let {
-                                dispatchCommand(RemoteCommand.Numpad(it))
-                            }
-                        },
-                        onExit = { dispatchCommand(RemoteCommand.Back) },
-                        onDelete = { dispatchCommand(RemoteCommand.Backspace) }
+                    activeMode == RemoteMode.NUMPAD -> {
+                        val isDigitsSupported = capabilities.contains(TvCapability.DIGITS)
+                        NumPad(
+                            modifier = Modifier.alpha(if (isDigitsSupported) 1f else 0.4f),
+                            onDigit = { digit ->
+                                digit.toIntOrNull()?.let {
+                                    dispatchCommand(RemoteCommand.Numpad(it))
+                                }
+                            },
+                            onExit = { dispatchCommand(RemoteCommand.Back) },
+                            onDelete = { dispatchCommand(RemoteCommand.Backspace) }
+                        )
+                    }
+
+                    else -> DPadModeContent(
+                        dispatchCommand = ::dispatchCommand,
+                        capabilities = capabilities
                     )
                 }
 
@@ -308,7 +368,7 @@ fun RemoteScreen(
                 BottomActions()
             }
                 }
-                
+
                 if (!controlsEnabled) {
                     Box(
                         modifier = Modifier
@@ -317,7 +377,7 @@ fun RemoteScreen(
                                 interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
                                 indication = null
                             ) {
-                                android.widget.Toast.makeText(context, context.getString(R.string.no_tv_connected), android.widget.Toast.LENGTH_SHORT).show()
+                                android.widget.Toast.makeText(contextForToast, contextForToast.getString(R.string.no_tv_connected), android.widget.Toast.LENGTH_SHORT).show()
                             }
                     )
                 }
@@ -325,4 +385,3 @@ fun RemoteScreen(
         }
     }
 }
-

@@ -19,16 +19,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 
+import androidx.compose.ui.draw.alpha
+
 @Composable
 fun RowScope.RemoteStepperCard(
     title: String,
     onMinus: () -> Unit = {},
-    onPlus: () -> Unit = {}
+    onPlus: () -> Unit = {},
+    enabled: Boolean = true
 ) {
     val colors = SmartClickThemeTokens.colors
     Column(
         modifier = Modifier
             .weight(1f)
+            .alpha(if (enabled) 1f else 0.4f)
             .background(colors.surf, RoundedCornerShape(14.dp))
             .border(1.dp, colors.bord, RoundedCornerShape(14.dp))
             .padding(horizontal = 14.dp, vertical = 12.dp),
@@ -45,6 +49,7 @@ fun RowScope.RemoteStepperCard(
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = onMinus,
+                enabled = enabled,
                 colors = ButtonDefaults.buttonColors(containerColor = colors.surfEl),
                 modifier = Modifier.weight(1f).height(42.dp),
                 shape = RoundedCornerShape(8.dp),
@@ -52,6 +57,7 @@ fun RowScope.RemoteStepperCard(
             ) { Text("-", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors.tx1) }
             Button(
                 onClick = onPlus,
+                enabled = enabled,
                 colors = ButtonDefaults.buttonColors(containerColor = colors.surfEl),
                 modifier = Modifier.weight(1f).height(42.dp),
                 shape = RoundedCornerShape(8.dp),

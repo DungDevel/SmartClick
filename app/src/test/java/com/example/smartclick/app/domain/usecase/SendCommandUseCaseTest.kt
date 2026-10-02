@@ -12,8 +12,11 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+
+import com.example.smartclick.app.domain.model.TvCapability
 
 class SendCommandUseCaseTest {
     private lateinit var activeTvSession: ActiveTvSession
@@ -26,9 +29,11 @@ class SendCommandUseCaseTest {
         activeTvSession = mockk(relaxed = true)
         mockController = mockk(relaxed = true)
         mockReconnectWatcher = mockk(relaxed = true)
-        
-        every { activeTvSession.currentController.value } returns mockController
-        
+
+        val controllerFlow = MutableStateFlow<ITvController?>(mockController)
+        every { activeTvSession.currentController } returns controllerFlow
+        every { mockController.capabilities } returns setOf(TvCapability.VOLUME)
+
         // mock controller.sendCommand to return success
         coEvery { mockController.sendCommand(any()) } returns Result.success(Unit)
 
@@ -36,7 +41,7 @@ class SendCommandUseCaseTest {
     }
 
     @Test
-    fun `send command should be sent when state is Connected`() = runTest {
+    fun `send command should be sent when state is Connected and supported`() = runTest {
         // Arrange
         val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
         every { mockController.connectionState } returns connectState
@@ -44,15 +49,33 @@ class SendCommandUseCaseTest {
         val command = RemoteCommand.VolumeUp
 
         // Act
-        useCase(command)
+        val result = useCase(command)
 
         // Assert
+        assertEquals(SendCommandResult.SUCCESS, result)
         coVerify { mockController.sendCommand(command) }
         coVerify { mockReconnectWatcher.onCommandResult(true) }
     }
 
     @Test
-    fun `send command should NOT be sent when state is Idle`() = runTest {
+    fun `send command should report NOT_SUPPORTED and NOT trigger watcher if lacking capability`() = runTest {
+        // Arrange
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+        // Command needing POINTER which is not in capabilities
+        val command = RemoteCommand.PointerClick
+
+        // Act
+        val result = useCase(command)
+
+        // Assert
+        assertEquals(SendCommandResult.NOT_SUPPORTED, result)
+        coVerify(exactly = 0) { mockController.sendCommand(command) }
+        coVerify(exactly = 0) { mockReconnectWatcher.onCommandResult(any()) }
+    }
+
+    @Test
+    fun `send command should NOT be sent and report NOT_CONNECTED when state is Idle`() = runTest {
         // Arrange
         val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Idle)
         every { mockController.connectionState } returns connectState
@@ -60,10 +83,29 @@ class SendCommandUseCaseTest {
         val command = RemoteCommand.VolumeUp
 
         // Act
-        useCase(command)
+        val result = useCase(command)
 
         // Assert
+        assertEquals(SendCommandResult.NOT_CONNECTED, result)
         coVerify(exactly = 0) { mockController.sendCommand(any()) }
         coVerify(exactly = 0) { mockReconnectWatcher.onCommandResult(any()) }
+    }
+
+    @Test
+    fun `send command that fails returns FAILED and informs watcher`() = runTest {
+        // Arrange
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+        coEvery { mockController.sendCommand(any()) } returns Result.failure(Exception("Network Error"))
+
+        val command = RemoteCommand.VolumeUp
+
+        // Act
+        val result = useCase(command)
+
+        // Assert
+        assertEquals(SendCommandResult.FAILED, result)
+        coVerify { mockController.sendCommand(command) }
+        coVerify { mockReconnectWatcher.onCommandResult(false) }
     }
 }

@@ -212,4 +212,6 @@ Effortlessly
     <string name="btn_home">Home</string>
     <string name="btn_input">Input</string>
     <string name="wifi">Wi-Fi</string>
+    <string name="command_not_supported">Not supported on this TV</string>
+    <string name="command_not_connected">TV is not connected</string>
 </resources>

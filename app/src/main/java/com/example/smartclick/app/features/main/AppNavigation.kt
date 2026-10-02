@@ -1,6 +1,8 @@
 package com.example.smartclick.app.features.main
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -68,8 +70,16 @@ fun AppNavigation(
             )
         }
         composable(NavRoutes.LANGUAGE) {
+            val settingsViewModel: com.example.smartclick.app.features.settings.SettingsViewModel = hiltViewModel()
+            val uiState by settingsViewModel.uiState.collectAsState()
+            val currentLang = uiState.settings?.languageTag ?: "en"
+
             LanguageScreen(
-                onNext = { navController.navigate("scan_flow") }
+                currentLanguage = currentLang,
+                onSelectAndNext = { lang ->
+                    settingsViewModel.setLanguage(lang)
+                    navController.navigate("scan_flow")
+                }
             )
         }
         navigation(startDestination = NavRoutes.BRAND, route = "scan_flow") {

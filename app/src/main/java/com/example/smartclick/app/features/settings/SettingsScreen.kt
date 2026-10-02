@@ -1,6 +1,8 @@
 package com.example.smartclick.app.features.settings
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -20,8 +22,18 @@ fun SettingsScreen() {
             AccountInformationScreen(onBack = { navController.popBackStack() })
         }
         composable("language") {
+            val settingsVM: SettingsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+            val uiState by settingsVM.uiState.collectAsState()
+            val currentLang = uiState.settings?.languageTag ?: "en"
+
             // Using existing LanguageScreen. onNext acts as save & back.
-            LanguageScreen(onNext = { navController.popBackStack() })
+            LanguageScreen(
+                currentLanguage = currentLang,
+                onSelectAndNext = { lang ->
+                    settingsVM.setLanguage(lang)
+                    navController.popBackStack()
+                }
+            )
         }
         composable("privacy") {
             PrivacyPolicyScreen(onBack = { navController.popBackStack() })

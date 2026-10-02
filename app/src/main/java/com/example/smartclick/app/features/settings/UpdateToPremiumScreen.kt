@@ -48,7 +48,17 @@ fun UpdateToPremiumScreen(
         stringResource(R.string.perk_priority_support)
     )
     val uiState by viewModel.uiState.collectAsState()
+    val billingMessage by viewModel.billingMessages.collectAsState(initial = null)
     var selectedPlanId by remember { mutableStateOf("annual") }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    LaunchedEffect(billingMessage) {
+        billingMessage?.let { msg ->
+            if (msg.isNotEmpty()) {
+                android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -141,7 +151,6 @@ fun UpdateToPremiumScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            val context = androidx.compose.ui.platform.LocalContext.current
             Button(
                 onClick = {
                     (context as? android.app.Activity)?.let { activity ->
