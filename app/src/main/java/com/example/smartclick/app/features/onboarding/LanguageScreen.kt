@@ -38,29 +38,21 @@ import com.example.smartclick.app.core.ui.theme.Typography
 import androidx.compose.ui.res.stringResource
 import com.example.smartclick.R
 
-data class LanguageItem(val code: String, val name: String, val flag: String)
+data class LanguageItem(val code: String, val nameRes: Int?, val defaultName: String, val flag: String)
 
 val LANGUAGES = listOf(
-    LanguageItem("en", "English", "🇺🇸"),
-    LanguageItem("vi", "Tiếng Việt", "🇻🇳"),
-    LanguageItem("zh", "中文", "🇨🇳"),
-    LanguageItem("ja", "日本語", "🇯🇵"),
-    LanguageItem("ko", "한국어", "🇰🇷"),
-    LanguageItem("es", "Español", "🇪🇸"),
-    LanguageItem("fr", "Français", "🇫🇷"),
-    LanguageItem("de", "Deutsch", "🇩🇪"),
-    LanguageItem("pt", "Português", "🇧🇷"),
-    LanguageItem("ar", "العربية", "🇸🇦"),
-    LanguageItem("ru", "Русский", "🇷🇺"),
-    LanguageItem("th", "ภาษาไทย", "🇹🇭")
+    LanguageItem("sys", R.string.system_default, "System Default", "📱"),
+    LanguageItem("en", null, "English", "🇺🇸"),
+    LanguageItem("vi", null, "Tiếng Việt", "🇻🇳")
 )
 
 @Composable
 fun LanguageScreen(
-    onNext: () -> Unit
+    currentLanguage: String = "en",
+    onSelectAndNext: (String) -> Unit
 ) {
     val colors = SmartClickThemeTokens.colors
-    var selectedLanguageCode by remember { mutableStateOf("en") }
+    var selectedLanguageCode by remember(currentLanguage) { mutableStateOf(currentLanguage) }
 
     Box(
         modifier = Modifier
@@ -122,7 +114,7 @@ fun LanguageScreen(
                         Text(text = language.flag, fontSize = 24.sp)
 
                         Text(
-                            text = language.name,
+                            text = language.nameRes?.let { stringResource(id = it) } ?: language.defaultName,
                             color = colors.tx1,
                             style = Typography.titleMedium.copy(
                                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
@@ -145,7 +137,7 @@ fun LanguageScreen(
 
             // Continue Button
             Button(
-                onClick = onNext,
+                onClick = { onSelectAndNext(selectedLanguageCode) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
