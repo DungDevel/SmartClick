@@ -350,6 +350,7 @@ fun RemoteScreen(
                         val isDigitsSupported = capabilities.contains(TvCapability.DIGITS)
                         NumPad(
                             modifier = Modifier.alpha(if (isDigitsSupported) 1f else 0.4f),
+                            canDelete = capabilities.contains(TvCapability.BACKSPACE),
                             onDigit = { digit ->
                                 digit.toIntOrNull()?.let {
                                     dispatchCommand(RemoteCommand.Numpad(it))

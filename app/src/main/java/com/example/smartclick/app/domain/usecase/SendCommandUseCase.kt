@@ -47,6 +47,7 @@ class SendCommandUseCase @Inject constructor(
             is RemoteCommand.Numpad -> caps.contains(TvCapability.DIGITS)
             is RemoteCommand.SearchContent -> caps.contains(TvCapability.SEARCH_CONTENT)
             is RemoteCommand.OpenSearchUi -> caps.contains(TvCapability.OPEN_SEARCH_UI)
+            RemoteCommand.Backspace -> caps.contains(TvCapability.BACKSPACE)
             else -> true
         }
     }

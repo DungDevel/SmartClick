@@ -9,5 +9,6 @@ enum class TvCapability {
     CAST,
     CHANNEL_CONTROL,
     SEARCH_CONTENT,
-    OPEN_SEARCH_UI
+    OPEN_SEARCH_UI,
+    BACKSPACE
 }

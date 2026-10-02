@@ -34,6 +34,7 @@ import com.example.smartclick.R
 @Composable
 fun NumPad(
     modifier: Modifier = Modifier,
+    canDelete: Boolean = true,
     onDigit: (String) -> Unit = {},
     onExit: () -> Unit = {},
     onDelete: () -> Unit = {}
@@ -53,9 +54,12 @@ fun NumPad(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 row.forEach { key ->
+                    val isEnabled = if (key == "DEL") canDelete else true
                     NumKey(
                         key = key,
+                        modifier = Modifier.alpha(if (isEnabled) 1f else 0.4f),
                         onClick = {
+                            if (!isEnabled) return@NumKey
                             when (key) {
                                 "EXIT" -> onExit()
                                 "DEL" -> onDelete()
@@ -70,11 +74,11 @@ fun NumPad(
 }
 
 @Composable
-private fun RowScope.NumKey(key: String, onClick: () -> Unit) {
+private fun RowScope.NumKey(key: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val colors = SmartClickThemeTokens.colors
     val shape = RoundedCornerShape(14.dp)
     Box(
-        modifier = Modifier
+        modifier = modifier
             .weight(1f)
             .aspectRatio(1f)
             .clip(shape)

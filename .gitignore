@@ -25,4 +25,5 @@ build_log.txt
 
 .idea/
 *.txt
+!UpdateProjectProcess.txt
 .claude/

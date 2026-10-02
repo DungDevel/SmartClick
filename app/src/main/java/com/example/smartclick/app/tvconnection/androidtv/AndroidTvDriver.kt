@@ -61,7 +61,8 @@ class AndroidTvDriver @Inject constructor() : IProtocolDriver {
             TvCapability.VOLUME,
             TvCapability.CHANNEL_CONTROL,
             TvCapability.OPEN_SEARCH_UI,
-            TvCapability.DIGITS
+            TvCapability.DIGITS,
+            TvCapability.BACKSPACE
             // Removed KEYBOARD_TEXT, INSTALLED_APPS, POINTER, SEARCH_CONTENT due to over-promising
         )
     }
