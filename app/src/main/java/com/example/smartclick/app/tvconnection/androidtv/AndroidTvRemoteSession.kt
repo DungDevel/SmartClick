@@ -48,6 +48,8 @@ class AndroidTvRemoteSession(
 
     override val capabilities: Set<TvCapability> = setOf(
         TvCapability.VOLUME,
+        TvCapability.KEYBOARD_TEXT,
+        TvCapability.INSTALLED_APPS,
         TvCapability.POINTER,
         TvCapability.CHANNEL_CONTROL,
         TvCapability.SEARCH_CONTENT
@@ -100,18 +102,8 @@ class AndroidTvRemoteSession(
         sessionScope?.launch {
             try {
                 while (isActive) {
-                    val length = inputStream.read()
-                    if (length < 0) break
-                    val buffer = ByteArray(length)
-                    var readCount = 0
-                    while (readCount < length) {
-                        val count = inputStream.read(buffer, readCount, length - readCount)
-                        if (count < 0) break
-                        readCount += count
-                    }
-                    if (readCount < length) break
-
-                    val msg = RemoteMessage.parseFrom(buffer)
+                    val msg = RemoteMessage.parseDelimitedFrom(inputStream)
+                    if (msg == null) break
                     handleMessage(msg)
                 }
             } catch (e: Exception) {
@@ -152,6 +144,26 @@ class AndroidTvRemoteSession(
         if (socket == null || outputStream == null) {
             return@withContext Result.failure(Exception("Not connected"))
         }
+
+        // Special handling for text commands
+        if (command is RemoteCommand.SearchContent) {
+            try {
+                val encodedQuery = java.net.URLEncoder.encode(command.query, "UTF-8")
+                // Use Intent URI to open search with query
+                val intentUri = "intent:#Intent;action=android.intent.action.SEARCH;S.query=$encodedQuery;end"
+                val msg = RemoteMessage.newBuilder()
+                    .setRemoteAppLinkLaunchRequest(
+                        com.example.smartclick.app.tvconnection.androidtv.proto.RemoteAppLinkLaunchRequest.newBuilder()
+                            .setAppLink(intentUri)
+                            .build()
+                    ).build()
+                sendMsg(msg)
+                return@withContext Result.success(Unit)
+            } catch (e: Exception) {
+                return@withContext Result.failure(e)
+            }
+        }
+
         val keyCode = AndroidTvKeyMapper.mapCommand(command)
         if (keyCode != null) {
             try {
@@ -174,9 +186,7 @@ class AndroidTvRemoteSession(
 
     private fun sendMsg(msg: RemoteMessage) {
         val out = outputStream ?: return
-        val bytes = msg.toByteArray()
-        out.write(bytes.size)
-        out.write(bytes)
+        msg.writeDelimitedTo(out)
         out.flush()
     }
 }

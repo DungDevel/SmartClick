@@ -177,23 +177,12 @@ class AndroidTvPairingSession(
     }
 
     private fun sendMsg(out: OutputStream, msg: OuterMessage) {
-        val bytes = msg.toByteArray()
-        out.write(bytes.size) // 1-byte length prefix (works if length < 256)
-        out.write(bytes)
+        msg.writeDelimitedTo(out)
         out.flush()
     }
 
     private fun readMsg(inputStream: InputStream): OuterMessage {
-        val length = inputStream.read()
-        if (length < 0) throw RuntimeException("Stream closed")
-        val buffer = ByteArray(length)
-        var readCount = 0
-        while (readCount < length) {
-            val count = inputStream.read(buffer, readCount, length - readCount)
-            if (count < 0) throw RuntimeException("Stream closed")
-            readCount += count
-        }
-        return OuterMessage.parseFrom(buffer)
+        return OuterMessage.parseDelimitedFrom(inputStream) ?: throw RuntimeException("Stream closed")
     }
 
     companion object {
