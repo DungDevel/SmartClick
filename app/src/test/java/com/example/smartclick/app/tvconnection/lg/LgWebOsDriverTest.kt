@@ -6,6 +6,7 @@ import com.example.smartclick.app.domain.connection.Fingerprint
 import com.example.smartclick.app.domain.connection.PairingFailure
 import com.example.smartclick.app.domain.connection.PairingStep
 import com.example.smartclick.app.domain.connection.RawCandidate
+import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.model.TvProtocol
 import io.mockk.every
@@ -86,6 +87,18 @@ class LgWebOsDriverTest {
         val controller = driver.createController(lgDevice(), null)
 
         assertNotNull(controller as LgWebOsController)
+    }
+
+    // ---------------------------------------------------------------------
+    // capabilities
+    // ---------------------------------------------------------------------
+
+    @Test
+    fun `driver declares correct capabilities including BACKSPACE`() {
+        val driver = LgWebOsDriver()
+        assertTrue(driver.capabilities.contains(TvCapability.BACKSPACE))
+        assertTrue(driver.capabilities.contains(TvCapability.VOLUME))
+        assertTrue(driver.capabilities.contains(TvCapability.POINTER))
     }
 
     // ---------------------------------------------------------------------

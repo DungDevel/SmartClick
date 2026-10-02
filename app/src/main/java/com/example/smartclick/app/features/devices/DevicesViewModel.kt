@@ -17,6 +17,7 @@ import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.TvConnectionState
 import com.example.smartclick.app.domain.connection.NetworkState
 import com.example.smartclick.app.domain.connection.IWifiNetworkProvider
+import com.example.smartclick.app.domain.policy.PairingLimitPolicy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -47,7 +48,8 @@ class DevicesViewModel @Inject constructor(
     private val wifiNetworkProvider: IWifiNetworkProvider,
     private val activeTvSession: IActiveTvSession,
     private val subscriptionRepository: ISubscriptionRepository,
-    private val tvCredentialStore: ITvCredentialStore
+    private val tvCredentialStore: ITvCredentialStore,
+    private val pairingLimitPolicy: PairingLimitPolicy
 ) : ViewModel() {
 
     private val _targetBrand = MutableStateFlow("Roku")
@@ -135,8 +137,10 @@ class DevicesViewModel @Inject constructor(
         discoveredDevices,
         activeTvSession.connectionState,
         subscriptionRepository.currentPlan
-    ) { paired, discovered, connectionState, _ ->
+    ) { paired, discovered, connectionState, plan ->
         val activeDeviceId = (connectionState as? TvConnectionState.Connected)?.device?.id
+        val isPremium = plan == com.example.smartclick.app.domain.model.SubscriptionPlan.PREMIUM
+        val primaryDevice = paired.firstOrNull()
 
         val allDevicesMap = mutableMapOf<String, TvDevice>()
         paired.forEach { allDevicesMap[it.id] = it }
@@ -153,7 +157,7 @@ class DevicesViewModel @Inject constructor(
             val isPaired = paired.any { it.id == tv.id }
             val isOnline = discovered.any { it.id == tv.id } || tv.id == activeDeviceId
             val isActive = tv.id == activeDeviceId
-            val isLocked = false // Will be enforced at ConnectToTvUseCase policy evaluation
+            val isLocked = !isPremium && paired.isNotEmpty() && tv.id != primaryDevice?.id
 
             DeviceRowUi(tv, isActive, isOnline, isPaired, isLocked)
         }.sortedByDescending { it.isActive }.sortedByDescending { it.isPaired }
@@ -173,7 +177,16 @@ class DevicesViewModel @Inject constructor(
 
     fun connectToDevice(device: TvDevice) {
         if (!device.isPaired) {
-            startPairing(device)
+            viewModelScope.launch {
+                val plan = subscriptionRepository.currentPlan.first()
+                val paired = tvDeviceRepository.getPairedDevices().first()
+                val result = pairingLimitPolicy.evaluate(plan, paired)
+                if (result is com.example.smartclick.app.domain.policy.PairingResult.LimitExceeded) {
+                    _connectionResult.emit(ConnectOutcome.PaywallRequired)
+                    return@launch
+                }
+                startPairing(device)
+            }
             return
         }
         viewModelScope.launch {
@@ -224,6 +237,17 @@ class DevicesViewModel @Inject constructor(
                 val finalizedDevice = if (device.protocol == com.example.smartclick.app.domain.model.TvProtocol.UNKNOWN) {
                     device.copy(brand = brand)
                 } else device
+
+                if (!finalizedDevice.isPaired) {
+                    val plan = subscriptionRepository.currentPlan.first()
+                    val paired = tvDeviceRepository.getPairedDevices().first()
+                    val result = pairingLimitPolicy.evaluate(plan, paired)
+                    if (result is com.example.smartclick.app.domain.policy.PairingResult.LimitExceeded) {
+                        _connectionResult.emit(ConnectOutcome.PaywallRequired)
+                        return@launch
+                    }
+                }
+
                 connectToDevice(finalizedDevice)
             } else {
                 _connectionResult.emit(ConnectOutcome.Failed("Could not identify TV at $ipAddress"))

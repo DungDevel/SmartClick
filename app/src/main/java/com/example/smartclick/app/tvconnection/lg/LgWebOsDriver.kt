@@ -35,7 +35,8 @@ class LgWebOsDriver @Inject constructor() : IProtocolDriver {
         TvCapability.KEYBOARD_TEXT,
         TvCapability.INSTALLED_APPS,
         TvCapability.POINTER,
-        TvCapability.CHANNEL_CONTROL
+        TvCapability.CHANNEL_CONTROL,
+        TvCapability.BACKSPACE
     )
 
     private val tofuTrustManager = com.example.smartclick.app.tvconnection.security.PinningTrustManager(expectedSha256 = null, isPairing = true)

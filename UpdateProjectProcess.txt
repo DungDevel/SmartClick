@@ -16,3 +16,24 @@
 6. **Unit test:** Đã thêm Unit test cho `RemoteViewModel` (thiết lập mode D-Pad/Numpad mặc định và fallback behavior).
 
 Hiện trạng: "xong code, chưa kiểm chứng runtime". Đang chờ build CI (lintDebug, assembleRelease, Unit Tests).
+
+## 2026-10-02 (Phần 2): Hoàn thiện Task 1, 2, 3 theo Kế hoạch Tối ưu
+
+1. **Sửa lỗi B10 (Samsung Backspace & ReconnectWatcher):**
+   - Bổ sung `TvCapability.BACKSPACE` và xử lý logic trả về `NOT_SUPPORTED` trong `SendCommandUseCase` để chống reconnect phi lý.
+   - Bổ sung UI Numpad dim `DEL` thay vì giấu luôn nếu không hỗ trợ Backspace.
+   - Thêm unit test `SamsungKeyMapperTest`.
+2. **Cập nhật CI:**
+   - Cấu hình file `.github/workflows/android-ci.yml` build cả nhánh Release (`assembleRelease`) và upload Artifact `app-release`.
+3. **Workspace Cleanup:**
+   - Dọn dẹp khoảng 15+ file bash script xử lý code cũ và các file temp.
+   - Chuẩn hoá CRLF -> LF (commit toàn bộ file thay đổi qua `git add --renormalize`).
+   - Thêm rule ignore `!UpdateProjectProcess.txt` để Git tiếp tục tracking file báo cáo local.
+
+## 2026-10-02 (Phần 3): Phát hành Build và Unit Tests 
+
+4. **Sửa lỗi Dagger Hilt (Release Build) & Bổ sung Unit Tests (Task 2.4):**
+   - Xác nhận `NoOpRepositories.kt` (NoOpAuthRepository, NoOpSubscriptionRepository, NoOpChannelRegistryRepository, NoOpMediaRepository) đã triển khai đủ các hàm interface và biên dịch thành công.
+   - Bổ sung Unit Tests thiết yếu cho Domain UseCases (`ScanTvDevicesUseCaseTest`, `PairTvUseCaseTest`, `RemoveDeviceUseCaseTest`).
+   - Đã biên dịch toàn bộ với lệnh `testDebugUnitTest` (passed).
+   - Đạt kiểm chứng Runtime bằng `assembleRelease` và `lintDebug` không tồn tại lỗi (passed).

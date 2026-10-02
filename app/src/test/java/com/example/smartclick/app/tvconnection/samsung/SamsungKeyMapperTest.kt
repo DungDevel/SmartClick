@@ -28,5 +28,6 @@ class SamsungKeyMapperTest {
     @Test
     fun testMapCommand_UnsupportedCommands() {
         assertNull(SamsungKeyMapper.mapCommand(RemoteCommand.PointerClick))
+        assertNull(SamsungKeyMapper.mapCommand(RemoteCommand.Backspace))
     }
 }

@@ -341,7 +341,8 @@ fun RemoteScreen(
                                 onDismissRequest = { showKeyboard = false },
                                 onTextChange = { text -> dispatchCommand(RemoteCommand.Text(text)) },
                                 onEnter = { dispatchCommand(RemoteCommand.Ok) },
-                                onBackspace = { dispatchCommand(RemoteCommand.Backspace) }
+                                onBackspace = { dispatchCommand(RemoteCommand.Backspace) },
+                                canDelete = capabilities.contains(TvCapability.BACKSPACE)
                             )
                         }
                     }

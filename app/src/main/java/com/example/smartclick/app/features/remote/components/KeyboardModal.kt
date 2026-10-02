@@ -23,7 +23,8 @@ fun KeyboardModal(
     onDismissRequest: () -> Unit,
     onTextChange: (String) -> Unit,
     onEnter: () -> Unit,
-    onBackspace: () -> Unit
+    onBackspace: () -> Unit,
+    canDelete: Boolean = true
 ) {
     val colors = SmartClickThemeTokens.colors
     var text by remember { mutableStateOf("") }
@@ -50,12 +51,17 @@ fun KeyboardModal(
                 value = text,
                 onValueChange = { newValue ->
                     if (newValue.length < text.length) {
-                        onBackspace()
+                        if (canDelete) {
+                            onBackspace()
+                            text = newValue
+                        }
                     } else if (newValue.length > text.length) {
                         val delta = newValue.substring(text.length)
                         onTextChange(delta)
+                        text = newValue
+                    } else {
+                        text = newValue
                     }
-                    text = newValue
                 },
                 modifier = Modifier
                     .fillMaxWidth()
