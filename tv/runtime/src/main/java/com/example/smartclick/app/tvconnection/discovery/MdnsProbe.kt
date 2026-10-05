@@ -66,10 +66,8 @@ class MdnsProbe(
                                 }
 
                                 val txtMap = mutableMapOf<String, String>()
-                                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-                                    resolvedInfo.attributes.forEach { (k, v) ->
-                                        txtMap[k] = String(v, Charsets.UTF_8)
-                                    }
+                                resolvedInfo.attributes.forEach { (k, v) ->
+                                    txtMap[k] = String(v, Charsets.UTF_8)
                                 }
 
                                 trySend(

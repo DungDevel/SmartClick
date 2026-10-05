@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.example.smartclick.app.domain.connection.Credentials
@@ -42,9 +43,9 @@ class TvCredentialStore @Inject constructor(
             json.put(key, value)
         }
         
-        sharedPreferences.edit()
-            .putString("cred_${deviceId}_$ref", json.toString())
-            .apply()
+        sharedPreferences.edit {
+            putString("cred_${deviceId}_$ref", json.toString())
+        }
 
         ref
     }
@@ -65,8 +66,8 @@ class TvCredentialStore @Inject constructor(
     }
 
     override suspend fun clearCredentials(deviceId: String, credentialsRef: String) = withContext(Dispatchers.IO) {
-        sharedPreferences.edit()
-            .remove("cred_${deviceId}_$credentialsRef")
-            .apply()
+        sharedPreferences.edit {
+            remove("cred_${deviceId}_$credentialsRef")
+        }
     }
 }

@@ -213,4 +213,5 @@ một cách dễ dàng</string>
     <string name="wifi">Wi-Fi</string>
     <string name="command_not_supported">Không hỗ trợ trên TV này</string>
     <string name="command_not_connected">Chưa kết nối TV</string>
+    <string name="remote_is_locked">Điều khiển đang bị khóa. Nhấn giữ nút Khóa để mở.</string>
 </resources>
