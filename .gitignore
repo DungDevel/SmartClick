@@ -27,3 +27,9 @@ build_log.txt
 *.txt
 !UpdateProjectProcess.txt
 .claude/
+
+# Build directories
+build/
+core/model/build/
+core/tv-api/build/
+tv/runtime/build/

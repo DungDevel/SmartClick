@@ -145,3 +145,9 @@ protobuf {
         }
     }
 }
+
+dependencies {
+    implementation(project(":core:model"))
+    implementation(project(":core:tv-api"))
+    implementation(project(":tv:runtime"))
+}

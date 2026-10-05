@@ -23,8 +23,9 @@ class RemoveDeviceUseCase @Inject constructor(
         }
 
         val device = tvDeviceRepository.getDeviceById(deviceId)
-        if (device?.credentialsRef != null) {
-            tvCredentialStore.clearCredentials(deviceId, device.credentialsRef)
+        val ref = device?.credentialsRef
+        if (ref != null) {
+            tvCredentialStore.clearCredentials(deviceId, ref)
         }
 
         tvDeviceRepository.removeDevice(deviceId)

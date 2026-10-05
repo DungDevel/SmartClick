@@ -24,3 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "SmartClick"
 include(":app")
+include(":core:model")
+include(":core:tv-api")
+include(":tv:runtime")

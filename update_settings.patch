@@ -1,0 +1,46 @@
+--- D:/SmartClick/app/src/main/java/com/example/smartclick/app/domain/model/AppSettings.kt
++++ D:/SmartClick/app/src/main/java/com/example/smartclick/app/domain/model/AppSettings.kt
+@@ -8,4 +8,5 @@
+     val hapticEnabled: Boolean = true,
+     val languageTag: String? = null,
+     val onboardingCompleted: Boolean = false,
++    val remoteMode: String = "DPAD",
+ )
+--- D:/SmartClick/app/src/main/java/com/example/smartclick/app/domain/repository/ISettingsRepository.kt
++++ D:/SmartClick/app/src/main/java/com/example/smartclick/app/domain/repository/ISettingsRepository.kt
+@@ -10,4 +10,5 @@
+     suspend fun setHapticEnabled(enabled: Boolean)
+     suspend fun setLanguageTag(tag: String?)
+     suspend fun setOnboardingCompleted(done: Boolean)
++    suspend fun setRemoteMode(mode: String)
+ }
+--- D:/SmartClick/app/src/main/java/com/example/smartclick/app/data/local/DataStoreSettingsRepository.kt
++++ D:/SmartClick/app/src/main/java/com/example/smartclick/app/data/local/DataStoreSettingsRepository.kt
+@@ -31,4 +31,5 @@
+         val HAPTIC_ENABLED = booleanPreferencesKey("haptic_enabled")
+         val LANGUAGE_TAG = stringPreferencesKey("language_tag")
+         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
++        val REMOTE_MODE = stringPreferencesKey("remote_mode")
+     }
+ 
+@@ -53,5 +54,6 @@
+                 themeMode = themeMode,
+                 hapticEnabled = preferences[PreferencesKeys.HAPTIC_ENABLED] ?: true,
+                 languageTag = preferences[PreferencesKeys.LANGUAGE_TAG],
+-                onboardingCompleted = preferences[PreferencesKeys.ONBOARDING_COMPLETED] ?: false
++                onboardingCompleted = preferences[PreferencesKeys.ONBOARDING_COMPLETED] ?: false,
++                remoteMode = preferences[PreferencesKeys.REMOTE_MODE] ?: "DPAD"
+             )
+         }
+ 
+@@ -83,4 +85,10 @@
+             preferences[PreferencesKeys.ONBOARDING_COMPLETED] = done
+         }
+     }
++
++    override suspend fun setRemoteMode(mode: String) {
++        context.dataStore.edit { preferences ->
++            preferences[PreferencesKeys.REMOTE_MODE] = mode
++        }
++    }
+ }
