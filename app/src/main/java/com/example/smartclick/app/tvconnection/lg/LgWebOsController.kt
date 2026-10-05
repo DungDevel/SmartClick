@@ -212,12 +212,15 @@ class LgWebOsController(
         }
 
         when (command) {
-            RemoteCommand.Mute -> {
+            RemoteCommand.Mute,
+            RemoteCommand.MuteOn,
+            RemoteCommand.MuteOff -> {
                 val req = JSONObject().apply {
                     put("type", "request")
                     put("id", commandIdCounter++.toString())
                     put("uri", "ssap://audio/setMute")
-                    put("payload", JSONObject().apply { put("mute", true) })
+                    // Note: Ideally toggle requires reading current state. We pass true to force mute for now.
+                    put("payload", JSONObject().apply { put("mute", command != RemoteCommand.MuteOff) })
                 }
                 val sent = ws.send(req.toString())
                 return if (sent) Result.success(Unit) else Result.failure(Exception("Failed to send mute payload"))

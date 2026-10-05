@@ -25,6 +25,7 @@ import javax.inject.Inject
 sealed class RemoteUiEvent {
     object CommandNotSupported : RemoteUiEvent()
     object CommandNotConnected : RemoteUiEvent()
+    object CommandFailed : RemoteUiEvent()
 }
 
 @HiltViewModel
@@ -98,6 +99,10 @@ class RemoteViewModel @Inject constructor(
                     SendCommandResult.NOT_CONNECTED -> {
                         lastToastTime = now
                         _uiEvents.tryEmit(RemoteUiEvent.CommandNotConnected)
+                    }
+                    SendCommandResult.FAILED -> {
+                        lastToastTime = now
+                        _uiEvents.tryEmit(RemoteUiEvent.CommandFailed)
                     }
                     else -> {}
                 }

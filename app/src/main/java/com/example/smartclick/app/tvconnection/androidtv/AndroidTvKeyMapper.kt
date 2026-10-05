@@ -6,10 +6,14 @@ import com.example.smartclick.app.tvconnection.androidtv.proto.RemoteKeyCode
 object AndroidTvKeyMapper {
     fun mapCommand(command: RemoteCommand): RemoteKeyCode? {
         return when (command) {
-            is RemoteCommand.Power -> RemoteKeyCode.KEYCODE_POWER
+            is RemoteCommand.Power,
+            is RemoteCommand.PowerOn,
+            is RemoteCommand.PowerOff -> RemoteKeyCode.KEYCODE_POWER
             is RemoteCommand.VolumeUp -> RemoteKeyCode.KEYCODE_VOLUME_UP
             is RemoteCommand.VolumeDown -> RemoteKeyCode.KEYCODE_VOLUME_DOWN
-            is RemoteCommand.Mute -> RemoteKeyCode.KEYCODE_MUTE
+            is RemoteCommand.Mute,
+            is RemoteCommand.MuteOn,
+            is RemoteCommand.MuteOff -> RemoteKeyCode.KEYCODE_MUTE
             is RemoteCommand.DPadUp -> RemoteKeyCode.KEYCODE_DPAD_UP
             is RemoteCommand.DPadDown -> RemoteKeyCode.KEYCODE_DPAD_DOWN
             is RemoteCommand.DPadLeft -> RemoteKeyCode.KEYCODE_DPAD_LEFT

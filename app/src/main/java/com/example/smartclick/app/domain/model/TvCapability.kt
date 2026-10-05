@@ -10,5 +10,8 @@ enum class TvCapability {
     CHANNEL_CONTROL,
     SEARCH_CONTENT,
     OPEN_SEARCH_UI,
-    BACKSPACE
+    BACKSPACE,
+    POWER_TOGGLE,
+    POWER_ON,
+    POWER_OFF
 }

@@ -206,7 +206,13 @@ class DevicesViewModel @Inject constructor(
                     val ref = step.credentials?.let {
                         tvCredentialStore.saveCredentials(device.id, it)
                     }
-                    val result = connectToTvUseCase(device.copy(isPaired = true, credentialsRef = ref))
+                    val pairedDevice = device.copy(
+                        isPaired = true,
+                        credentialsRef = ref,
+                        lastConnectedAt = System.currentTimeMillis()
+                    )
+                    tvDeviceRepository.saveDevice(pairedDevice)
+                    val result = connectToTvUseCase(pairedDevice)
                     _connectionResult.emit(result)
                     _pairingStep.value = null
                 }

@@ -10,7 +10,9 @@ object LgKeyMapper {
             RemoteCommand.PlayPause -> "ssap://media.controls/play"
             RemoteCommand.Rewind -> "ssap://media.controls/rewind"
             RemoteCommand.FastForward -> "ssap://media.controls/fastForward"
-            RemoteCommand.Power -> "ssap://system/turnOff"
+            RemoteCommand.Power,
+            RemoteCommand.PowerOn,
+            RemoteCommand.PowerOff -> "ssap://system/turnOff"
             RemoteCommand.Home -> "ssap://com.webos.applicationManager/launch?id=com.webos.app.home"
             RemoteCommand.ChannelUp -> "ssap://tv/channelUp"
             RemoteCommand.ChannelDown -> "ssap://tv/channelDown"

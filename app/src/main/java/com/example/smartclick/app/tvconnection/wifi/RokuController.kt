@@ -290,10 +290,14 @@ class RokuController @Inject constructor(
 
     private fun mapCommandToRokuKey(cmd: RemoteCommand): String? {
         return when (cmd) {
-            is RemoteCommand.Power -> "Power"
+            is RemoteCommand.Power,
+            is RemoteCommand.PowerOn,
+            is RemoteCommand.PowerOff -> "Power"
             is RemoteCommand.VolumeUp -> "VolumeUp"
             is RemoteCommand.VolumeDown -> "VolumeDown"
-            is RemoteCommand.Mute -> "VolumeMute"
+            is RemoteCommand.Mute,
+            is RemoteCommand.MuteOn,
+            is RemoteCommand.MuteOff -> "VolumeMute"
             is RemoteCommand.DPadUp -> "Up"
             is RemoteCommand.DPadDown -> "Down"
             is RemoteCommand.DPadLeft -> "Left"

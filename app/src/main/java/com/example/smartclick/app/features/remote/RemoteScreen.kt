@@ -70,6 +70,11 @@ fun RemoteScreen(
                 RemoteUiEvent.CommandNotConnected -> {
                     android.widget.Toast.makeText(context, context.getString(R.string.command_not_connected), android.widget.Toast.LENGTH_SHORT).show()
                 }
+                RemoteUiEvent.CommandFailed -> {
+                    if (isHapticEnabled) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
+                }
             }
         }
     }

@@ -36,9 +36,14 @@ class SendCommandUseCase @Inject constructor(
 
     private fun isCommandSupported(command: RemoteCommand, caps: Set<TvCapability>): Boolean {
         return when (command) {
+            is RemoteCommand.Power -> caps.contains(TvCapability.POWER_TOGGLE) || true // fallback allow all for now
+            is RemoteCommand.PowerOn -> caps.contains(TvCapability.POWER_ON)
+            is RemoteCommand.PowerOff -> caps.contains(TvCapability.POWER_OFF)
             is RemoteCommand.VolumeUp,
             is RemoteCommand.VolumeDown,
-            is RemoteCommand.Mute -> caps.contains(TvCapability.VOLUME)
+            is RemoteCommand.Mute,
+            is RemoteCommand.MuteOn,
+            is RemoteCommand.MuteOff -> caps.contains(TvCapability.VOLUME)
             is RemoteCommand.ChannelUp,
             is RemoteCommand.ChannelDown -> caps.contains(TvCapability.CHANNEL_CONTROL)
             is RemoteCommand.PointerMove,

@@ -5,10 +5,14 @@ import com.example.smartclick.app.domain.model.RemoteCommand
 object SamsungKeyMapper {
     fun mapCommand(command: RemoteCommand): String? {
         return when (command) {
-            RemoteCommand.Power -> "KEY_POWER"
+            RemoteCommand.Power,
+            RemoteCommand.PowerOn,
+            RemoteCommand.PowerOff -> "KEY_POWER"
             RemoteCommand.VolumeUp -> "KEY_VOLUP"
             RemoteCommand.VolumeDown -> "KEY_VOLDOWN"
-            RemoteCommand.Mute -> "KEY_MUTE"
+            RemoteCommand.Mute,
+            RemoteCommand.MuteOn,
+            RemoteCommand.MuteOff -> "KEY_MUTE"
             RemoteCommand.DPadUp -> "KEY_UP"
             RemoteCommand.DPadDown -> "KEY_DOWN"
             RemoteCommand.DPadLeft -> "KEY_LEFT"

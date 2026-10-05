@@ -1,10 +1,14 @@
 package com.example.smartclick.app.domain.model
 
 sealed class RemoteCommand {
-    object Power : RemoteCommand()
+    object Power : RemoteCommand() // Toggle
+    object PowerOn : RemoteCommand()
+    object PowerOff : RemoteCommand()
     object VolumeUp : RemoteCommand()
     object VolumeDown : RemoteCommand()
-    object Mute : RemoteCommand()
+    object Mute : RemoteCommand() // Toggle
+    object MuteOn : RemoteCommand()
+    object MuteOff : RemoteCommand()
     object DPadUp : RemoteCommand()
     object DPadDown : RemoteCommand()
     object DPadLeft : RemoteCommand()
