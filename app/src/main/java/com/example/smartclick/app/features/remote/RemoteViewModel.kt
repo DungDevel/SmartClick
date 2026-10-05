@@ -15,6 +15,8 @@ import com.example.smartclick.app.domain.connection.IWifiNetworkProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -32,7 +34,7 @@ sealed class RemoteUiEvent {
 class RemoteViewModel @Inject constructor(
     private val sendCommandUseCase: SendCommandUseCase,
     private val activeTvSession: IActiveTvSession,
-    settingsRepository: ISettingsRepository,
+    private val settingsRepository: ISettingsRepository,
     private val wifiNetworkProvider: IWifiNetworkProvider,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -42,13 +44,37 @@ class RemoteViewModel @Inject constructor(
 
     private var lastToastTime = 0L
 
-    val activeMode: StateFlow<RemoteMode> = savedStateHandle.getStateFlow(
-        "remote_mode",
-        RemoteMode.DPAD
-    )
+    val activeMode: StateFlow<RemoteMode> = settingsRepository.settings
+        .map { settings ->
+            try {
+                RemoteMode.valueOf(settings.remoteMode)
+            } catch (e: Exception) {
+                RemoteMode.DPAD
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = RemoteMode.DPAD
+        )
 
     fun setMode(mode: RemoteMode) {
-        savedStateHandle["remote_mode"] = mode
+        viewModelScope.launch {
+            settingsRepository.setRemoteMode(mode.name)
+        }
+    }
+
+    private val _isLocked = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val isLocked: StateFlow<Boolean> = _isLocked.asStateFlow()
+
+    fun toggleScreenLock() {
+        if (!_isLocked.value) {
+            _isLocked.value = true
+        }
+    }
+
+    fun unlockScreen() {
+        _isLocked.value = false
     }
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)

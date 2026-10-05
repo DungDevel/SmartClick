@@ -18,7 +18,11 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -40,10 +44,11 @@ class RemoteViewModelTest {
 
     private val connectionStateFlow = MutableStateFlow<TvConnectionState>(TvConnectionState.Idle)
     private val networkStateFlow = MutableStateFlow<NetworkState>(NetworkState.WifiConnected())
+    private lateinit var settingsFlow: MutableStateFlow<AppSettings>
 
     @Before
     fun setup() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(StandardTestDispatcher())
 
         activeTvSession = mockk(relaxed = true)
         every { activeTvSession.connectionState } returns connectionStateFlow
@@ -52,10 +57,15 @@ class RemoteViewModelTest {
         every { wifiNetworkProvider.networkState } returns networkStateFlow
         every { wifiNetworkProvider.getCurrentState() } returns NetworkState.WifiConnected()
 
-        settingsRepository = mockk(relaxed = true)
-        every { settingsRepository.settings } returns MutableStateFlow(
-            AppSettings(ThemeMode.SYSTEM, true, null, true)
+        settingsFlow = MutableStateFlow(
+            AppSettings(ThemeMode.SYSTEM, true, null, true, "DPAD")
         )
+        settingsRepository = mockk(relaxed = true)
+        every { settingsRepository.settings } returns settingsFlow
+        coEvery { settingsRepository.setRemoteMode(any()) } answers {
+            val mode = firstArg<String>()
+            settingsFlow.value = settingsFlow.value.copy(remoteMode = mode)
+        }
 
         savedStateHandle = SavedStateHandle()
 
@@ -76,14 +86,23 @@ class RemoteViewModelTest {
     }
 
     @Test
-    fun `initial active mode is DPAD`() {
+    fun `initial active mode is DPAD`() = runTest {
+        val job = launch { viewModel.activeMode.collect() }
+        advanceUntilIdle()
         assertEquals(RemoteMode.DPAD, viewModel.activeMode.value)
+        job.cancel()
     }
 
     @Test
-    fun `setMode updates active mode`() {
+    fun `setMode updates active mode`() = runTest {
+        val job = launch { viewModel.activeMode.collect() }
+        advanceUntilIdle()
+        
         viewModel.setMode(RemoteMode.NUMPAD)
+        advanceUntilIdle()
+        
         assertEquals(RemoteMode.NUMPAD, viewModel.activeMode.value)
+        job.cancel()
     }
 
     @Test
@@ -92,6 +111,7 @@ class RemoteViewModelTest {
         coEvery { sendCommandUseCase(command) } returns SendCommandResult.SUCCESS
 
         viewModel.sendCommand(command)
+        advanceUntilIdle()
 
         coVerify(exactly = 1) { sendCommandUseCase(command) }
     }

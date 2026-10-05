@@ -214,4 +214,5 @@ Effortlessly
     <string name="wifi">Wi-Fi</string>
     <string name="command_not_supported">Not supported on this TV</string>
     <string name="command_not_connected">TV is not connected</string>
+    <string name="remote_is_locked">Remote is locked. Long press Lock to unlock.</string>
 </resources>

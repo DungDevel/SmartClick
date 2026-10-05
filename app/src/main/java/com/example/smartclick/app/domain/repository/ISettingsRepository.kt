@@ -10,4 +10,5 @@ interface ISettingsRepository {
     suspend fun setHapticEnabled(enabled: Boolean)
     suspend fun setLanguageTag(tag: String?)
     suspend fun setOnboardingCompleted(done: Boolean)
+    suspend fun setRemoteMode(mode: String)
 }

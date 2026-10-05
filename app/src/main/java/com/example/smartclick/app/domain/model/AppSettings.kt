@@ -7,4 +7,5 @@ data class AppSettings(
     val hapticEnabled: Boolean = true,
     val languageTag: String? = null,
     val onboardingCompleted: Boolean = false,
+    val remoteMode: String = "DPAD",
 )

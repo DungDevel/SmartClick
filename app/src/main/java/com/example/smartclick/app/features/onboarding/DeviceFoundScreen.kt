@@ -410,7 +410,8 @@ fun PairingDialogs(
                             onValueChange = { if (it.length <= pairingStep.length) pin = it },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            placeholder = { Text("Code: ${pairingStep.length} digits") }
                         )
                     }
                 },
@@ -427,13 +428,51 @@ fun PairingDialogs(
             )
         }
         is PairingStep.ConfirmOnTv -> {
+            var progress by remember(pairingStep) { mutableFloatStateOf(1f) }
+            LaunchedEffect(pairingStep) {
+                val totalMs = pairingStep.timeoutMs.toFloat()
+                var currentMs = totalMs
+                val interval = 50f
+                while (currentMs > 0) {
+                    kotlinx.coroutines.delay(interval.toLong())
+                    currentMs -= interval
+                    progress = (currentMs / totalMs).coerceIn(0f, 1f)
+                }
+            }
+
             AlertDialog(
                 onDismissRequest = onCancel,
                 title = { Text(stringResource(R.string.confirm_on_tv_title)) },
-                text = { Text(stringResource(R.string.confirm_on_tv_message)) },
+                text = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(stringResource(R.string.confirm_on_tv_message))
+                        Spacer(modifier = Modifier.height(16.dp))
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
                 confirmButton = {
                     TextButton(onClick = onCancel) {
                         Text(stringResource(R.string.cancel))
+                    }
+                }
+            )
+        }
+        is PairingStep.Instruction -> {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val displayMessage = remember(pairingStep.key) {
+                val resId = context.resources.getIdentifier(pairingStep.key, "string", context.packageName)
+                if (resId != 0) context.getString(resId) else pairingStep.key
+            }
+            AlertDialog(
+                onDismissRequest = onCancel,
+                title = { Text("Instruction") },
+                text = { Text(displayMessage) },
+                confirmButton = {
+                    TextButton(onClick = onCancel) {
+                        Text("Dismiss") // Will naturally be closed when state changes
                     }
                 }
             )

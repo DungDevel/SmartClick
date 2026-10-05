@@ -10,6 +10,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -61,6 +63,8 @@ fun RemoteScreen(
     val isWifiOff = networkState !is NetworkState.WifiConnected
 
     val context = androidx.compose.ui.platform.LocalContext.current
+    val isLocked by viewModel.isLocked.collectAsState()
+
     LaunchedEffect(viewModel) {
         viewModel.uiEvents.collect { event ->
             when (event) {
@@ -80,6 +84,10 @@ fun RemoteScreen(
     }
 
     fun dispatchCommand(command: RemoteCommand) {
+        if (isLocked) {
+            android.widget.Toast.makeText(context, context.getString(R.string.remote_is_locked), android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
         if (isHapticEnabled) {
             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         }
@@ -169,7 +177,7 @@ fun RemoteScreen(
         } else {
             val contextForToast = androidx.compose.ui.platform.LocalContext.current
             Box(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = Modifier.fillMaxSize().alpha(if (controlsEnabled) 1f else 0.4f)) {
+                Column(modifier = Modifier.fillMaxSize().alpha(if (controlsEnabled) (if (isLocked) 0.3f else 1f) else 0.4f)) {
             // Mode + action row
             Row(
                 modifier = Modifier
@@ -267,17 +275,37 @@ fun RemoteScreen(
                 Box(
                     modifier = Modifier
                         .size(45.dp)
-                        .background(colors.surfEl, CircleShape)
-                        .border(1.dp, colors.bord, CircleShape)
-                        .clickable {
-                            android.widget.Toast.makeText(contextForToast, contextForToast.getString(R.string.feature_coming_soon, contextForToast.getString(R.string.lock)), android.widget.Toast.LENGTH_SHORT).show()
+                        .background(if (isLocked) colors.acc else colors.surfEl, CircleShape)
+                        .border(1.dp, if (isLocked) colors.acc else colors.bord, CircleShape)
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onLongPress = {
+                                    if (isLocked) {
+                                        viewModel.unlockScreen()
+                                        if (isHapticEnabled) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        }
+                                    }
+                                },
+                                onTap = {
+                                    if (!isLocked) {
+                                        viewModel.toggleScreenLock()
+                                        if (isHapticEnabled) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        }
+                                    } else {
+                                        android.widget.Toast.makeText(contextForToast, contextForToast.getString(R.string.remote_is_locked), android.widget.Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            )
                         },
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.lock),
                         contentDescription = stringResource(R.string.lock),
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
+                        colorFilter = if (isLocked) androidx.compose.ui.graphics.ColorFilter.tint(Color.White) else null
                     )
                 }
             }

@@ -42,7 +42,9 @@ import java.util.UUID
  * mà không cần mạng thật.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class LgWebOsDriverTest {
+class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.AbstractDriverContractTest() {
+    override fun createDriver(): com.example.smartclick.app.domain.connection.IProtocolDriver = LgWebOsDriver()
+    override fun createDummyDevice(): TvDevice = lgDevice()
 
     @After
     fun teardown() {

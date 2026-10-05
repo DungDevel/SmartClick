@@ -31,6 +31,7 @@ class DataStoreSettingsRepository @Inject constructor(
         val HAPTIC_ENABLED = booleanPreferencesKey("haptic_enabled")
         val LANGUAGE_TAG = stringPreferencesKey("language_tag")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+        val REMOTE_MODE = stringPreferencesKey("remote_mode")
     }
 
     override val settings: Flow<AppSettings> = context.dataStore.data
@@ -53,7 +54,8 @@ class DataStoreSettingsRepository @Inject constructor(
                 themeMode = themeMode,
                 hapticEnabled = preferences[PreferencesKeys.HAPTIC_ENABLED] ?: true,
                 languageTag = preferences[PreferencesKeys.LANGUAGE_TAG],
-                onboardingCompleted = preferences[PreferencesKeys.ONBOARDING_COMPLETED] ?: false
+                onboardingCompleted = preferences[PreferencesKeys.ONBOARDING_COMPLETED] ?: false,
+                remoteMode = preferences[PreferencesKeys.REMOTE_MODE] ?: "DPAD"
             )
         }
 
@@ -82,6 +84,12 @@ class DataStoreSettingsRepository @Inject constructor(
     override suspend fun setOnboardingCompleted(done: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.ONBOARDING_COMPLETED] = done
+        }
+    }
+
+    override suspend fun setRemoteMode(mode: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.REMOTE_MODE] = mode
         }
     }
 }
