@@ -171,8 +171,9 @@
     <string name="restore_purchase_terms">Khôi phục mua hàng · Điều khoản &amp; Bảo mật</string>
     <string name="failed_to_load_plans">Không tải được gói. Chạm để thử lại.</string>
     <string name="perk_unlimited_devices">Không giới hạn thiết bị</string>
-    <string name="perk_channels_library">Thư viện Kênh</string>
-    <string name="perk_priority_support">Hỗ trợ ưu tiên</string>
+    <string name="perk_voice_commands">Lệnh giọng nói</string>
+    <string name="perk_media_casting">Truyền nội dung đa phương tiện</string>
+    <string name="perk_no_ads">Không quảng cáo</string>
 
     <string name="welcome_title">Điều khiển TV của bạn
 một cách dễ dàng</string>
@@ -215,4 +216,8 @@ một cách dễ dàng</string>
     <string name="command_not_connected">Chưa kết nối TV</string>
     <string name="remote_is_locked">Điều khiển đang bị khóa. Nhấn giữ nút Khóa để mở.</string>
     <string name="wol_sent">Đã gửi gói tin Đánh thức (Wake-on-LAN)</string>
+    <string name="code_n_digits">Mã: %1$d chữ số</string>
+    <string name="instruction">Hướng dẫn</string>
+    <string name="dismiss">Bỏ qua</string>
+    <string name="power_off_confirm">Bạn có chắc chắn muốn tắt TV không?</string>
 </resources>

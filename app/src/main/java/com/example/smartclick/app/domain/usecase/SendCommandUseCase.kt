@@ -21,12 +21,11 @@ class SendCommandUseCase @Inject constructor(
     suspend operator fun invoke(command: RemoteCommand): SendCommandResult {
         val controller = activeTvSession.currentController.value ?: return SendCommandResult.NOT_CONNECTED
 
-        if (!isCommandSupported(command, controller.capabilities)) {
-            return SendCommandResult.NOT_SUPPORTED
-        }
+        val actualCommand = getEffectiveCommand(command, controller.capabilities) 
+            ?: return SendCommandResult.NOT_SUPPORTED
 
         return if (controller.connectionState.value is TvConnectionState.Connected) {
-            val result = controller.sendCommand(command)
+            val result = controller.sendCommand(actualCommand)
             reconnectWatcher.onCommandResult(result.isSuccess)
             if (result.isSuccess) SendCommandResult.SUCCESS else SendCommandResult.FAILED
         } else {
@@ -34,26 +33,61 @@ class SendCommandUseCase @Inject constructor(
         }
     }
 
-    private fun isCommandSupported(command: RemoteCommand, caps: Set<TvCapability>): Boolean {
+    private fun getEffectiveCommand(command: RemoteCommand, caps: Set<TvCapability>): RemoteCommand? {
         return when (command) {
-            is RemoteCommand.Power -> caps.contains(TvCapability.POWER_TOGGLE) || true // fallback allow all for now
-            is RemoteCommand.PowerOn -> caps.contains(TvCapability.POWER_ON)
-            is RemoteCommand.PowerOff -> caps.contains(TvCapability.POWER_OFF)
-            is RemoteCommand.VolumeUp,
-            is RemoteCommand.VolumeDown,
-            is RemoteCommand.Mute,
-            is RemoteCommand.MuteOn,
-            is RemoteCommand.MuteOff -> caps.contains(TvCapability.VOLUME)
-            is RemoteCommand.ChannelUp,
-            is RemoteCommand.ChannelDown -> caps.contains(TvCapability.CHANNEL_CONTROL)
-            is RemoteCommand.PointerMove,
-            is RemoteCommand.PointerClick -> caps.contains(TvCapability.POINTER)
-            is RemoteCommand.Text -> caps.contains(TvCapability.KEYBOARD_TEXT)
-            is RemoteCommand.Numpad -> caps.contains(TvCapability.DIGITS)
-            is RemoteCommand.SearchContent -> caps.contains(TvCapability.SEARCH_CONTENT)
-            is RemoteCommand.OpenSearchUi -> caps.contains(TvCapability.OPEN_SEARCH_UI)
-            RemoteCommand.Backspace -> caps.contains(TvCapability.BACKSPACE)
-            else -> true
+            is RemoteCommand.Power -> {
+                if (caps.contains(TvCapability.POWER_TOGGLE)) command
+                else if (caps.contains(TvCapability.POWER_OFF)) RemoteCommand.PowerOff // For LG
+                else null
+            }
+            is RemoteCommand.PowerOn -> {
+                if (caps.contains(TvCapability.POWER_ON)) command
+                else if (caps.contains(TvCapability.POWER_TOGGLE)) RemoteCommand.Power
+                else null
+            }
+            is RemoteCommand.PowerOff -> {
+                if (caps.contains(TvCapability.POWER_OFF)) command
+                else if (caps.contains(TvCapability.POWER_TOGGLE)) RemoteCommand.Power
+                else null
+            }
+            is RemoteCommand.VolumeUp, is RemoteCommand.VolumeDown -> {
+                if (caps.contains(TvCapability.VOLUME)) command else null
+            }
+            is RemoteCommand.Mute -> {
+                if (caps.contains(TvCapability.VOLUME)) command else null
+            }
+            is RemoteCommand.MuteOn -> {
+                if (caps.contains(TvCapability.MUTE_ON_OFF)) command
+                else if (caps.contains(TvCapability.VOLUME)) RemoteCommand.Mute
+                else null
+            }
+            is RemoteCommand.MuteOff -> {
+                if (caps.contains(TvCapability.MUTE_ON_OFF)) command
+                else if (caps.contains(TvCapability.VOLUME)) RemoteCommand.Mute
+                else null
+            }
+            is RemoteCommand.ChannelUp, is RemoteCommand.ChannelDown -> {
+                if (caps.contains(TvCapability.CHANNEL_CONTROL)) command else null
+            }
+            is RemoteCommand.PointerMove, is RemoteCommand.PointerClick -> {
+                if (caps.contains(TvCapability.POINTER)) command else null
+            }
+            is RemoteCommand.Text -> {
+                if (caps.contains(TvCapability.KEYBOARD_TEXT)) command else null
+            }
+            is RemoteCommand.Numpad -> {
+                if (caps.contains(TvCapability.DIGITS)) command else null
+            }
+            is RemoteCommand.SearchContent -> {
+                if (caps.contains(TvCapability.SEARCH_CONTENT)) command else null
+            }
+            is RemoteCommand.OpenSearchUi -> {
+                if (caps.contains(TvCapability.OPEN_SEARCH_UI)) command else null
+            }
+            is RemoteCommand.Backspace -> {
+                if (caps.contains(TvCapability.BACKSPACE)) command else null
+            }
+            else -> command 
         }
     }
 }

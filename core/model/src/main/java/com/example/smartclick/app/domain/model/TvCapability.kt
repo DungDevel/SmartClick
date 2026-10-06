@@ -13,5 +13,6 @@ enum class TvCapability {
     BACKSPACE,
     POWER_TOGGLE,
     POWER_ON,
-    POWER_OFF
+    POWER_OFF,
+    MUTE_ON_OFF
 }

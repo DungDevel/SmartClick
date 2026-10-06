@@ -86,32 +86,36 @@ class MockAndroidTvServer {
 
     private fun handleClient(socket: SSLSocket) {
         scope.launch {
-            socket.use {
-                it.startHandshake()
-                val inputStream = it.inputStream
-                val outputStream = it.outputStream
+            try {
+                socket.use {
+                    it.startHandshake()
+                    val inputStream = it.inputStream
+                    val outputStream = it.outputStream
 
-                while (isActive) {
-                    try {
-                        val msg = RemoteMessage.parseDelimitedFrom(inputStream) ?: break
+                    while (isActive) {
+                        try {
+                            val msg = RemoteMessage.parseDelimitedFrom(inputStream) ?: break
 
-                        if (msg.hasRemoteConfigure()) {
-                            val reply = RemoteMessage.newBuilder().setRemoteConfigure(
-                                RemoteConfigure.newBuilder()
-                                    .setCode1(msg.remoteConfigure.code1)
-                                    .setDeviceInfo(msg.remoteConfigure.deviceInfo.toBuilder().setVendor("MockServer").setModel("MockModel"))
-                            ).build()
-                            reply.writeDelimitedTo(outputStream)
-                        } else if (msg.hasRemoteSetActive()) {
-                            val reply = RemoteMessage.newBuilder().setRemoteSetActive(
-                                RemoteSetActive.newBuilder().setActive(msg.remoteSetActive.active)
-                            ).build()
-                            reply.writeDelimitedTo(outputStream)
+                            if (msg.hasRemoteConfigure()) {
+                                val reply = RemoteMessage.newBuilder().setRemoteConfigure(
+                                    RemoteConfigure.newBuilder()
+                                        .setCode1(msg.remoteConfigure.code1)
+                                        .setDeviceInfo(msg.remoteConfigure.deviceInfo.toBuilder().setVendor("MockServer").setModel("MockModel"))
+                                ).build()
+                                reply.writeDelimitedTo(outputStream)
+                            } else if (msg.hasRemoteSetActive()) {
+                                val reply = RemoteMessage.newBuilder().setRemoteSetActive(
+                                    RemoteSetActive.newBuilder().setActive(msg.remoteSetActive.active)
+                                ).build()
+                                reply.writeDelimitedTo(outputStream)
+                            }
+                        } catch (e: Exception) {
+                            break
                         }
-                    } catch (e: Exception) {
-                        break
                     }
                 }
+            } catch (e: Exception) {
+                // Ignore handshake or socket errors resulting from test validations rejecting the connection
             }
         }
     }

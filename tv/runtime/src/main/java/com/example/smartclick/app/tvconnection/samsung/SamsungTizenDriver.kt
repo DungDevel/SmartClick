@@ -37,7 +37,8 @@ class SamsungTizenDriver @Inject constructor() : IProtocolDriver {
         TvCapability.VOLUME,
         TvCapability.DIGITS,
         TvCapability.CHANNEL_CONTROL,
-        TvCapability.OPEN_SEARCH_UI
+        TvCapability.OPEN_SEARCH_UI,
+        TvCapability.POWER_TOGGLE
     )
 
     private val applicationName = "SmartClick"
@@ -66,13 +67,14 @@ class SamsungTizenDriver @Inject constructor() : IProtocolDriver {
                 val deviceMap = json.optJSONObject("device") ?: return null
 
                 val model = deviceMap.optString("modelName", "Samsung/Tizen TV")
-                val mac = deviceMap.optString("wifiMac", candidate.ipAddress)
-                val id = deviceMap.optString("id", mac) // UUID
+                val wifiMac = deviceMap.optString("wifiMac")
+                val id = deviceMap.optString("id", wifiMac.takeIf { it.isNotEmpty() } ?: candidate.ipAddress) // UUID
 
                 Fingerprint(
                     protocol = protocol,
                     stableId = id,
-                    displayName = model
+                    displayName = model,
+                    macAddress = wifiMac ?: ""
                 )
             } else {
                 null

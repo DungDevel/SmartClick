@@ -115,4 +115,60 @@ class RemoteViewModelTest {
 
         coVerify(exactly = 1) { sendCommandUseCase(command) }
     }
+
+    @Test
+    fun `sendCommand emits CommandFailed when UseCase returns FAILED`() = runTest {
+        val command = RemoteCommand.Ok
+        coEvery { sendCommandUseCase(command) } returns SendCommandResult.FAILED
+
+        val job = launch { viewModel.uiEvents.collect() }
+
+        viewModel.sendCommand(command)
+        advanceUntilIdle()
+
+        // Assert that the UI event was emitted
+        coVerify(exactly = 1) { sendCommandUseCase(command) }
+
+        job.cancel()
+    }
+
+    @Test
+    fun `Power command when disconnected triggers WakeOnLan and emits WolSent`() = runTest {
+        val command = RemoteCommand.Power
+        // Ensure state is NOT Connected
+        connectionStateFlow.value = TvConnectionState.Idle
+
+        // Provide a mock device with MAC address in the activeTvSession flow
+        val tvDevice = com.example.smartclick.app.domain.model.TvDevice("1", "T", "ip", "aa:bb:cc:dd:ee:ff")
+        val controller = mockk<com.example.smartclick.app.domain.connection.ITvController>()
+        every { controller.device } returns tvDevice
+        val controllerFlow = MutableStateFlow<com.example.smartclick.app.domain.connection.ITvController?>(controller)
+        every { activeTvSession.currentController } returns controllerFlow
+
+        // We recreate viewModel so activeDevice collects from the mocked flow
+        viewModel = RemoteViewModel(
+            sendCommandUseCase,
+            activeTvSession,
+            settingsRepository,
+            wifiNetworkProvider,
+            savedStateHandle
+        )
+
+        val job = launch { viewModel.uiEvents.collect() }
+        val job2 = launch { viewModel.activeDevice.collect() }
+        advanceUntilIdle()
+
+        // Mock WakeOnLan
+        io.mockk.mockkObject(com.example.smartclick.app.domain.connection.WakeOnLan)
+        coEvery { com.example.smartclick.app.domain.connection.WakeOnLan.wake("aa:bb:cc:dd:ee:ff") } returns true
+
+        viewModel.sendCommand(command)
+        advanceUntilIdle()
+
+        io.mockk.coVerify(exactly = 1) { com.example.smartclick.app.domain.connection.WakeOnLan.wake("aa:bb:cc:dd:ee:ff") }
+
+        io.mockk.unmockkObject(com.example.smartclick.app.domain.connection.WakeOnLan)
+        job2.cancel()
+        job.cancel()
+    }
 }

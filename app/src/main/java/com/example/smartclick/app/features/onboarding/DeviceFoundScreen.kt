@@ -411,7 +411,7 @@ fun PairingDialogs(
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text("Code: ${pairingStep.length} digits") }
+                            placeholder = { Text(stringResource(R.string.code_n_digits, pairingStep.length)) }
                         )
                     }
                 },
@@ -468,11 +468,11 @@ fun PairingDialogs(
             }
             AlertDialog(
                 onDismissRequest = onCancel,
-                title = { Text("Instruction") },
+                title = { Text(stringResource(R.string.instruction)) },
                 text = { Text(displayMessage) },
                 confirmButton = {
                     TextButton(onClick = onCancel) {
-                        Text("Dismiss") // Will naturally be closed when state changes
+                        Text(stringResource(R.string.dismiss)) // Will naturally be closed when state changes
                     }
                 }
             )

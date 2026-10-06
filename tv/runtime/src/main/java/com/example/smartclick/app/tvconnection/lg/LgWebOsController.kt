@@ -38,7 +38,10 @@ class LgWebOsController(
         TvCapability.KEYBOARD_TEXT,
         TvCapability.INSTALLED_APPS,
         TvCapability.POINTER,
-        TvCapability.CHANNEL_CONTROL
+        TvCapability.CHANNEL_CONTROL,
+        TvCapability.BACKSPACE,
+        TvCapability.MUTE_ON_OFF,
+        TvCapability.POWER_OFF
     )
 
     private var commandIdCounter = 1
@@ -241,6 +244,15 @@ class LgWebOsController(
                 }
                 ws.send(req.toString())
                 return Result.success(Unit)
+            }
+            RemoteCommand.PowerOff, RemoteCommand.Power -> {
+                val req = JSONObject().apply {
+                    put("type", "request")
+                    put("id", commandIdCounter++.toString())
+                    put("uri", "ssap://system/turnOff")
+                }
+                val sent = ws.send(req.toString())
+                return if (sent) Result.success(Unit) else Result.failure(Exception("Failed to send turnOff payload"))
             }
             RemoteCommand.Backspace -> {
                  val req = JSONObject().apply {

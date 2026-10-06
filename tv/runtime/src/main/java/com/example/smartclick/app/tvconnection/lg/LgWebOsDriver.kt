@@ -36,7 +36,9 @@ class LgWebOsDriver @Inject constructor() : IProtocolDriver {
         TvCapability.INSTALLED_APPS,
         TvCapability.POINTER,
         TvCapability.CHANNEL_CONTROL,
-        TvCapability.BACKSPACE
+        TvCapability.BACKSPACE,
+        TvCapability.MUTE_ON_OFF,
+        TvCapability.POWER_OFF
     )
 
     private val tofuTrustManager = com.example.smartclick.app.tvconnection.security.PinningTrustManager(expectedSha256 = null, isPairing = true)
@@ -66,7 +68,10 @@ class LgWebOsDriver @Inject constructor() : IProtocolDriver {
                 stableId = stableId,
                 displayName = candidate.serviceName ?: "LG WebOS TV",
                 confidence = if (candidate.protocolHint == TvProtocol.LG_WEBOS) Fingerprint.Confidence.HIGH else Fingerprint.Confidence.LOW,
-                macAddress = ""
+                macAddress = candidate.attributes["mac"] ?: candidate.attributes["wakeup"]?.let {
+                    val macRegex = "(?i)MAC=([0-9A-F:]+)".toRegex()
+                    macRegex.find(it)?.groupValues?.get(1)
+                } ?: ""
             )
         }
         null

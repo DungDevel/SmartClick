@@ -217,4 +217,8 @@ Effortlessly
     <string name="command_not_connected">TV is not connected</string>
     <string name="remote_is_locked">Remote is locked. Long press Lock to unlock.</string>
     <string name="wol_sent">Wake-on-LAN packet sent</string>
+    <string name="code_n_digits">Code: %1$d digits</string>
+    <string name="instruction">Instruction</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="power_off_confirm">Are you sure you want to turn off the TV?</string>
 </resources>

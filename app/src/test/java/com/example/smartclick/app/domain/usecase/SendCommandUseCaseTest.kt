@@ -108,4 +108,148 @@ class SendCommandUseCaseTest {
         coVerify { mockController.sendCommand(command) }
         coVerify { mockReconnectWatcher.onCommandResult(false) }
     }
+
+    @Test
+    fun `PowerOff should fallback to Power if only POWER_TOGGLE supported`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.POWER_TOGGLE)
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+
+        val result = useCase(RemoteCommand.PowerOff)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify { mockController.sendCommand(RemoteCommand.Power) }
+    }
+
+    @Test
+    fun `MuteOn should fallback to Mute if only VOLUME supported`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.VOLUME)
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+
+        val result = useCase(RemoteCommand.MuteOn)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify { mockController.sendCommand(RemoteCommand.Mute) }
+    }
+
+    @Test
+    fun `MuteOn should send MuteOn if MUTE_ON_OFF supported`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.MUTE_ON_OFF)
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+
+        val result = useCase(RemoteCommand.MuteOn)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify { mockController.sendCommand(RemoteCommand.MuteOn) }
+    }
+
+    @Test
+    fun `MuteOff should send MuteOff if MUTE_ON_OFF supported`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.MUTE_ON_OFF)
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+
+        val result = useCase(RemoteCommand.MuteOff)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify { mockController.sendCommand(RemoteCommand.MuteOff) }
+    }
+
+    @Test
+    fun `MuteOff should fallback to Mute if only VOLUME supported`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.VOLUME)
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+
+        val result = useCase(RemoteCommand.MuteOff)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify { mockController.sendCommand(RemoteCommand.Mute) }
+    }
+
+    @Test
+    fun `Mute should send Mute if VOLUME supported`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.VOLUME)
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+
+        val result = useCase(RemoteCommand.Mute)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify { mockController.sendCommand(RemoteCommand.Mute) }
+    }
+
+    @Test
+    fun `PowerOff should send PowerOff if POWER_OFF supported`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.POWER_OFF)
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+
+        val result = useCase(RemoteCommand.PowerOff)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify { mockController.sendCommand(RemoteCommand.PowerOff) }
+    }
+
+    @Test
+    fun `PowerOn should send PowerOn if POWER_ON supported`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.POWER_ON)
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+
+        val result = useCase(RemoteCommand.PowerOn)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify { mockController.sendCommand(RemoteCommand.PowerOn) }
+    }
+
+    @Test
+    fun `PowerOn should fallback to Power if only POWER_TOGGLE supported`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.POWER_TOGGLE)
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+
+        val result = useCase(RemoteCommand.PowerOn)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify { mockController.sendCommand(RemoteCommand.Power) }
+    }
+
+    @Test
+    fun `Power should fallback to PowerOff if only POWER_OFF supported`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.POWER_OFF)
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+
+        val result = useCase(RemoteCommand.Power)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify { mockController.sendCommand(RemoteCommand.PowerOff) }
+    }
+
+    @Test
+    fun `Power should send Power if POWER_TOGGLE supported`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.POWER_TOGGLE)
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+
+        val result = useCase(RemoteCommand.Power)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify { mockController.sendCommand(RemoteCommand.Power) }
+    }
+
+    @Test
+    fun `Backspace is sent if BACKSPACE is supported`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.BACKSPACE)
+        val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
+        every { mockController.connectionState } returns connectState
+
+        val result = useCase(RemoteCommand.Backspace)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify { mockController.sendCommand(RemoteCommand.Backspace) }
+    }
 }

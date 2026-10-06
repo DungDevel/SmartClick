@@ -30,7 +30,8 @@ class AndroidTvDriver @Inject constructor() : IProtocolDriver {
                 protocol = protocol,
                 stableId = stableId,
                 displayName = candidate.serviceName ?: "Android TV",
-                confidence = Fingerprint.Confidence.HIGH
+                confidence = Fingerprint.Confidence.HIGH,
+                macAddress = candidate.attributes["mac"] ?: candidate.attributes["btmac"] ?: ""
             )
         }
         return null
@@ -62,7 +63,7 @@ class AndroidTvDriver @Inject constructor() : IProtocolDriver {
             TvCapability.CHANNEL_CONTROL,
             TvCapability.OPEN_SEARCH_UI,
             TvCapability.DIGITS,
-            TvCapability.BACKSPACE
+            TvCapability.BACKSPACE, TvCapability.POWER_TOGGLE
             // Removed KEYBOARD_TEXT, INSTALLED_APPS, POINTER, SEARCH_CONTENT due to over-promising
         )
     }

@@ -41,6 +41,30 @@ class AndroidTvTlsIntegrationTest {
     }
 
     @Test
+    fun `test TLS connection fails with invalid expectedCertSha256`() = runTest(timeout = 5.seconds) {
+        val invalidSession = AndroidTvRemoteSession(
+            ipAddress = "127.0.0.1",
+            port = server.port,
+            clientCertPair = server.clientCertPair,
+            expectedCertSha256 = "invalid_hash"
+        )
+
+        val dummyDevice = TvDevice(
+            id = "test_dev",
+            name = "Test TV",
+            ipAddress = "127.0.0.1",
+            macAddress = "00:11:22:33:44:55",
+            protocol = com.example.smartclick.app.domain.model.TvProtocol.ANDROID_TV_V2
+        )
+
+        val connectResult = invalidSession.connect(dummyDevice)
+        assertTrue("Connect should fail (or return failure) due to TLS validation error", connectResult.isFailure)
+
+        val finalState = invalidSession.connectionState.value
+        assertTrue(finalState is TvConnectionState.Failed)
+    }
+
+    @Test
     fun `test TLS connection and handshake with mock server`() = runTest(timeout = 5.seconds) {
         val dummyDevice = TvDevice(
             id = "test_dev",

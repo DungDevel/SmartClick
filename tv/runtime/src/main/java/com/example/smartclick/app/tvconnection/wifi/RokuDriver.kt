@@ -58,6 +58,8 @@ class RokuDriver @Inject constructor(
                 var serialNumber: String? = null
                 var friendlyName: String? = null
                 var defaultDeviceName: String? = null
+                var wifiMac: String? = null
+                var ethernetMac: String? = null
                 var currentTag = ""
 
                 while (eventType != XmlPullParser.END_DOCUMENT) {
@@ -70,6 +72,8 @@ class RokuDriver @Inject constructor(
                                     "serial-number" -> serialNumber = text
                                     "friendly-device-name" -> friendlyName = text
                                     "default-device-name" -> defaultDeviceName = text
+                                    "wifi-mac" -> wifiMac = text
+                                    "ethernet-mac" -> ethernetMac = text
                                 }
                             }
                         }
@@ -85,7 +89,7 @@ class RokuDriver @Inject constructor(
                         stableId = serialNumber,
                         displayName = displayName,
                         confidence = Fingerprint.Confidence.HIGH,
-                        macAddress = ""
+                        macAddress = wifiMac ?: ethernetMac ?: ""
                     )
                 }
             }
@@ -124,7 +128,7 @@ class RokuDriver @Inject constructor(
             TvCapability.SEARCH_CONTENT,
             TvCapability.OPEN_SEARCH_UI,
             TvCapability.DIGITS,
-            TvCapability.BACKSPACE
+            TvCapability.BACKSPACE, TvCapability.POWER_TOGGLE
         )
     }
 }

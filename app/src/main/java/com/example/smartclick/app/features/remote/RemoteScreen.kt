@@ -110,7 +110,7 @@ fun RemoteScreen(
         AlertDialog(
             onDismissRequest = { showPowerOffDialog = false },
             title = { Text(stringResource(R.string.power)) },
-            text = { Text("Are you sure you want to turn off the TV?") },
+            text = { Text(stringResource(R.string.power_off_confirm)) },
             confirmButton = {
                 TextButton(onClick = {
                     showPowerOffDialog = false
