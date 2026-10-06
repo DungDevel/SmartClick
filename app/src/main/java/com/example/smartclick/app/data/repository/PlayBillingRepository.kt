@@ -15,9 +15,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.example.smartclick.R
 
 @Singleton
 class PlayBillingRepository @Inject constructor(
@@ -75,14 +77,14 @@ class PlayBillingRepository @Inject constructor(
     override fun launchBillingFlow(activity: Any, planId: String) {
         val act = activity as? Activity ?: return
         if (!billingClient.isReady) {
-            _billingMessages.tryEmit("Lỗi: Dịch vụ thanh toán chưa sẵn sàng")
+            _billingMessages.tryEmit(context.getString(R.string.billing_not_ready))
             connectToBillingService()
             return
         }
 
         val productDetails = productDetailsMap[planId]
         if (productDetails == null) {
-            _billingMessages.tryEmit("Không tìm thấy thông tin gói thanh toán này")
+            _billingMessages.tryEmit(context.getString(R.string.billing_plan_not_found))
             return
         }
 
@@ -92,7 +94,7 @@ class PlayBillingRepository @Inject constructor(
         if (productDetails.productType == BillingClient.ProductType.SUBS) {
             val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
             if (offerToken == null) {
-                _billingMessages.tryEmit("Lỗi cấu hình gói: Không có offerToken")
+                _billingMessages.tryEmit(context.getString(R.string.billing_config_error_no_token))
                 return
             }
             productDetailsParamsBuilder.setOfferToken(offerToken)
@@ -111,12 +113,12 @@ class PlayBillingRepository @Inject constructor(
 
     override fun restorePurchases() {
         if (!billingClient.isReady) {
-            _billingMessages.tryEmit("Dịch vụ thanh toán chưa kết nối. Đang thử lại...")
+            _billingMessages.tryEmit(context.getString(R.string.billing_not_connected_retrying))
             connectToBillingService()
             return
         }
         queryPurchases() // Re-fetch active purchases
-        _billingMessages.tryEmit("Đang khôi phục giao dịch...")
+        _billingMessages.tryEmit(context.getString(R.string.billing_restoring))
     }
 
     private fun connectToBillingService() {
@@ -226,7 +228,7 @@ class PlayBillingRepository @Inject constructor(
         }
 
         if (hasPending) {
-            _billingMessages.tryEmit("Giao dịch của bạn đang được xử lý (Pending). Bạn sẽ nhận được quyền lợi khi thanh toán hoàn tất.")
+            _billingMessages.tryEmit(context.getString(R.string.billing_processing_pending))
         }
 
         if (hasPremium) {
@@ -236,37 +238,56 @@ class PlayBillingRepository @Inject constructor(
         }
     }
 
-    private fun acknowledgePurchase(purchase: Purchase) {
+    private fun acknowledgePurchase(purchase: Purchase, retryCount: Int = 3) {
         applicationScope.launch {
             val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
                 .setPurchaseToken(purchase.purchaseToken)
                 .build()
 
-            billingClient.acknowledgePurchase(acknowledgePurchaseParams) { billingResult ->
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    Log.d(TAG, "Đã ghi nhận giao dịch thành công (Acknowledge) ${purchase.orderId}")
-                } else {
-                    Log.e(TAG, "Lỗi khi ghi nhận giao dịch: ${billingResult.debugMessage}")
+            var currentAttempt = 0
+            var success = false
+            while (currentAttempt < retryCount && !success) {
+                try {
+                    val result = suspendCoroutine<BillingResult> { continuation ->
+                        billingClient.acknowledgePurchase(acknowledgePurchaseParams) { billingResult ->
+                            continuation.resume(billingResult)
+                        }
+                    }
+                    if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                        Log.d(TAG, "Đã ghi nhận giao dịch thành công (Acknowledge) ${purchase.orderId}")
+                        success = true
+                    } else {
+                        Log.e(TAG, "Lỗi khi ghi nhận giao dịch: ${result.debugMessage}")
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Exception during acknowledgePurchase", e)
+                }
+
+                if (!success) {
+                    currentAttempt++
+                    if (currentAttempt < retryCount) {
+                        kotlinx.coroutines.delay(2000L * currentAttempt)
+                    }
                 }
             }
         }
     }
 
-    private fun handleBillingError(responseCode: Int, context: String) {
+    private fun handleBillingError(responseCode: Int, contextCaller: String) {
         val errorMessage = when (responseCode) {
-            BillingClient.BillingResponseCode.USER_CANCELED -> "Đã hủy thanh toán"
-            BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> "Bạn đã sở hữu gói này"
-            BillingClient.BillingResponseCode.NETWORK_ERROR -> "Lỗi mạng. Vui lòng kiểm tra lại kết nối"
+            BillingClient.BillingResponseCode.USER_CANCELED -> context.getString(R.string.billing_error_canceled)
+            BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> context.getString(R.string.billing_error_already_owned)
+            BillingClient.BillingResponseCode.NETWORK_ERROR -> context.getString(R.string.billing_error_network)
             BillingClient.BillingResponseCode.SERVICE_DISCONNECTED,
-            BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE -> "Dịch vụ thanh toán Google Play không khả dụng"
-            BillingClient.BillingResponseCode.BILLING_UNAVAILABLE -> "Tính năng thanh toán không khả dụng thiết bị này"
-            BillingClient.BillingResponseCode.ITEM_UNAVAILABLE -> "Sản phẩm không khả dụng lúc này"
-            BillingClient.BillingResponseCode.DEVELOPER_ERROR -> "Lỗi cấu hình nhà phát triển (License Tester)"
-            BillingClient.BillingResponseCode.ERROR -> "Lệch thông tin với Google Play"
-            else -> "Lỗi thanh toán không xác định ($responseCode)"
+            BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE -> context.getString(R.string.billing_error_service_unavailable)
+            BillingClient.BillingResponseCode.BILLING_UNAVAILABLE -> context.getString(R.string.billing_error_billing_unavailable)
+            BillingClient.BillingResponseCode.ITEM_UNAVAILABLE -> context.getString(R.string.billing_error_item_unavailable)
+            BillingClient.BillingResponseCode.DEVELOPER_ERROR -> context.getString(R.string.billing_error_developer)
+            BillingClient.BillingResponseCode.ERROR -> context.getString(R.string.billing_error_generic)
+            else -> context.getString(R.string.billing_error_unknown, responseCode)
         }
 
-        Log.e(TAG, "Billing Error in $context: $errorMessage code: $responseCode")
+        Log.e(TAG, "Billing Error in $contextCaller: $errorMessage code: $responseCode")
         _billingMessages.tryEmit(errorMessage)
 
         // Nếu trùng, kích hoạt tự động cập nhật lại các gói xem liệu đã được mua chưa

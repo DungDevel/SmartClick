@@ -221,4 +221,19 @@ Effortlessly
     <string name="instruction">Instruction</string>
     <string name="dismiss">Dismiss</string>
     <string name="power_off_confirm">Are you sure you want to turn off the TV?</string>
+    <string name="billing_error_canceled">Payment canceled</string>
+    <string name="billing_error_already_owned">You already own this item</string>
+    <string name="billing_error_network">Network error. Please check your connection</string>
+    <string name="billing_error_service_unavailable">Google Play billing service is unavailable</string>
+    <string name="billing_error_billing_unavailable">Billing is unavailable on this device</string>
+    <string name="billing_error_item_unavailable">Product is currently unavailable</string>
+    <string name="billing_error_developer">Developer configuration error (License Tester)</string>
+    <string name="billing_error_generic">Information mismatch with Google Play</string>
+    <string name="billing_error_unknown">Unknown billing error (%1$d)</string>
+    <string name="billing_not_ready">Error: Billing service is not ready</string>
+    <string name="billing_plan_not_found">Cannot find information for this plan</string>
+    <string name="billing_config_error_no_token">Configuration error: No offerToken</string>
+    <string name="billing_not_connected_retrying">Billing service not connected. Retrying...</string>
+    <string name="billing_restoring">Restoring purchases...</string>
+    <string name="billing_processing_pending">Your transaction is being processed (Pending). You will receive your benefits once the payment is completed.</string>
 </resources>

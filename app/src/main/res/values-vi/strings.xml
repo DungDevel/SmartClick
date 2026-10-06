@@ -220,4 +220,19 @@ một cách dễ dàng</string>
     <string name="instruction">Hướng dẫn</string>
     <string name="dismiss">Bỏ qua</string>
     <string name="power_off_confirm">Bạn có chắc chắn muốn tắt TV không?</string>
+    <string name="billing_error_canceled">Đã hủy thanh toán</string>
+    <string name="billing_error_already_owned">Bạn đã sở hữu gói này</string>
+    <string name="billing_error_network">Lỗi mạng. Vui lòng kiểm tra lại kết nối</string>
+    <string name="billing_error_service_unavailable">Dịch vụ thanh toán Google Play không khả dụng</string>
+    <string name="billing_error_billing_unavailable">Tính năng thanh toán không khả dụng trên thiết bị này</string>
+    <string name="billing_error_item_unavailable">Sản phẩm không khả dụng lúc này</string>
+    <string name="billing_error_developer">Lỗi cấu hình nhà phát triển (License Tester)</string>
+    <string name="billing_error_generic">Lệch thông tin với Google Play</string>
+    <string name="billing_error_unknown">Lỗi thanh toán không xác định (%1$d)</string>
+    <string name="billing_not_ready">Lỗi: Dịch vụ thanh toán chưa sẵn sàng</string>
+    <string name="billing_plan_not_found">Không tìm thấy thông tin gói thanh toán này</string>
+    <string name="billing_config_error_no_token">Lỗi cấu hình gói: Không có offerToken</string>
+    <string name="billing_not_connected_retrying">Dịch vụ thanh toán chưa kết nối. Đang thử lại...</string>
+    <string name="billing_restoring">Đang khôi phục giao dịch...</string>
+    <string name="billing_processing_pending">Giao dịch của bạn đang được xử lý (Pending). Bạn sẽ nhận được quyền lợi khi thanh toán hoàn tất.</string>
 </resources>
