@@ -32,6 +32,7 @@ import com.example.smartclick.app.core.ui.components.WifiBanner
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import com.example.smartclick.app.domain.connection.NetworkState
 import com.example.smartclick.app.domain.model.RemoteCommand
+import com.example.smartclick.app.domain.model.SwipeToDpadMapper
 import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.features.remote.components.BottomActions
 import com.example.smartclick.app.features.remote.components.DPad
@@ -323,46 +324,26 @@ fun RemoteScreen(
                         var showKeyboard by remember { mutableStateOf(false) }
 
                         val isPointerSupported = capabilities.contains(TvCapability.POINTER)
-                        var fallbackDx by remember { mutableFloatStateOf(0f) }
-                        var fallbackDy by remember { mutableFloatStateOf(0f) }
                         val density = androidx.compose.ui.platform.LocalDensity.current
-                        val swipeThreshold = remember(density) { with(density) { 50.dp.toPx() } }
-                        var lastSwipeTime by remember { mutableLongStateOf(0L) }
+                        val swipeMapper = remember(density) {
+                            SwipeToDpadMapper(
+                                thresholdPx = with(density) { 50.dp.toPx() },
+                                cooldownMs = 150L
+                            )
+                        }
 
                         TouchPad(
                             onMove = { dx, dy ->
                                 if (isPointerSupported) {
                                     dispatchCommand(RemoteCommand.PointerMove(dx, dy))
                                 } else {
-                                    fallbackDx += dx
-                                    fallbackDy += dy
-                                    val now = System.currentTimeMillis()
-                                    if (now - lastSwipeTime > 150L) {
-                                        var handled = false
-                                        // Prevents crossing/diagonal swiping by picking the larger magnitude
-                                        if (kotlin.math.abs(fallbackDx) > kotlin.math.abs(fallbackDy)) {
-                                            if (fallbackDx > swipeThreshold) {
-                                                dispatchCommand(RemoteCommand.DPadRight); handled = true
-                                            } else if (fallbackDx < -swipeThreshold) {
-                                                dispatchCommand(RemoteCommand.DPadLeft); handled = true
-                                            }
-                                        } else {
-                                            if (fallbackDy > swipeThreshold) {
-                                                dispatchCommand(RemoteCommand.DPadDown); handled = true
-                                            } else if (fallbackDy < -swipeThreshold) {
-                                                dispatchCommand(RemoteCommand.DPadUp); handled = true
-                                            }
-                                        }
-
-                                        if (handled) {
-                                            fallbackDx = 0f
-                                            fallbackDy = 0f
-                                            lastSwipeTime = now
-                                        }
+                                    val command = swipeMapper.onMove(dx, dy, System.currentTimeMillis())
+                                    if (command != null) {
+                                        dispatchCommand(command)
                                     }
                                 }
                             },
-                            onDragEnd = { fallbackDx = 0f; fallbackDy = 0f },
+                            onDragEnd = { swipeMapper.onDragEnd() },
                             onTap = { dispatchCommand(if (isPointerSupported) RemoteCommand.PointerClick else RemoteCommand.Ok) },
                             onLeftClick = { dispatchCommand(if (isPointerSupported) RemoteCommand.PointerClick else RemoteCommand.Ok) },
                             onRightClick = { dispatchCommand(RemoteCommand.Back) },

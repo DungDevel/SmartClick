@@ -17,7 +17,7 @@ interface ITvController {
     suspend fun disconnect()
     suspend fun sendCommand(command: RemoteCommand): Result<Unit>
 
-    suspend fun getApps(): Result<List<TvApp>> = Result.success(emptyList())
-    suspend fun launchApp(appId: String): Result<Unit> = Result.success(Unit)
+    suspend fun getApps(): Result<List<TvApp>> = Result.failure(UnsupportedOperationException("Get apps not supported via this protocol yet"))
+    suspend fun launchApp(appId: String): Result<Unit> = Result.failure(UnsupportedOperationException("Launch app not supported via this protocol yet"))
 }
 
