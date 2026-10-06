@@ -28,13 +28,6 @@ import com.example.smartclick.app.domain.model.PricingPlan
 import androidx.compose.ui.res.stringResource
 import com.example.smartclick.R
 
-/**
- * Quyền lợi Premium - tuân thủ BR-05:
- * Remote/Cast/Voice là FREE → KHÔNG được liệt kê ở đây.
- * Chỉ liệt kê những thứ thực sự yêu cầu Premium.
- */
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateToPremiumScreen(
@@ -44,8 +37,9 @@ fun UpdateToPremiumScreen(
     val colors = SmartClickThemeTokens.colors
     val premiumPerks = listOf(
         stringResource(R.string.perk_unlimited_devices),
-        stringResource(R.string.perk_channels_library),
-        stringResource(R.string.perk_priority_support)
+        stringResource(R.string.perk_voice_commands),
+        stringResource(R.string.perk_media_casting),
+        stringResource(R.string.perk_no_ads)
     )
     val uiState by viewModel.uiState.collectAsState()
     val billingMessage by viewModel.billingMessages.collectAsState(initial = null)
@@ -128,7 +122,7 @@ fun UpdateToPremiumScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Perks — tuân thủ BR-05: không có Voice/Cast
+            // Perks
             Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)

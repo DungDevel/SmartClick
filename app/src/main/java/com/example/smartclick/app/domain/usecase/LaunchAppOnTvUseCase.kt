@@ -21,11 +21,6 @@ class LaunchAppOnTvUseCase @Inject constructor(
     }
     
     suspend operator fun invoke(appId: String): Result<Unit> {
-        val currentPlan = subscriptionRepository.currentPlan.first()
-        if (!featureGate.isFeatureAllowed(PremiumFeature.CHANNELS, currentPlan)) {
-            return Result.failure(Exception("ChannelsFeatureRequiresPremium"))
-        }
-
         val controller = activeTvSession.currentController.value ?: return Result.failure(Exception("No TV connected"))
 
         return if (controller.connectionState.value is TvConnectionState.Connected) {

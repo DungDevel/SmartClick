@@ -214,4 +214,5 @@ một cách dễ dàng</string>
     <string name="command_not_supported">Không hỗ trợ trên TV này</string>
     <string name="command_not_connected">Chưa kết nối TV</string>
     <string name="remote_is_locked">Điều khiển đang bị khóa. Nhấn giữ nút Khóa để mở.</string>
+    <string name="wol_sent">Đã gửi gói tin Đánh thức (Wake-on-LAN)</string>
 </resources>

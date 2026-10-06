@@ -171,8 +171,9 @@
     <string name="restore_purchase_terms">Restore purchase · Terms &amp; Privacy</string>
     <string name="failed_to_load_plans">Failed to load plans. Tap to retry.</string>
     <string name="perk_unlimited_devices">Unlimited devices</string>
-    <string name="perk_channels_library">Channels library</string>
-    <string name="perk_priority_support">Priority support</string>
+    <string name="perk_voice_commands">Voice commands</string>
+    <string name="perk_media_casting">Media casting</string>
+    <string name="perk_no_ads">No ads</string>
     
     <string name="welcome_title">Control Your TV
 Effortlessly
@@ -215,4 +216,5 @@ Effortlessly
     <string name="command_not_supported">Not supported on this TV</string>
     <string name="command_not_connected">TV is not connected</string>
     <string name="remote_is_locked">Remote is locked. Long press Lock to unlock.</string>
+    <string name="wol_sent">Wake-on-LAN packet sent</string>
 </resources>

@@ -67,10 +67,7 @@ class ChannelsViewModel @Inject constructor(
 
     fun launchApp(appId: String) {
         viewModelScope.launch {
-            val result = launchAppOnTvUseCase(appId)
-            result.onFailure {
-                // TODO(P8): Show paywall if error is ChannelsFeatureRequiresPremium
-            }
+            launchAppOnTvUseCase(appId)
         }
     }
 

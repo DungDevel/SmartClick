@@ -1,26 +1,28 @@
 package com.example.smartclick.app.features.remote
 
-import androidx.compose.ui.draw.alpha
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,17 +33,15 @@ import com.example.smartclick.app.core.ui.components.ReconnectBanner
 import com.example.smartclick.app.core.ui.components.WifiBanner
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import com.example.smartclick.app.domain.connection.NetworkState
+import com.example.smartclick.app.domain.connection.TvConnectionState
 import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.domain.model.SwipeToDpadMapper
 import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.features.remote.components.BottomActions
-import com.example.smartclick.app.features.remote.components.DPad
 import com.example.smartclick.app.features.remote.components.DPadModeContent
 import com.example.smartclick.app.features.remote.components.KeyboardModal
 import com.example.smartclick.app.features.remote.components.NumPad
 import com.example.smartclick.app.features.remote.components.TouchPad
-import com.example.smartclick.app.domain.connection.TvConnectionState
-import androidx.compose.ui.res.stringResource
 
 @Composable
 fun RemoteScreen(
@@ -80,9 +80,14 @@ fun RemoteScreen(
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
                 }
+                RemoteUiEvent.WolSent -> {
+                    android.widget.Toast.makeText(context, context.getString(R.string.wol_sent), android.widget.Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
+
+    var showPowerOffDialog by remember { mutableStateOf(false) }
 
     fun dispatchCommand(command: RemoteCommand) {
         if (isLocked) {
@@ -92,7 +97,44 @@ fun RemoteScreen(
         if (isHapticEnabled) {
             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         }
+
+        if (command == RemoteCommand.PowerOff || (command == RemoteCommand.Power && controlsEnabled)) {
+            showPowerOffDialog = true
+            return
+        }
+
         viewModel.sendCommand(command)
+    }
+
+    if (showPowerOffDialog) {
+        AlertDialog(
+            onDismissRequest = { showPowerOffDialog = false },
+            title = { Text(stringResource(R.string.power)) },
+            text = { Text("Are you sure you want to turn off the TV?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPowerOffDialog = false
+                    viewModel.sendCommand(RemoteCommand.PowerOff)
+                }) {
+                    Text(stringResource(R.string.yes))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPowerOffDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    // Mute State: 0: Vol, 1: Mute, -1: Unknown
+    val hasVolume = capabilities.contains(TvCapability.VOLUME)
+    var localMuteState by remember { mutableStateOf(-1) }
+
+    LaunchedEffect(connectionState) {
+        if (connectionState !is TvConnectionState.Connected) {
+            localMuteState = -1
+        }
     }
 
     Column(
@@ -126,7 +168,7 @@ fun RemoteScreen(
                     .clickable { onNavigateToDevices() },
                 contentAlignment = Alignment.Center
             ) {
-                Text("📺", fontSize = 20.sp) // Device Icon
+                Text("📺", fontSize = 20.sp)
             }
         }
 
@@ -139,7 +181,7 @@ fun RemoteScreen(
             val statusColor = when (connectionState) {
                 is TvConnectionState.Connected -> colors.green
                 is TvConnectionState.Connecting, is TvConnectionState.Reconnecting -> colors.orange
-                is TvConnectionState.Failed -> colors.acc // Red
+                is TvConnectionState.Failed -> colors.acc
                 else -> colors.tx2
             }
             Box(
@@ -189,34 +231,95 @@ fun RemoteScreen(
                 horizontalArrangement = Arrangement.spacedBy(7.dp)
             ) {
 
-                // Power
+                val infiniteTransition = rememberInfiniteTransition(label = "power_pulse")
+                val pulseAlpha by infiniteTransition.animateFloat(
+                    initialValue = 0.3f,
+                    targetValue = 1f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(800, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "alpha_pulse"
+                )
+
+                val powerBg: Color
+                val powerBorder: Color
+                val powerIconTint: Color
+                var powerAlpha = 1f
+
+                val isConnectingOrReconnecting = connectionState is TvConnectionState.Connecting || connectionState is TvConnectionState.Reconnecting
+
+                when {
+                    connectionState is TvConnectionState.Connected -> {
+                        powerBg = colors.orange
+                        powerBorder = Color.Transparent
+                        powerIconTint = Color.White
+                    }
+                    isConnectingOrReconnecting -> {
+                        powerBg = colors.orange.copy(alpha = 0.3f)
+                        powerBorder = Color.Transparent
+                        powerIconTint = Color.White
+                        powerAlpha = pulseAlpha
+                    }
+                    activeDevice?.macAddress?.isNotEmpty() == true -> {
+                        powerBg = colors.surfEl
+                        powerBorder = colors.orange.copy(alpha = 0.5f)
+                        powerIconTint = colors.orange
+                    }
+                    else -> {
+                        powerBg = colors.surfEl
+                        powerBorder = colors.bord
+                        powerIconTint = colors.tx1
+                    }
+                }
+
+                // Power (5-states visual representation)
                 Box(
                     modifier = Modifier
                         .size(45.dp)
-                        .background(colors.orange, CircleShape)
+                        .background(powerBg, CircleShape)
+                        .border(1.dp, powerBorder, CircleShape)
+                        .alpha(powerAlpha)
                         .clickable { dispatchCommand(RemoteCommand.Power) },
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.turn_off),
                         contentDescription = stringResource(R.string.power),
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
+                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(powerIconTint)
                     )
                 }
 
-                // Mute
+                val muteIcon = when (localMuteState) {
+                    1 -> R.drawable.mute
+                    else -> R.drawable.volume
+                }
+                val mAlpha = if (localMuteState == -1 || !hasVolume) 0.4f else 1f
+
+                // Mute (3-states: Unknown, Muted, Unmuted)
                 Box(
                     modifier = Modifier
                         .size(45.dp)
                         .background(colors.surfEl, CircleShape)
                         .border(1.dp, colors.bord, CircleShape)
-                        .clickable { dispatchCommand(RemoteCommand.Mute) },
+                        .alpha(mAlpha)
+                        .clickable(enabled = hasVolume) {
+                            if (localMuteState == -1 || localMuteState == 0) {
+                                localMuteState = 1
+                                dispatchCommand(RemoteCommand.MuteOn)
+                            } else {
+                                localMuteState = 0
+                                dispatchCommand(RemoteCommand.MuteOff)
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.mute),
+                        painter = painterResource(id = muteIcon),
                         contentDescription = stringResource(R.string.mute),
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
+                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(colors.tx1)
                     )
                 }
 
@@ -377,7 +480,12 @@ fun RemoteScreen(
                     }
 
                     else -> DPadModeContent(
-                        dispatchCommand = ::dispatchCommand,
+                        dispatchCommand = { cmd ->
+                            if (cmd == RemoteCommand.VolumeUp || cmd == RemoteCommand.VolumeDown) {
+                                if (localMuteState == 1) localMuteState = 0
+                            }
+                            dispatchCommand(cmd)
+                        },
                         capabilities = capabilities
                     )
                 }

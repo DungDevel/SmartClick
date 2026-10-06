@@ -28,6 +28,7 @@ sealed class RemoteUiEvent {
     object CommandNotSupported : RemoteUiEvent()
     object CommandNotConnected : RemoteUiEvent()
     object CommandFailed : RemoteUiEvent()
+    object WolSent : RemoteUiEvent()
 }
 
 @HiltViewModel
@@ -114,6 +115,15 @@ class RemoteViewModel @Inject constructor(
 
     fun sendCommand(command: RemoteCommand) {
         viewModelScope.launch {
+            if (command == RemoteCommand.Power && connectionState.value !is TvConnectionState.Connected) {
+                // Trigger Wake-on-LAN if device not connected but we have a MAC
+                activeDevice.value?.macAddress?.let { mac ->
+                    com.example.smartclick.app.domain.connection.WakeOnLan.wake(mac)
+                    _uiEvents.tryEmit(RemoteUiEvent.WolSent)
+                    return@launch
+                }
+            }
+
             val result = sendCommandUseCase(command)
             val now = System.currentTimeMillis()
             if (now - lastToastTime > 2000L) { // Debounce toasts 2s

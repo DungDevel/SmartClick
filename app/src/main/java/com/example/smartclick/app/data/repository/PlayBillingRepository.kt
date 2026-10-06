@@ -58,9 +58,13 @@ class PlayBillingRepository @Inject constructor(
         val weeklyPhases = weeklyDetails?.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList
         val weeklyPrice = weeklyPhases?.firstOrNull()?.formattedPrice ?: "$2.99"
 
+        val lifetimeDetails = productDetailsMap["lifetime"]
+        val lifetimePrice = lifetimeDetails?.oneTimePurchaseOfferDetails?.formattedPrice ?: "$49.99"
+
         return listOf(
             PricingPlan("weekly", "Weekly", weeklyPrice, "per week"),
-            PricingPlan("annual", "Annual", annualPrice, "per year", isBestValue = true)
+            PricingPlan("annual", "Annual", annualPrice, "per year", isBestValue = true),
+            PricingPlan("lifetime", "Lifetime", lifetimePrice, "one-time")
         )
     }
 
@@ -82,18 +86,19 @@ class PlayBillingRepository @Inject constructor(
             return
         }
 
-        val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
-        if (offerToken == null) {
-            _billingMessages.tryEmit("Lỗi cấu hình gói: Không có offerToken")
-            return
+        val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
+            .setProductDetails(productDetails)
+
+        if (productDetails.productType == BillingClient.ProductType.SUBS) {
+            val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
+            if (offerToken == null) {
+                _billingMessages.tryEmit("Lỗi cấu hình gói: Không có offerToken")
+                return
+            }
+            productDetailsParamsBuilder.setOfferToken(offerToken)
         }
 
-        val productDetailsParamsList = listOf(
-            BillingFlowParams.ProductDetailsParams.newBuilder()
-                .setProductDetails(productDetails)
-                .setOfferToken(offerToken)
-                .build()
-        )
+        val productDetailsParamsList = listOf(productDetailsParamsBuilder.build())
         val billingFlowParams = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(productDetailsParamsList)
             .build()
@@ -144,6 +149,10 @@ class PlayBillingRepository @Inject constructor(
                 QueryProductDetailsParams.Product.newBuilder()
                     .setProductId("weekly")
                     .setProductType(BillingClient.ProductType.SUBS)
+                    .build(),
+                QueryProductDetailsParams.Product.newBuilder()
+                    .setProductId("lifetime")
+                    .setProductType(BillingClient.ProductType.INAPP)
                     .build()
             )
             val params = QueryProductDetailsParams.newBuilder().setProductList(productList).build()
@@ -160,17 +169,28 @@ class PlayBillingRepository @Inject constructor(
     private fun queryPurchases() {
         applicationScope.launch {
             // M3 Note: Play Billing Library requires you to query both INAPP and SUBS if you offer both.
-            // Currently we only check SUBS.
-            val params = QueryPurchasesParams.newBuilder()
+            val subsParams = QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.SUBS)
                 .build()
 
-            billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
+            val inappParams = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+
+            billingClient.queryPurchasesAsync(subsParams) { billingResult, subsPurchases ->
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    processPurchases(purchases)
+                    billingClient.queryPurchasesAsync(inappParams) { inappResult, inappPurchases ->
+                        if (inappResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                            val allPurchases = (subsPurchases + inappPurchases).distinct()
+                            processPurchases(allPurchases)
+                        } else {
+                            Log.e(TAG, "Lỗi queryPurchases INAPP: ${inappResult.debugMessage}")
+                            handleBillingError(inappResult.responseCode, "queryPurchases INAPP")
+                        }
+                    }
                 } else {
-                    Log.e(TAG, "Lỗi queryPurchases: ${billingResult.debugMessage}")
-                    handleBillingError(billingResult.responseCode, "queryPurchases")
+                    Log.e(TAG, "Lỗi queryPurchases SUBS: ${billingResult.debugMessage}")
+                    handleBillingError(billingResult.responseCode, "queryPurchases SUBS")
                 }
             }
         }
