@@ -32,6 +32,7 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils
 
 class AndroidTvRemoteSession(
     private val ipAddress: String,
@@ -53,6 +54,10 @@ class AndroidTvRemoteSession(
     private var sessionScope: CoroutineScope? = null
 
     override suspend fun connect(device: TvDevice): Result<Unit> = withContext(Dispatchers.IO) {
+        if (!NetworkSecurityUtils.isPrivateLanAddress(device.ipAddress)) {
+            _connectionState.value = TvConnectionState.Failed("Connection rejected: SSRF protection (Public IP skipped)")
+            return@withContext Result.failure(Exception("Connection rejected: SSRF protection"))
+        }
         _connectionState.value = TvConnectionState.Connecting(ConnectProgress.CONNECTING_SOCKET)
         this@AndroidTvRemoteSession._device = device
 

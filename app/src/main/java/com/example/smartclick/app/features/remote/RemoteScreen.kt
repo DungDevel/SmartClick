@@ -27,6 +27,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import com.example.smartclick.R
 import com.example.smartclick.app.core.ui.components.NoActiveDeviceState
 import com.example.smartclick.app.core.ui.components.ReconnectBanner
@@ -66,6 +71,16 @@ fun RemoteScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val isLocked by viewModel.isLocked.collectAsState()
 
+    val recordAudioPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.startListening()
+        } else {
+            android.widget.Toast.makeText(context, context.getString(R.string.voice_not_supported), android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
     LaunchedEffect(viewModel) {
         viewModel.uiEvents.collect { event ->
             when (event) {
@@ -82,6 +97,18 @@ fun RemoteScreen(
                 }
                 RemoteUiEvent.WolSent -> {
                     android.widget.Toast.makeText(context, context.getString(R.string.wol_sent), android.widget.Toast.LENGTH_SHORT).show()
+                }
+                RemoteUiEvent.VoicePremiumRequired -> {
+                    android.widget.Toast.makeText(context, context.getString(R.string.voice_premium_required), android.widget.Toast.LENGTH_SHORT).show()
+                }
+                RemoteUiEvent.VoiceNotSupportedError -> {
+                    android.widget.Toast.makeText(context, context.getString(R.string.command_not_supported), android.widget.Toast.LENGTH_SHORT).show()
+                }
+                RemoteUiEvent.VoiceUnrecognizedError -> {
+                    android.widget.Toast.makeText(context, context.getString(R.string.voice_unrecognized), android.widget.Toast.LENGTH_SHORT).show()
+                }
+                is RemoteUiEvent.VoiceError -> {
+                    android.widget.Toast.makeText(context, (event as RemoteUiEvent.VoiceError).message, android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -491,7 +518,30 @@ fun RemoteScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                BottomActions()
+
+                val speechState by viewModel.speechState.collectAsState()
+
+                BottomActions(
+                    speechState = speechState,
+                    onStartVoice = {
+                        if (isHapticEnabled) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        }
+                        val hasPerm = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+
+                        if (hasPerm) {
+                            viewModel.startListening()
+                        } else {
+                            recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
+                    },
+                    onStopVoice = {
+                        viewModel.stopListening()
+                    }
+                )
             }
                 }
 

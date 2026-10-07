@@ -144,7 +144,13 @@ class LgWebOsDriver @Inject constructor() : IProtocolDriver {
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                trySend(PairingStep.Failed(PairingFailure.Network(t.message ?: "WS Failure")))
+                val msg = t.message ?: "WS Failure"
+                if (msg.contains("Connection refused", ignoreCase = true) || msg.contains("Connection reset", ignoreCase = true) || msg.contains("Socket closed", ignoreCase = true)) {
+                    trySend(PairingStep.Instruction("pairing_network_control_disabled"))
+                    trySend(PairingStep.Failed(PairingFailure.NetworkControlDisabled("pairing_network_control_disabled")))
+                } else {
+                    trySend(PairingStep.Failed(PairingFailure.Network(msg)))
+                }
                 close()
             }
         }

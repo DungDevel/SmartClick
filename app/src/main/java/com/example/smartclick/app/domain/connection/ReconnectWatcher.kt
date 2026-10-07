@@ -27,8 +27,8 @@ class ReconnectWatcher @Inject constructor(
     private var isReconnecting = false
     private val mutex = Mutex()
 
-    private val FAILURE_THRESHOLD = 3
-    private val MAX_ATTEMPTS = 10
+    private val FAILURE_THRESHOLD = 2
+    private val MAX_ATTEMPTS = 5
 
     fun onCommandResult(success: Boolean) {
         scope.launch {
@@ -60,13 +60,13 @@ class ReconnectWatcher @Inject constructor(
 
         scope.launch {
             var attempt = 1
-            var delayMs = 1000L
+            var delayMs = 1500L
 
             while (attempt <= MAX_ATTEMPTS) {
                 mutex.withLock {
                     if (!isReconnecting) return@launch
                 }
-                
+
                 activeTvSession.setConnectionState(TvConnectionState.Reconnecting(attempt))
 
                 // Wait for the backoff period
@@ -85,7 +85,7 @@ class ReconnectWatcher @Inject constructor(
                 }
 
                 attempt++
-                delayMs = min(delayMs * 2, 30000L) // Exponential backoff, cap at 30s
+                delayMs = min(delayMs * 2, 10000L) // Exponential backoff, cap at 10s
             }
 
             // If we've reached here, all attempts failed

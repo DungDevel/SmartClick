@@ -1,0 +1,14 @@
+--- app/src/test/java/com/example/smartclick/app/features/remote/RemoteViewModelTest.kt
++++ app/src/test/java/com/example/smartclick/app/features/remote/RemoteViewModelTest.kt
+@@ -155,6 +155,11 @@
+             activeTvSession,
+             settingsRepository,
+             wifiNetworkProvider,
++            speechToTextEngine,
++            intentParser,
++            processVoiceCommandUseCase,
++            featureGate,
++            subscriptionRepository,
+             savedStateHandle
+         )
+ 

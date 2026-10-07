@@ -18,6 +18,7 @@ import okhttp3.WebSocketListener
 import org.json.JSONObject
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
+import com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils
 
 class LgWebOsController(
     private val clientKey: String?,
@@ -48,6 +49,10 @@ class LgWebOsController(
     private val pendingRequests = mutableMapOf<String, kotlinx.coroutines.CancellableContinuation<JSONObject>>()
 
     override suspend fun connect(device: TvDevice): Result<Unit> = suspendCancellableCoroutine { cont ->
+        if (!NetworkSecurityUtils.isPrivateLanAddress(device.ipAddress)) {
+            cont.resume(Result.failure(Exception("Connection rejected: SSRF protection (Public IP skipped)")))
+            return@suspendCancellableCoroutine
+        }
         if (_connectionState.value is TvConnectionState.Connected) {
             cont.resume(Result.success(Unit))
             return@suspendCancellableCoroutine

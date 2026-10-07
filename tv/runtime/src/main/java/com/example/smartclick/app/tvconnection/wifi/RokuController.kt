@@ -27,6 +27,7 @@ import java.net.URLEncoder
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.math.abs
+import com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils
 
 class RokuController @Inject constructor(
     client: OkHttpClient
@@ -54,7 +55,7 @@ class RokuController @Inject constructor(
     private val swipeThreshold = 50f
 
     override suspend fun connect(device: TvDevice): Result<Unit> {
-        if (!isPrivateLanAddress(device.ipAddress)) {
+        if (!NetworkSecurityUtils.isPrivateLanAddress(device.ipAddress)) {
             val err = "Invalid address: not a private LAN IP"
             _connectionState.value = TvConnectionState.Failed(err)
             Log.w(TAG, "Rejected non-LAN address: ${device.ipAddress}")
@@ -278,15 +279,6 @@ class RokuController @Inject constructor(
         }
     }
 
-    private fun isPrivateLanAddress(ip: String): Boolean {
-        return try {
-            val addr = InetAddress.getByName(ip)
-            addr.isSiteLocalAddress || addr.isLinkLocalAddress || ip.startsWith("192.168.") || ip.startsWith("10.") // fallback manual check
-        } catch (e: Exception) {
-            Log.w(TAG, "Could not parse IP address: $ip", e)
-            false
-        }
-    }
 
     private fun mapCommandToRokuKey(cmd: RemoteCommand): String? {
         return when (cmd) {

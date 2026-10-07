@@ -22,10 +22,19 @@ import com.example.smartclick.R
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import androidx.compose.ui.res.stringResource
 
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.input.pointer.pointerInput
+import com.example.smartclick.app.domain.voice.SpeechState
+
 @Composable
-fun BottomActions() {
+fun BottomActions(
+    speechState: SpeechState = SpeechState.Idle,
+    onStartVoice: () -> Unit = {},
+    onStopVoice: () -> Unit = {}
+) {
     val colors = SmartClickThemeTokens.colors
-    
+
 
     // Delete / Shot / Config
     Row(
@@ -70,16 +79,33 @@ fun BottomActions() {
     }
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Voice Search is hidden until P9 is implemented
-    /*
+    val isListening = speechState is SpeechState.Listening || speechState is SpeechState.Processing
+    val voiceTextStr = when (speechState) {
+        is SpeechState.Idle -> stringResource(R.string.voice_search)
+        is SpeechState.Listening -> "Listening..."
+        is SpeechState.Processing -> "Processing: ${speechState.partialText}"
+        is SpeechState.Result -> "Result: ${speechState.text}"
+        is SpeechState.Error -> "Error: ${speechState.message}"
+    }
+
+    val boxColor = if (isListening) colors.acc.copy(alpha = 0.3f) else colors.acc.copy(alpha = 0.15f)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(56.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(colors.acc.copy(alpha = 0.15f))
+            .background(boxColor)
             .border(1.dp, colors.acc, RoundedCornerShape(12.dp))
-            .clickable {  },
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        onStartVoice()
+                        tryAwaitRelease()
+                        onStopVoice()
+                    }
+                )
+            },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -87,16 +113,16 @@ fun BottomActions() {
             painter = painterResource(id = R.drawable.microphone),
             contentDescription = stringResource(R.string.voice_search),
             tint = colors.acc,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = stringResource(R.string.voice_search),
-            color = colors.acc,
+            text = voiceTextStr,
+            color = colors.tx1,
             fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1
         )
     }
-    */
     Spacer(modifier = Modifier.height(24.dp))
 }

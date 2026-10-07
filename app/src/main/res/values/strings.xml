@@ -73,6 +73,9 @@
     <string name="mute">Mute</string>
     <string name="lock">Lock</string>
     <string name="voice_search">Voice Search</string>
+    <string name="voice_premium_required">Voice command requires Premium</string>
+    <string name="voice_unrecognized">Voice command not recognized</string>
+    <string name="voice_not_supported">Microphone permission required for Voice Command</string>
     <string name="vol">Vol</string>
     <string name="ch">Ch</string>
     <string name="shot">Shot</string>

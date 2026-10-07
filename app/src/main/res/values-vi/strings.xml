@@ -77,6 +77,9 @@
     <string name="mute">Tắt tiếng</string>
     <string name="lock">Khóa</string>
     <string name="voice_search">Tìm kiếm giọng nói</string>
+    <string name="voice_premium_required">Tính năng giọng nói yêu cầu gói Premium</string>
+    <string name="voice_unrecognized">Không nhận dạng được lệnh thoại</string>
+    <string name="voice_not_supported">Cần cấp quyền micro để sử dụng Voice Command</string>
     <string name="vol">âm lượng</string>
     <string name="ch">Kênh</string>
     <string name="shot">Chụp</string>

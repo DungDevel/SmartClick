@@ -12,23 +12,39 @@ import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.TvConnectionState
 import com.example.smartclick.app.domain.connection.NetworkState
 import com.example.smartclick.app.domain.connection.IWifiNetworkProvider
+import com.example.smartclick.app.domain.model.SubscriptionPlan
+import com.example.smartclick.app.domain.policy.FeatureGate
+import com.example.smartclick.app.domain.policy.PremiumFeature
+import com.example.smartclick.app.domain.usecase.ProcessVoiceCommandUseCase
+import com.example.smartclick.app.domain.usecase.VoiceCommandResult
+import com.example.smartclick.app.domain.voice.IntentParser
+import com.example.smartclick.app.domain.voice.SpeechState
+import com.example.smartclick.app.domain.voice.SpeechToTextEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+import com.example.smartclick.app.domain.repository.ISubscriptionRepository
 
 sealed class RemoteUiEvent {
     object CommandNotSupported : RemoteUiEvent()
     object CommandNotConnected : RemoteUiEvent()
     object CommandFailed : RemoteUiEvent()
     object WolSent : RemoteUiEvent()
+    object VoiceNotSupportedError : RemoteUiEvent()
+    object VoiceUnrecognizedError : RemoteUiEvent()
+    data class VoiceError(val message: String) : RemoteUiEvent()
+    object VoicePremiumRequired : RemoteUiEvent()
 }
 
 @HiltViewModel
@@ -37,6 +53,11 @@ class RemoteViewModel @Inject constructor(
     private val activeTvSession: IActiveTvSession,
     private val settingsRepository: ISettingsRepository,
     private val wifiNetworkProvider: IWifiNetworkProvider,
+    private val speechToTextEngine: SpeechToTextEngine,
+    private val intentParser: IntentParser,
+    private val processVoiceCommandUseCase: ProcessVoiceCommandUseCase,
+    private val featureGate: FeatureGate,
+    private val subscriptionRepository: ISubscriptionRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -104,6 +125,50 @@ class RemoteViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = true
         )
+
+    val speechState: StateFlow<SpeechState> = speechToTextEngine.state
+
+    init {
+        viewModelScope.launch {
+            speechToTextEngine.state.collect { state ->
+                when (state) {
+                    is SpeechState.Result -> processVoiceResult(state.text)
+                    is SpeechState.Error -> {
+                        _uiEvents.tryEmit(RemoteUiEvent.VoiceError(state.message))
+                    }
+                    else -> {}
+                }
+            }
+        }
+    }
+
+    fun startListening() {
+        viewModelScope.launch {
+            val userPlan = subscriptionRepository.currentPlan.first()
+            val isVoiceAllowed = featureGate.isFeatureAllowed(PremiumFeature.VOICE, userPlan)
+            if (isVoiceAllowed) {
+                speechToTextEngine.startListening()
+            } else {
+                _uiEvents.tryEmit(RemoteUiEvent.VoicePremiumRequired)
+            }
+        }
+    }
+
+    fun stopListening() {
+        speechToTextEngine.stopListening()
+    }
+
+    private suspend fun processVoiceResult(text: String) {
+        val intent = intentParser.parse(text)
+        val result = processVoiceCommandUseCase(intent)
+        when (result) {
+            VoiceCommandResult.NOT_CONNECTED -> _uiEvents.tryEmit(RemoteUiEvent.CommandNotConnected)
+            VoiceCommandResult.NOT_SUPPORTED -> _uiEvents.tryEmit(RemoteUiEvent.CommandNotSupported)
+            VoiceCommandResult.FAILED -> _uiEvents.tryEmit(RemoteUiEvent.CommandFailed)
+            VoiceCommandResult.UNRECOGNIZED -> _uiEvents.tryEmit(RemoteUiEvent.VoiceUnrecognizedError)
+            VoiceCommandResult.SUCCESS -> { /* Handled successfully */ }
+        }
+    }
 
     /** Current WiFi state — UI can show a banner when WiFi drops. */
     val networkState: StateFlow<NetworkState> = wifiNetworkProvider.networkState

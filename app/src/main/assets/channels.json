@@ -1,0 +1,32 @@
+[
+  {
+    "id": "vtv1",
+    "name": "VTV1",
+    "channel_number": "1",
+    "keywords": ["vtv1", "v t v 1", "kênh một", "vê tê vê 1", "vê tê vê một"]
+  },
+  {
+    "id": "vtv2",
+    "name": "VTV2",
+    "channel_number": "2",
+    "keywords": ["vtv2", "v t v 2", "kênh hai", "vê tê vê 2", "vê tê vê hai"]
+  },
+  {
+    "id": "vtv3",
+    "name": "VTV3",
+    "channel_number": "3",
+    "keywords": ["vtv3", "v t v 3", "kênh ba", "vê tê vê 3", "vê tê vê ba"]
+  },
+  {
+    "id": "vtv6",
+    "name": "VTV6",
+    "channel_number": "6",
+    "keywords": ["vtv6", "v t v 6", "kênh sáu", "vê tê vê 6", "vê tê vê sáu"]
+  },
+  {
+    "id": "htv7",
+    "name": "HTV7",
+    "channel_number": "7",
+    "keywords": ["htv7", "h t v 7", "kênh htv", "hát tê vê 7", "hát tê vê bảy"]
+  }
+]

@@ -17,6 +17,7 @@ import okhttp3.WebSocketListener
 import org.json.JSONObject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils
 
 class SamsungTizenController(
     private val appNameBase64: String,
@@ -41,6 +42,10 @@ class SamsungTizenController(
     )
 
     override suspend fun connect(device: TvDevice): Result<Unit> = suspendCoroutine { cont ->
+        if (!NetworkSecurityUtils.isPrivateLanAddress(device.ipAddress)) {
+            cont.resume(Result.failure(Exception("Connection rejected: SSRF protection (Public IP skipped)")))
+            return@suspendCoroutine
+        }
         if (_connectionState.value is TvConnectionState.Connected) {
             cont.resume(Result.success(Unit))
             return@suspendCoroutine

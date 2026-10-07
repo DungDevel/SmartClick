@@ -11,6 +11,13 @@ import com.example.smartclick.app.domain.model.ThemeMode
 import com.example.smartclick.app.domain.repository.ISettingsRepository
 import com.example.smartclick.app.domain.usecase.SendCommandResult
 import com.example.smartclick.app.domain.usecase.SendCommandUseCase
+import com.example.smartclick.app.domain.usecase.ProcessVoiceCommandUseCase
+import com.example.smartclick.app.domain.voice.SpeechToTextEngine
+import com.example.smartclick.app.domain.voice.IntentParser
+import com.example.smartclick.app.domain.policy.FeatureGate
+import com.example.smartclick.app.domain.repository.ISubscriptionRepository
+import com.example.smartclick.app.domain.model.SubscriptionPlan
+import com.example.smartclick.app.domain.voice.SpeechState
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -38,6 +45,11 @@ class RemoteViewModelTest {
     private lateinit var activeTvSession: IActiveTvSession
     private lateinit var settingsRepository: ISettingsRepository
     private lateinit var wifiNetworkProvider: IWifiNetworkProvider
+    private lateinit var speechToTextEngine: SpeechToTextEngine
+    private lateinit var intentParser: IntentParser
+    private lateinit var processVoiceCommandUseCase: ProcessVoiceCommandUseCase
+    private lateinit var featureGate: FeatureGate
+    private lateinit var subscriptionRepository: ISubscriptionRepository
     private lateinit var savedStateHandle: SavedStateHandle
 
     private lateinit var viewModel: RemoteViewModel
@@ -70,12 +82,23 @@ class RemoteViewModelTest {
         savedStateHandle = SavedStateHandle()
 
         sendCommandUseCase = mockk()
+        speechToTextEngine = mockk(relaxed = true)
+        every { speechToTextEngine.state } returns MutableStateFlow(SpeechState.Idle)
+        intentParser = mockk(relaxed = true)
+        processVoiceCommandUseCase = mockk(relaxed = true)
+        featureGate = mockk(relaxed = true)
+        subscriptionRepository = mockk(relaxed = true)
 
         viewModel = RemoteViewModel(
             sendCommandUseCase,
             activeTvSession,
             settingsRepository,
             wifiNetworkProvider,
+            speechToTextEngine,
+            intentParser,
+            processVoiceCommandUseCase,
+            featureGate,
+            subscriptionRepository,
             savedStateHandle
         )
     }
@@ -151,6 +174,11 @@ class RemoteViewModelTest {
             activeTvSession,
             settingsRepository,
             wifiNetworkProvider,
+            speechToTextEngine,
+            intentParser,
+            processVoiceCommandUseCase,
+            featureGate,
+            subscriptionRepository,
             savedStateHandle
         )
 
