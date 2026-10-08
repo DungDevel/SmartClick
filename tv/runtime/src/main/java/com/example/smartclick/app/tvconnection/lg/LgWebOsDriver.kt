@@ -26,8 +26,14 @@ import java.security.SecureRandom
 import javax.inject.Inject
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
+import com.example.smartclick.app.tvconnection.cast.LocalMediaServer
+import com.example.smartclick.app.tvconnection.lg.cast.LgWebOsCastController
+import com.example.smartclick.app.tvconnection.lg.cast.OkHttpLgWebOsCastTransport
+import com.example.smartclick.app.domain.connection.ICastController
 
-class LgWebOsDriver @Inject constructor() : IProtocolDriver {
+class LgWebOsDriver @Inject constructor(
+    private val localMediaServer: LocalMediaServer
+) : IProtocolDriver {
     override val protocol: TvProtocol = TvProtocol.LG_WEBOS
 
     override val capabilities: Set<TvCapability> = setOf(
@@ -38,7 +44,11 @@ class LgWebOsDriver @Inject constructor() : IProtocolDriver {
         TvCapability.CHANNEL_CONTROL,
         TvCapability.BACKSPACE,
         TvCapability.MUTE_ON_OFF,
-        TvCapability.POWER_OFF
+        TvCapability.POWER_OFF,
+        TvCapability.CAST_IMAGE,
+        TvCapability.CAST_VIDEO,
+        TvCapability.CAST_AUDIO,
+        TvCapability.CAST_PLAYBACK
     )
 
     private val tofuTrustManager = com.example.smartclick.app.tvconnection.security.PinningTrustManager(expectedSha256 = null, isPairing = true)
@@ -181,5 +191,29 @@ class LgWebOsDriver @Inject constructor() : IProtocolDriver {
         }
 
         return LgWebOsController(clientKey, controllerClient)
+    }
+
+    override fun createCastController(device: TvDevice, credentials: Credentials?): ICastController {
+        val clientKey = credentials?.protocolValues?.get("client-key")
+        val certSha256 = credentials?.protocolValues?.get("cert_sha256")
+
+        val transportClient = if (certSha256 != null) {
+            try {
+                val trustManager = com.example.smartclick.app.tvconnection.security.PinningTrustManager(certSha256)
+                val newSslContext = javax.net.ssl.SSLContext.getInstance("TLSv1.2").apply {
+                    init(null, arrayOf<javax.net.ssl.TrustManager>(trustManager), java.security.SecureRandom())
+                }
+                pairingClient.newBuilder()
+                    .sslSocketFactory(newSslContext.socketFactory, trustManager)
+                    .build()
+            } catch (e: Exception) {
+                pairingClient
+            }
+        } else {
+            pairingClient
+        }
+
+        val transport = OkHttpLgWebOsCastTransport(transportClient)
+        return LgWebOsCastController(transport, localMediaServer, device.ipAddress, clientKey)
     }
 }

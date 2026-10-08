@@ -53,6 +53,7 @@ okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0" 
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version = "1.6.1" }
 json = { group = "org.json", name = "json", version = "20240303" }
 play-billing = { group = "com.android.billingclient", name = "billing-ktx", version = "7.0.0" }
+nanohttpd = { group = "org.nanohttpd", name = "nanohttpd", version = "2.3.1" }
 
 protobuf-lite = { group = "com.google.protobuf", name = "protobuf-javalite", version = "3.25.3" }
 [plugins]

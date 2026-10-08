@@ -38,7 +38,12 @@ class SamsungTizenController(
         TvCapability.DIGITS,
         TvCapability.CHANNEL_CONTROL,
         TvCapability.OPEN_SEARCH_UI,
-        TvCapability.POWER_TOGGLE
+        TvCapability.POWER_TOGGLE,
+        TvCapability.CAST_IMAGE,
+        TvCapability.CAST_VIDEO,
+        TvCapability.CAST_AUDIO,
+        TvCapability.CAST_PLAYBACK,
+        TvCapability.CAST_SEEK
     )
 
     override suspend fun connect(device: TvDevice): Result<Unit> = suspendCoroutine { cont ->

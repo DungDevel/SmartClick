@@ -6,7 +6,12 @@ import com.example.smartclick.app.domain.model.TvApp
 import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.connection.ITvController
+import com.example.smartclick.app.domain.connection.ICastController
 import com.example.smartclick.app.domain.connection.TvConnectionState
+import com.example.smartclick.app.domain.cast.CastPlaybackState
+import com.example.smartclick.app.domain.cast.CastSessionInfo
+import com.example.smartclick.app.domain.cast.CastCommand
+import com.example.smartclick.app.domain.model.CastMediaType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,7 +36,7 @@ import com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils
 
 class RokuController @Inject constructor(
     client: OkHttpClient
-) : ITvController {
+) : ITvController, ICastController {
 
     private val tvClient = client.newBuilder()
         .connectTimeout(1000, TimeUnit.MILLISECONDS)
@@ -44,6 +49,12 @@ class RokuController @Inject constructor(
 
     private var currentDevice: TvDevice? = null
     override val device: TvDevice? get() = currentDevice
+
+    private val _castPlaybackState = MutableStateFlow(CastPlaybackState.IDLE)
+    override val castPlaybackState: StateFlow<CastPlaybackState> = _castPlaybackState.asStateFlow()
+
+    private val _castSessionInfo = MutableStateFlow(CastSessionInfo())
+    override val castSessionInfo: StateFlow<CastSessionInfo> = _castSessionInfo.asStateFlow()
 
     override val capabilities: Set<TvCapability> = RokuDriver.ROKU_CAPABILITIES
 
@@ -279,6 +290,71 @@ class RokuController @Inject constructor(
         }
     }
 
+
+    override suspend fun castMedia(url: String, mimeType: String, type: CastMediaType, title: String): Result<Unit> {
+        val dev = currentDevice ?: return Result.failure(Exception("No active device"))
+        if (_connectionState.value !is TvConnectionState.Connected) return Result.failure(Exception("Not connected"))
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val encodedUrl = URLEncoder.encode(url, "UTF-8")
+                val encodedTitle = URLEncoder.encode(title, "UTF-8")
+                val t = when (type) {
+                    CastMediaType.VIDEO -> "v"
+                    CastMediaType.PHOTO -> "p"
+                    CastMediaType.AUDIO -> "a"
+                }
+
+                val format = mimeType.substringAfterLast("/", "mp4")
+                var reqUrl = "http://${dev.ipAddress}:8060/input/15985?t=$t&u=$encodedUrl&videoName=$encodedTitle"
+
+                if (type == CastMediaType.VIDEO) {
+                    reqUrl += "&videoFormat=$format"
+                } else if (type == CastMediaType.AUDIO) {
+                    reqUrl += "&songFormat=$format&songName=$encodedTitle"
+                }
+
+                postToRoku(reqUrl).also {
+                    if (it.isSuccess) {
+                        _castPlaybackState.value = CastPlaybackState.BUFFERING
+                        _castSessionInfo.value = CastSessionInfo(currentUrl = url)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to cast media to Roku", e)
+                _castPlaybackState.value = CastPlaybackState.ERROR
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun controlCast(command: CastCommand): Result<Unit> {
+        return when (command) {
+            is CastCommand.Play -> sendCommand(RemoteCommand.PlayPause)
+            is CastCommand.Pause -> sendCommand(RemoteCommand.PlayPause) // Roku toggles play/pause with same key
+            is CastCommand.Stop -> {
+                _castPlaybackState.value = CastPlaybackState.IDLE
+                sendCommand(RemoteCommand.Back)
+            } // Stops cast by going back
+            is CastCommand.SeekBy -> {
+                if (command.offsetMs > 0) sendCommand(RemoteCommand.FastForward) else sendCommand(RemoteCommand.Rewind)
+            }
+            is CastCommand.SetVolume -> {
+                // Roku basic ECP does not support direct set volume typically via standard API,
+                // but can potentially loop VolumeUp/Down. Not implemented.
+                Result.failure(Exception("Unsupported cast command on Roku via ECP basic remote"))
+            }
+            is CastCommand.Mute -> sendCommand(RemoteCommand.MuteOn)
+            is CastCommand.Unmute -> sendCommand(RemoteCommand.MuteOff)
+            else -> Result.failure(Exception("Unsupported cast command on Roku via ECP basic remote"))
+        }
+    }
+
+    override suspend fun teardown(): Result<Unit> {
+        _castPlaybackState.value = CastPlaybackState.IDLE
+        _castSessionInfo.value = CastSessionInfo()
+        return sendCommand(RemoteCommand.Back)
+    }
 
     private fun mapCommandToRokuKey(cmd: RemoteCommand): String? {
         return when (cmd) {

@@ -43,7 +43,7 @@ import java.util.UUID
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.AbstractDriverContractTest() {
-    override fun createDriver(): com.example.smartclick.app.domain.connection.IProtocolDriver = LgWebOsDriver()
+    override fun createDriver(): com.example.smartclick.app.domain.connection.IProtocolDriver = LgWebOsDriver(mockk(relaxed = true))
     override fun createDummyDevice(): TvDevice = lgDevice()
 
     @After
@@ -67,7 +67,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun testCreateController() {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         val controller = driver.createController(lgDevice(), Credentials(mapOf("client-key" to "abcdef")))
 
         assertNotNull(controller)
@@ -76,7 +76,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun `createController with cert_sha256 builds pinned controller`() {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         val creds = Credentials(mapOf("client-key" to "abcdef", "cert_sha256" to "a".repeat(64)))
         val controller = driver.createController(lgDevice(), creds)
 
@@ -85,7 +85,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun `createController with null credentials still returns controller`() {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         val controller = driver.createController(lgDevice(), null)
 
         assertNotNull(controller as LgWebOsController)
@@ -97,7 +97,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun `driver declares correct capabilities including BACKSPACE`() {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         assertTrue(driver.capabilities.contains(TvCapability.BACKSPACE))
         assertTrue(driver.capabilities.contains(TvCapability.VOLUME))
         assertTrue(driver.capabilities.contains(TvCapability.POINTER))
@@ -109,7 +109,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun `fingerprint returns null for a different protocol hint`() = runTest {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         val candidate = RawCandidate(
             ipAddress = "192.168.1.50",
             protocolHint = TvProtocol.ROKU_ECP,
@@ -121,7 +121,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun `fingerprint returns HIGH confidence when hint is LG WebOS`() = runTest {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         val candidate = RawCandidate(
             ipAddress = "192.168.1.50",
             protocolHint = TvProtocol.LG_WEBOS,
@@ -140,7 +140,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun `fingerprint detects LG via open port 3001 with LOW confidence`() = runTest {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         val candidate = RawCandidate(
             ipAddress = "192.168.1.50",
             protocolHint = TvProtocol.UNKNOWN,
@@ -159,7 +159,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun `fingerprint returns null when no LG hint and no LG ports`() = runTest {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         val candidate = RawCandidate(
             ipAddress = "192.168.1.50",
             protocolHint = TvProtocol.UNKNOWN,
@@ -175,7 +175,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun `pair emits ConfirmOnTv as the first step`() = runTest {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         val mockClient = mockk<OkHttpClient>()
         val mockWs = mockk<WebSocket>(relaxed = true)
         every { mockClient.newWebSocket(any(), any()) } returns mockWs
@@ -189,7 +189,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun `pair succeeds and returns client-key when TV accepts`() = runTest {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         val mockClient = mockk<OkHttpClient>()
         val mockWs = mockk<WebSocket>(relaxed = true)
         val listenerReady = CompletableDeferred<WebSocketListener>()
@@ -224,7 +224,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun `pair captures server certificate SHA-256 on handshake`() = runTest {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         val mockClient = mockk<OkHttpClient>()
         val mockWs = mockk<WebSocket>(relaxed = true)
         val listenerReady = CompletableDeferred<WebSocketListener>()
@@ -261,7 +261,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun `pair fails with RejectedOnTv when TV sends error`() = runTest {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         val mockClient = mockk<OkHttpClient>()
         val mockWs = mockk<WebSocket>(relaxed = true)
         val listenerReady = CompletableDeferred<WebSocketListener>()
@@ -286,7 +286,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
 
     @Test
     fun `pair fails with Network when socket fails`() = runTest {
-        val driver = LgWebOsDriver()
+        val driver = LgWebOsDriver(mockk(relaxed = true))
         val mockClient = mockk<OkHttpClient>()
         val mockWs = mockk<WebSocket>(relaxed = true)
         val listenerReady = CompletableDeferred<WebSocketListener>()

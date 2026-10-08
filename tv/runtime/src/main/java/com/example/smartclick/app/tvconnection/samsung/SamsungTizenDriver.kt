@@ -29,7 +29,16 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
-class SamsungTizenDriver @Inject constructor() : IProtocolDriver {
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import com.example.smartclick.app.tvconnection.cast.LocalMediaServer
+import com.example.smartclick.app.tvconnection.samsung.dlna.OkHttpSamsungDlnaTransport
+import com.example.smartclick.app.tvconnection.samsung.dlna.SamsungDlnaCastController
+
+class SamsungTizenDriver @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val localMediaServer: LocalMediaServer
+) : IProtocolDriver {
 
     override val protocol: TvProtocol = TvProtocol.SAMSUNG_TIZEN
 
@@ -38,7 +47,12 @@ class SamsungTizenDriver @Inject constructor() : IProtocolDriver {
         TvCapability.DIGITS,
         TvCapability.CHANNEL_CONTROL,
         TvCapability.OPEN_SEARCH_UI,
-        TvCapability.POWER_TOGGLE
+        TvCapability.POWER_TOGGLE,
+        TvCapability.CAST_IMAGE,
+        TvCapability.CAST_VIDEO,
+        TvCapability.CAST_AUDIO,
+        TvCapability.CAST_PLAYBACK,
+        TvCapability.CAST_SEEK
     )
 
     private val applicationName = "SmartClick"
@@ -148,7 +162,7 @@ class SamsungTizenDriver @Inject constructor() : IProtocolDriver {
     override fun createController(device: TvDevice, credentials: Credentials?): ITvController {
         val token = credentials?.protocolValues?.get("token")
         val certSha256 = credentials?.protocolValues?.get("cert_sha256")
-        
+
         val controllerClient = if (certSha256 != null) {
             try {
                 val trustManager = com.example.smartclick.app.tvconnection.security.PinningTrustManager(certSha256)
@@ -164,7 +178,12 @@ class SamsungTizenDriver @Inject constructor() : IProtocolDriver {
         } else {
             okHttpClient
         }
-        
+
         return SamsungTizenController(appNameBase64, token, controllerClient)
+    }
+
+    override fun createCastController(device: TvDevice, credentials: Credentials?): com.example.smartclick.app.domain.connection.ICastController {
+        val dlnaTransport = OkHttpSamsungDlnaTransport(okHttpClient)
+        return SamsungDlnaCastController(context, dlnaTransport, localMediaServer, device.ipAddress)
     }
 }

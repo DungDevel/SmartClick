@@ -38,4 +38,10 @@ interface IProtocolDriver {
      * `TvCredentialStore` (FW-6) qua `TvDevice.credentialsRef`; `null` nếu giao thức không cần.
      */
     fun createController(device: TvDevice, credentials: Credentials?): ITvController
+
+    /**
+     * Optional: Create an ICastController for casting media.
+     * Return null if casting is natively unfulfilled by this driver.
+     */
+    fun createCastController(device: TvDevice, credentials: Credentials?): ICastController? = null
 }

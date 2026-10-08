@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 interface ITvController {
     val connectionState: StateFlow<TvConnectionState>
     val device: TvDevice?
-    
+
     val capabilities: Set<TvCapability>
         get() = emptySet()
 
@@ -20,4 +20,3 @@ interface ITvController {
     suspend fun getApps(): Result<List<TvApp>> = Result.failure(UnsupportedOperationException("Get apps not supported via this protocol yet"))
     suspend fun launchApp(appId: String): Result<Unit> = Result.failure(UnsupportedOperationException("Launch app not supported via this protocol yet"))
 }
-

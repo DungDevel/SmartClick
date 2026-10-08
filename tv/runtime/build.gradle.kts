@@ -36,6 +36,7 @@ dependencies {
     implementation(libs.okhttp3)
     implementation(libs.protobuf.lite)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.nanohttpd)
 
     // Security
     implementation("androidx.security:security-crypto:1.1.0")
