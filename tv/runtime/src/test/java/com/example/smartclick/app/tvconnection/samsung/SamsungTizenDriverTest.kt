@@ -2,6 +2,7 @@ package com.example.smartclick.app.tvconnection.samsung
 
 import android.content.Context
 import android.util.Base64
+import app.cash.turbine.test
 import com.example.smartclick.app.domain.connection.contract.AbstractDriverContractTest
 import com.example.smartclick.app.domain.connection.Credentials
 import com.example.smartclick.app.domain.connection.IProtocolDriver
@@ -12,6 +13,10 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import io.mockk.verify
+import kotlinx.coroutines.test.runTest
+import okhttp3.OkHttpClient
+import okhttp3.WebSocket
 import org.junit.After
 import org.junit.Assert.assertNotNull
 import org.junit.Before
@@ -67,6 +72,22 @@ class SamsungTizenDriverTest : AbstractDriverContractTest() {
         val castController = driver.createCastController(device, credentials)
 
         assertNotNull(castController)
+    }
+
+    @Test
+    fun `pairing flow cancellation closes websocket`() = runTest {
+        val driver = SamsungTizenDriver(context, localMediaServer)
+        val mockClient = mockk<OkHttpClient>()
+        val mockWs = mockk<WebSocket>(relaxed = true)
+        every { mockClient.newWebSocket(any(), any()) } returns mockWs
+        driver.okHttpClient = mockClient
+
+        driver.pair(createDummyDevice()).test {
+            org.junit.Assert.assertEquals(com.example.smartclick.app.domain.connection.PairingStep.ConfirmOnTv(30_000L), awaitItem())
+            cancel()
+        }
+
+        verify { mockWs.close(1000, any()) }
     }
 }
 

@@ -165,9 +165,11 @@ class LgWebOsDriver @Inject constructor(
             }
         }
 
-        pairingClient.newWebSocket(request, listener)
+        val ws = pairingClient.newWebSocket(request, listener)
 
-        awaitClose { }
+        awaitClose {
+            ws.close(1000, "Collector cancelled")
+        }
     }.flowOn(Dispatchers.IO)
 
     override fun createController(device: TvDevice, credentials: Credentials?): ITvController {

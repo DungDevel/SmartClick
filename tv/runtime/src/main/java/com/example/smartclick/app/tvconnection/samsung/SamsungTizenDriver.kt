@@ -64,7 +64,8 @@ class SamsungTizenDriver @Inject constructor(
         init(null, arrayOf<TrustManager>(tofuTrustManager), SecureRandom())
     }
 
-    private val okHttpClient = OkHttpClient.Builder()
+    // Test seam: internal var for unit testing
+    internal var okHttpClient = OkHttpClient.Builder()
         .sslSocketFactory(sslContext.socketFactory, tofuTrustManager)
         .hostnameVerifier { _, _ -> true }
         .build()
@@ -154,9 +155,11 @@ class SamsungTizenDriver @Inject constructor(
             }
         }
 
-        okHttpClient.newWebSocket(request, listener)
+        val ws = okHttpClient.newWebSocket(request, listener)
 
-        awaitClose { }
+        awaitClose {
+            ws.close(1000, "Collector cancelled")
+        }
     }.flowOn(Dispatchers.IO)
 
     override fun createController(device: TvDevice, credentials: Credentials?): ITvController {

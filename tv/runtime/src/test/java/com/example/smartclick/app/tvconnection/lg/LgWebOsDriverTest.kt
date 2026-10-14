@@ -310,4 +310,20 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
             awaitComplete()
         }
     }
+
+    @Test
+    fun `pairing flow cancellation closes websocket`() = runTest {
+        val driver = LgWebOsDriver(mockk(relaxed = true))
+        val mockClient = mockk<OkHttpClient>()
+        val mockWs = mockk<WebSocket>(relaxed = true)
+        every { mockClient.newWebSocket(any(), any()) } returns mockWs
+        driver.pairingClient = mockClient
+
+        driver.pair(lgDevice()).test {
+            assertEquals(PairingStep.ConfirmOnTv(30_000L), awaitItem())
+            cancel()
+        }
+
+        verify { mockWs.close(1000, any()) }
+    }
 }
