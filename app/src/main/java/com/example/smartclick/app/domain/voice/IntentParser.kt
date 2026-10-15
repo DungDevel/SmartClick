@@ -30,11 +30,28 @@ class IntentParser @Inject constructor(
     }
 
     private fun parsePower(normalized: String, rawText: String): VoiceIntent? {
-        if (normalized.matches(".*(tat tivi|tat tv|turn off|power off).*".toRegex())) {
-            return VoiceIntent.TurnOff(rawText)
+        val offKeywords = listOf("tat tivi", "tat tv", "turn off", "power off")
+        for (keyword in offKeywords) {
+            val idx = normalized.indexOf(keyword)
+            if (idx != -1) {
+                val prefix = normalized.substring(0, idx)
+                if (prefix.contains("khong") || prefix.contains("dung") || prefix.contains("chua")) {
+                    continue
+                }
+                return VoiceIntent.TurnOff(rawText)
+            }
         }
-        if (normalized.matches(".*(mo tivi|mo tv|bat tivi|bat tv|turn on|power on|wake up).*".toRegex())) {
-            return VoiceIntent.TurnOn(rawText)
+
+        val onKeywords = listOf("mo tivi", "mo tv", "bat tivi", "bat tv", "turn on", "power on", "wake up")
+        for (keyword in onKeywords) {
+            val idx = normalized.indexOf(keyword)
+            if (idx != -1) {
+                val prefix = normalized.substring(0, idx)
+                if (prefix.contains("khong") || prefix.contains("dung")) {
+                    continue
+                }
+                return VoiceIntent.TurnOn(rawText)
+            }
         }
         return null
     }

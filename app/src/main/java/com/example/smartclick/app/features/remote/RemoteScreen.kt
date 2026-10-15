@@ -81,6 +81,8 @@ fun RemoteScreen(
         }
     }
 
+    var showPowerOffDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(viewModel) {
         viewModel.uiEvents.collect { event ->
             when (event) {
@@ -110,11 +112,12 @@ fun RemoteScreen(
                 is RemoteUiEvent.VoiceError -> {
                     android.widget.Toast.makeText(context, (event as RemoteUiEvent.VoiceError).message, android.widget.Toast.LENGTH_SHORT).show()
                 }
+                RemoteUiEvent.RequestPowerOffConfirmation -> {
+                    showPowerOffDialog = true
+                }
             }
         }
     }
-
-    var showPowerOffDialog by remember { mutableStateOf(false) }
 
     fun dispatchCommand(command: RemoteCommand) {
         if (isLocked) {
@@ -127,6 +130,22 @@ fun RemoteScreen(
 
         if (command == RemoteCommand.PowerOff || (command == RemoteCommand.Power && controlsEnabled)) {
             showPowerOffDialog = true
+            return
+        }
+
+        if (command == RemoteCommand.Power && !controlsEnabled) {
+            val mac = activeDevice?.macAddress
+            if (!mac.isNullOrBlank()) {
+                viewModel.sendCommand(RemoteCommand.Power)
+                return
+            } else {
+                android.widget.Toast.makeText(context, context.getString(R.string.no_tv_connected), android.widget.Toast.LENGTH_SHORT).show()
+                return
+            }
+        }
+
+        if (!controlsEnabled) {
+            android.widget.Toast.makeText(context, context.getString(R.string.no_tv_connected), android.widget.Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -156,13 +175,7 @@ fun RemoteScreen(
 
     // Mute State: 0: Vol, 1: Mute, -1: Unknown
     val hasVolume = capabilities.contains(TvCapability.VOLUME)
-    var localMuteState by remember { mutableStateOf(-1) }
-
-    LaunchedEffect(connectionState) {
-        if (connectionState !is TvConnectionState.Connected) {
-            localMuteState = -1
-        }
-    }
+    val muteState by viewModel.muteState.collectAsState()
 
     Column(
         modifier = Modifier
@@ -318,11 +331,11 @@ fun RemoteScreen(
                     )
                 }
 
-                val muteIcon = when (localMuteState) {
+                val muteIcon = when (muteState) {
                     1 -> R.drawable.mute
                     else -> R.drawable.volume
                 }
-                val mAlpha = if (localMuteState == -1 || !hasVolume) 0.4f else 1f
+                val mAlpha = if (muteState == -1 || !hasVolume) 0.4f else 1f
 
                 // Mute (3-states: Unknown, Muted, Unmuted)
                 Box(
@@ -332,11 +345,9 @@ fun RemoteScreen(
                         .border(1.dp, colors.bord, CircleShape)
                         .alpha(mAlpha)
                         .clickable(enabled = hasVolume) {
-                            if (localMuteState == -1 || localMuteState == 0) {
-                                localMuteState = 1
+                            if (muteState == -1 || muteState == 0) {
                                 dispatchCommand(RemoteCommand.MuteOn)
                             } else {
-                                localMuteState = 0
                                 dispatchCommand(RemoteCommand.MuteOff)
                             }
                         },
@@ -508,9 +519,6 @@ fun RemoteScreen(
 
                     else -> DPadModeContent(
                         dispatchCommand = { cmd ->
-                            if (cmd == RemoteCommand.VolumeUp || cmd == RemoteCommand.VolumeDown) {
-                                if (localMuteState == 1) localMuteState = 0
-                            }
                             dispatchCommand(cmd)
                         },
                         capabilities = capabilities
@@ -543,19 +551,6 @@ fun RemoteScreen(
                     }
                 )
             }
-                }
-
-                if (!controlsEnabled) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clickable(
-                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                android.widget.Toast.makeText(contextForToast, contextForToast.getString(R.string.no_tv_connected), android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                    )
                 }
             }
         }

@@ -1,4 +1,4 @@
-package com.example.smartclick.app.tvconnection.cast.google
+﻿package com.example.smartclick.app.tvconnection.cast.google
 
 import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.CastMessage
 import kotlinx.coroutines.Dispatchers
@@ -161,7 +161,7 @@ class GoogleCastSessionTest {
     @Test
     fun `read loop emits messages to incoming flow`() = runBlocking {
         val session = GoogleCastSession("127.0.0.1", serverPort, mockSslSocketFactory, currentAuthManager)
-        
+
         val serverJob = launch(Dispatchers.IO) {
             val accepted = mockServer.accept()
             serverAcceptedSocket = accepted
@@ -190,7 +190,7 @@ class GoogleCastSessionTest {
     @Test
     fun `EOF terminates read loop and disconnected state safely`() = runBlocking {
         val session = GoogleCastSession("127.0.0.1", serverPort, mockSslSocketFactory, currentAuthManager)
-        
+
         launch(Dispatchers.IO) {
             serverAcceptedSocket = mockServer.accept()
             delay(100) // let it connect
@@ -266,3 +266,4 @@ class GoogleCastSessionTest {
         }
     }
 }
+

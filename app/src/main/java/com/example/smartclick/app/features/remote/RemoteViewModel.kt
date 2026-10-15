@@ -45,6 +45,7 @@ sealed class RemoteUiEvent {
     object VoiceUnrecognizedError : RemoteUiEvent()
     data class VoiceError(val message: String) : RemoteUiEvent()
     object VoicePremiumRequired : RemoteUiEvent()
+    object RequestPowerOffConfirmation : RemoteUiEvent()
 }
 
 @HiltViewModel
@@ -61,7 +62,11 @@ class RemoteViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val _uiEvents = MutableSharedFlow<RemoteUiEvent>(extraBufferCapacity = 1)
+    private val _uiEvents = MutableSharedFlow<RemoteUiEvent>(
+        replay = 0,
+        extraBufferCapacity = 64,
+        onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
+    )
     val uiEvents = _uiEvents.asSharedFlow()
 
     private var lastToastTime = 0L
@@ -88,6 +93,9 @@ class RemoteViewModel @Inject constructor(
 
     private val _isLocked = kotlinx.coroutines.flow.MutableStateFlow(false)
     val isLocked: StateFlow<Boolean> = _isLocked.asStateFlow()
+
+    private val _muteState = MutableStateFlow(-1)
+    val muteState: StateFlow<Int> = _muteState.asStateFlow()
 
     fun toggleScreenLock() {
         if (!_isLocked.value) {
@@ -130,6 +138,13 @@ class RemoteViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            connectionState.collect { state ->
+                if (state !is TvConnectionState.Connected) {
+                    _muteState.value = -1
+                }
+            }
+        }
+        viewModelScope.launch {
             speechToTextEngine.state.collect { state ->
                 when (state) {
                     is SpeechState.Result -> processVoiceResult(state.text)
@@ -160,6 +175,10 @@ class RemoteViewModel @Inject constructor(
 
     private suspend fun processVoiceResult(text: String) {
         val intent = intentParser.parse(text)
+        if (intent is com.example.smartclick.app.domain.model.voice.VoiceIntent.TurnOff) {
+            _uiEvents.tryEmit(RemoteUiEvent.RequestPowerOffConfirmation)
+            return
+        }
         val result = processVoiceCommandUseCase(intent)
         when (result) {
             VoiceCommandResult.NOT_CONNECTED -> _uiEvents.tryEmit(RemoteUiEvent.CommandNotConnected)
@@ -183,13 +202,25 @@ class RemoteViewModel @Inject constructor(
             if (command == RemoteCommand.Power && connectionState.value !is TvConnectionState.Connected) {
                 // Trigger Wake-on-LAN if device not connected but we have a MAC
                 activeDevice.value?.macAddress?.let { mac ->
-                    com.example.smartclick.app.domain.connection.WakeOnLan.wake(mac)
-                    _uiEvents.tryEmit(RemoteUiEvent.WolSent)
+                    val success = com.example.smartclick.app.domain.connection.WakeOnLan.wake(mac)
+                    if (success) {
+                        _uiEvents.tryEmit(RemoteUiEvent.WolSent)
+                    } else {
+                        _uiEvents.tryEmit(RemoteUiEvent.CommandFailed)
+                    }
                     return@launch
                 }
             }
 
             val result = sendCommandUseCase(command)
+            if (result == SendCommandResult.SUCCESS) {
+                when (command) {
+                    RemoteCommand.MuteOn -> _muteState.value = 1
+                    RemoteCommand.MuteOff -> _muteState.value = 0
+                    RemoteCommand.Mute -> _muteState.value = if (_muteState.value == 1) 0 else 1
+                    else -> {}
+                }
+            }
             val now = System.currentTimeMillis()
             if (now - lastToastTime > 2000L) { // Debounce toasts 2s
                 when (result) {

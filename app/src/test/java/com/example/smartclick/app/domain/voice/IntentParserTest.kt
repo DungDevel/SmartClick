@@ -30,6 +30,15 @@ class IntentParserTest {
     }
 
     @Test
+    fun `parse TurnOff with negation returns unrecognized or not turnoff`() {
+        val result1 = parser.parse("đừng tắt TV")
+        assertTrue(result1 !is VoiceIntent.TurnOff)
+
+        val result2 = parser.parse("không tắt TV")
+        assertTrue(result2 !is VoiceIntent.TurnOff)
+    }
+
+    @Test
     fun `parse MuteToggle intent`() {
         val result = parser.parse("tắt tiếng tivi")
         assertTrue(result is VoiceIntent.MuteToggle)

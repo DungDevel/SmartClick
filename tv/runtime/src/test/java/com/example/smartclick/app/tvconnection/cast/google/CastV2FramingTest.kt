@@ -1,4 +1,4 @@
-package com.example.smartclick.app.tvconnection.cast.google
+﻿package com.example.smartclick.app.tvconnection.cast.google
 
 import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.CastMessage
 import com.google.protobuf.InvalidProtocolBufferException
@@ -75,7 +75,7 @@ class CastV2FramingTest {
         val original = createValidMessage()
         val outputStream = ByteArrayOutputStream()
         CastV2Framing.writeFrame(outputStream, original)
-        
+
         // Chunk size = 1 means header needs 4 separate reads
         val chunkedStream = ChunkedInputStream(outputStream.toByteArray(), 1)
         val decoded = CastV2Framing.readFrame(chunkedStream)
@@ -88,7 +88,7 @@ class CastV2FramingTest {
         val original = createValidMessage("A".repeat(100))
         val outputStream = ByteArrayOutputStream()
         CastV2Framing.writeFrame(outputStream, original)
-        
+
         // Chunk size = 10, payload will require ~10 reads
         val chunkedStream = ChunkedInputStream(outputStream.toByteArray(), 10)
         val decoded = CastV2Framing.readFrame(chunkedStream)
@@ -193,3 +193,4 @@ class CastV2FramingTest {
         assertEquals("Zero-length frame is strictly not permitted", e.message)
     }
 }
+

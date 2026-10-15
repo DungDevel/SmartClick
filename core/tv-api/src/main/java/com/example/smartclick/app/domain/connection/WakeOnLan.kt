@@ -8,7 +8,11 @@ import java.net.InetAddress
 import android.util.Log
 
 object WakeOnLan {
-    suspend fun wake(macStr: String) = withContext(Dispatchers.IO) {
+    suspend fun wake(macStr: String?): Boolean = withContext(Dispatchers.IO) {
+        if (macStr.isNullOrBlank()) {
+            Log.e("WOL", "MAC address is empty")
+            return@withContext false
+        }
         try {
             val macBytes = getMacBytes(macStr)
             val bytes = ByteArray(6 + 16 * macBytes.size)

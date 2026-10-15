@@ -81,10 +81,10 @@ class GoogleCastSession(
                     throw SSLPeerUnverifiedException("No peer certificates found during TLS handshake")
                 }
                 val peerCert = certs[0] as java.security.cert.X509Certificate
-                
+
                 // Kiểm tra thời hạn
                 peerCert.checkValidity()
-                
+
                 // Kiểm tra thời hạn không quá 4 ngày theo khuyến nghị của Open Screen (đối với TLS peer cert)
                 val validityDays = (peerCert.notAfter.time - peerCert.notBefore.time) / (1000 * 60 * 60 * 24)
                 if (validityDays > 4) {

@@ -1,4 +1,4 @@
-package com.example.smartclick.app.tvconnection.cast.google
+﻿package com.example.smartclick.app.tvconnection.cast.google
 
 import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.AuthChallenge
 import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.AuthResponse
@@ -44,7 +44,7 @@ class GoogleCastAuthManager(
             // 3. Parse Certificates
             val cf = CertificateFactory.getInstance("X.509")
             val deviceCert = cf.generateCertificate(ByteArrayInputStream(response.clientAuthCertificate.toByteArray())) as X509Certificate
-            
+
             val chain = mutableListOf<X509Certificate>()
             chain.add(deviceCert)
             response.intermediateCertificateList.forEach { certBytes ->
@@ -99,3 +99,4 @@ class GoogleCastAuthManager(
         }
     }
 }
+

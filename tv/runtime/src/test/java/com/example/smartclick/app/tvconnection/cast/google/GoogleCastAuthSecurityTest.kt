@@ -1,4 +1,4 @@
-package com.example.smartclick.app.tvconnection.cast.google
+﻿package com.example.smartclick.app.tvconnection.cast.google
 
 import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.AuthChallenge
 import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.AuthResponse
@@ -43,7 +43,7 @@ class GoogleCastAuthSecurityTest {
         val serialNumber = BigInteger.valueOf(System.currentTimeMillis())
         val notBefore = Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24)
         val notAfter = Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365)
-        
+
         val certBuilder = JcaX509v3CertificateBuilder(
             issuer, serialNumber, notBefore, notAfter, issuer, keyPair.public
         )
@@ -168,3 +168,4 @@ class GoogleCastAuthSecurityTest {
         override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
     }
 }
+

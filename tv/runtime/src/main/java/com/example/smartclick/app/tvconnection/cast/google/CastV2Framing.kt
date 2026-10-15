@@ -1,4 +1,4 @@
-package com.example.smartclick.app.tvconnection.cast.google
+﻿package com.example.smartclick.app.tvconnection.cast.google
 
 import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.CastMessage
 import java.io.EOFException
@@ -7,7 +7,7 @@ import java.io.OutputStream
 
 object CastV2Framing {
 
-    /** 
+    /**
      * Maximum allowed payload length for CastV2 frames to prevent unbounded memory allocation.
      * We set a safe upper bound (256 KB). Standard is usually up to 64KB.
      */
@@ -40,7 +40,7 @@ object CastV2Framing {
     @Throws(EOFException::class, IllegalArgumentException::class)
     fun readFrame(inputStream: InputStream): CastMessage {
         val header = readExactly(inputStream, 4)
-        
+
         // Interpret Big-Endian size
         val length = ((header[0].toInt() and 0xFF) shl 24) or
                      ((header[1].toInt() and 0xFF) shl 16) or
@@ -58,7 +58,7 @@ object CastV2Framing {
         }
 
         val payload = readExactly(inputStream, length)
-        
+
         // Invalid Protocol Buffer formats will throw InvalidProtocolBufferException (subclass of IOException)
         return CastMessage.parseFrom(payload)
     }
@@ -80,3 +80,4 @@ object CastV2Framing {
         return buffer
     }
 }
+

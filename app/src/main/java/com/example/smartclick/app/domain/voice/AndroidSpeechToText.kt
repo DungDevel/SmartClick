@@ -24,12 +24,15 @@ class AndroidSpeechToText @Inject constructor(
     private var speechRecognizer: SpeechRecognizer? = null
 
     override fun startListening() {
-        if (speechRecognizer == null) {
-            initRecognizer()
-        }
+        initRecognizer()
 
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
             _state.value = SpeechState.Error("Speech recognition is not available on this device.")
+            return
+        }
+
+        if (speechRecognizer == null) {
+            _state.value = SpeechState.Error("Speech recognizer failed to initialize.")
             return
         }
 
@@ -57,16 +60,25 @@ class AndroidSpeechToText @Inject constructor(
     }
 
     private fun initRecognizer() {
-        val mainExecutor = android.os.Handler(android.os.Looper.getMainLooper())
-        // Initialization must happen on main thread usually, but let's assume this is safe
-        // to call or handled by DI. We will defer initialization.
-        mainExecutor.post {
-            try {
-                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
-                speechRecognizer?.setRecognitionListener(this)
-            } catch (e: Exception) {
-                _state.value = SpeechState.Error("Failed to initialize speech recognizer.")
+        if (speechRecognizer != null) return
+        try {
+            if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)?.apply {
+                    setRecognitionListener(this@AndroidSpeechToText)
+                }
+            } else {
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    try {
+                        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)?.apply {
+                            setRecognitionListener(this@AndroidSpeechToText)
+                        }
+                    } catch (e: Exception) {
+                        _state.value = SpeechState.Error("Failed to initialize speech recognizer.")
+                    }
+                }
             }
+        } catch (e: Exception) {
+            _state.value = SpeechState.Error("Failed to initialize speech recognizer.")
         }
     }
 

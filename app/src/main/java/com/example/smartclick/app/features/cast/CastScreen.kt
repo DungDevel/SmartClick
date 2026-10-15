@@ -105,38 +105,81 @@ fun CastScreen(
         if (uiState.activeTvName == null && !isReconnecting) {
             NoActiveDeviceState(onNavigateToDevices = onNavigateToDevices)
         } else {
-            // Casting Banner
-            if (uiState.isCasting) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(colors.acDim)
-                    .border(1.dp, colors.acc.copy(alpha = 0.26f))
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
+            // Casting Banner & Playback Controls
+            if (uiState.isCasting || uiState.playbackState != com.example.smartclick.app.domain.cast.CastPlaybackState.IDLE) {
+                Column(
                     modifier = Modifier
-                        .size(8.dp)
-                        .scale(pulseScale)
-                        .background(colors.green, CircleShape)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Text(
-                    text = stringResource(R.string.casting_to_tv, uiState.activeTvName ?: "TV"),
-                    color = colors.tx1,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = stringResource(R.string.stop),
-                    color = colors.red,
-                    fontSize = 12.sp,
-                    modifier = Modifier.clickable { viewModel.stopCasting() }
-                )
+                        .fillMaxWidth()
+                        .background(colors.acDim)
+                        .border(1.dp, colors.acc.copy(alpha = 0.26f))
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .scale(pulseScale)
+                                .background(
+                                    when (uiState.playbackState) {
+                                        com.example.smartclick.app.domain.cast.CastPlaybackState.PLAYING -> colors.green
+                                        com.example.smartclick.app.domain.cast.CastPlaybackState.PAUSED -> Color(0xFFFF9800)
+                                        com.example.smartclick.app.domain.cast.CastPlaybackState.ERROR -> colors.red
+                                        else -> colors.acc
+                                    },
+                                    CircleShape
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = stringResource(R.string.casting_to_tv, uiState.activeTvName ?: "TV") + " • ${uiState.playbackState.name}",
+                            color = colors.tx1,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = stringResource(R.string.stop),
+                            color = colors.red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.clickable { viewModel.stopCasting() }
+                        )
+                    }
+
+                    // Transport Controls Row
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (uiState.playbackState == com.example.smartclick.app.domain.cast.CastPlaybackState.PLAYING) {
+                            Button(
+                                onClick = { viewModel.pause() },
+                                colors = ButtonDefaults.buttonColors(containerColor = colors.acc)
+                            ) {
+                                Text("⏸ Pause", color = Color.White, fontSize = 12.sp)
+                            }
+                        } else {
+                            Button(
+                                onClick = { viewModel.play() },
+                                colors = ButtonDefaults.buttonColors(containerColor = colors.acc)
+                            ) {
+                                Text("▶ Play", color = Color.White, fontSize = 12.sp)
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Button(
+                            onClick = { viewModel.stop() },
+                            colors = ButtonDefaults.buttonColors(containerColor = colors.red)
+                        ) {
+                            Text("⏹ Stop", color = Color.White, fontSize = 12.sp)
+                        }
+                    }
+                }
             }
-        }
 
         // Scrollable Media Grid
         Column(

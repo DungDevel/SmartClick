@@ -5,6 +5,10 @@ import com.example.smartclick.app.tvconnection.androidtv.AndroidTvDriver
 import com.example.smartclick.app.tvconnection.samsung.SamsungTizenDriver
 import com.example.smartclick.app.tvconnection.wifi.RokuDriver
 import com.example.smartclick.app.tvconnection.lg.LgWebOsDriver
+import com.example.smartclick.app.tvconnection.sony.SonyBraviaDriver
+import com.example.smartclick.app.tvconnection.vizio.VizioDriver
+import com.example.smartclick.app.tvconnection.firetv.FireTvDriver
+import com.example.smartclick.app.tvconnection.vidaa.VidaaDriver
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,13 +27,21 @@ object TvDriverModule {
         rokuDriverProvider: Provider<RokuDriver>,
         androidTvDriverProvider: Provider<AndroidTvDriver>,
         samsungTizenDriverProvider: Provider<SamsungTizenDriver>,
-        lgWebOsDriverProvider: Provider<LgWebOsDriver>
+        lgWebOsDriverProvider: Provider<LgWebOsDriver>,
+        sonyBraviaDriverProvider: Provider<SonyBraviaDriver>,
+        vizioDriverProvider: Provider<VizioDriver>,
+        fireTvDriverProvider: Provider<FireTvDriver>,
+        vidaaDriverProvider: Provider<VidaaDriver>
     ): Set<IProtocolDriver> {
         return setOf(
             rokuDriverProvider.get(),
             androidTvDriverProvider.get(),
             samsungTizenDriverProvider.get(),
-            lgWebOsDriverProvider.get()
+            lgWebOsDriverProvider.get(),
+            sonyBraviaDriverProvider.get(),
+            vizioDriverProvider.get(),
+            fireTvDriverProvider.get(),
+            vidaaDriverProvider.get()
         )
     }
 }
