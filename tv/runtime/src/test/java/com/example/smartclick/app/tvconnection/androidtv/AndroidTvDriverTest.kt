@@ -18,6 +18,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.flow.collect
 import java.security.PrivateKey
 import java.security.cert.X509Certificate
 import java.util.UUID
@@ -58,6 +60,22 @@ class AndroidTvDriverTest : AbstractDriverContractTest() {
         assertTrue(driver.capabilities.contains(TvCapability.CAST_IMAGE))
         assertTrue(driver.capabilities.contains(TvCapability.CAST_PLAYBACK))
         assertTrue(driver.capabilities.contains(TvCapability.CAST_SEEK))
+    }
+
+    @Test
+    fun `pair flow handles connection failure without flow context violation`() = runTest {
+        val driver = AndroidTvDriver()
+        val device = createDummyDevice().copy(ipAddress = "127.0.0.1")
+        val steps = mutableListOf<com.example.smartclick.app.domain.connection.PairingStep>()
+        try {
+            driver.pair(device).collect { step ->
+                steps.add(step)
+            }
+        } catch (e: Exception) {
+            println("Caught exception in test: ${e.javaClass.name}: ${e.message}")
+            throw e
+        }
+        assertTrue(steps.any { it is com.example.smartclick.app.domain.connection.PairingStep.Failed })
     }
 
     @Test

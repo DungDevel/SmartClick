@@ -7,6 +7,9 @@ import com.example.smartclick.app.domain.connection.PairingStep
 import com.example.smartclick.app.tvconnection.androidtv.proto.PoloProto
 import com.example.smartclick.app.tvconnection.androidtv.proto.PoloProto.OuterMessage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.withContext
@@ -30,7 +33,8 @@ class AndroidTvPairingSession(
     private val ipAddress: String,
     private val port: Int,
     private val clientName: String,
-    private val serviceName: String
+    private val serviceName: String,
+    private val pinTimeoutMs: Long = 30_000L
 ) {
     private val pinChannel = Channel<String>(Channel.CONFLATED)
 
@@ -137,9 +141,16 @@ class AndroidTvPairingSession(
 
                 // At this point, the TV is showing a PIN.
                 collector.emit(PairingStep.EnterPin(6))
-                val pin = pinChannel.receive()
+                val pin = try {
+                    withTimeout(pinTimeoutMs) {
+                        pinChannel.receive()
+                    }
+                } catch (e: TimeoutCancellationException) {
+                    collector.emit(PairingStep.Failed(PairingFailure.TimedOut))
+                    return@withContext
+                }
 
-                if (pin.length != 6) {
+                if (pin.length != 6 || !pin.all { it in '0'..'9' || it in 'A'..'F' || it in 'a'..'f' }) {
                     collector.emit(PairingStep.Failed(PairingFailure.WrongPin()))
                     return@withContext
                 }
@@ -166,12 +177,18 @@ class AndroidTvPairingSession(
                     collector.emit(PairingStep.Failed(PairingFailure.WrongPin()))
                 }
 
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: TimeoutCancellationException) {
+                collector.emit(PairingStep.Failed(PairingFailure.TimedOut))
             } catch (e: Exception) {
                 collector.emit(PairingStep.Failed(PairingFailure.Network(e.message ?: "Network error")))
             } finally {
-                try {
-                    socket?.close()
-                } catch (e: Exception) {}
+                withContext(NonCancellable) {
+                    try {
+                        socket?.close()
+                    } catch (e: Exception) {}
+                }
             }
         }
     }

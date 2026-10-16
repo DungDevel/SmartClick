@@ -15,7 +15,8 @@ import com.example.smartclick.app.tvconnection.cast.google.GoogleCastAuthManager
 import com.example.smartclick.app.tvconnection.cast.google.GoogleCastController
 import com.example.smartclick.app.tvconnection.security.GoogleCastTrustManager
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.FlowCollector
 import java.security.SecureRandom
 import javax.inject.Inject
 import javax.net.ssl.SSLContext
@@ -56,12 +57,16 @@ class AndroidTvDriver : IProtocolDriver {
         pairingSession?.providePin(pin)
     }
 
-    override fun pair(device: TvDevice): Flow<PairingStep> = flow {
+    override fun pair(device: TvDevice): Flow<PairingStep> = channelFlow {
         val pairingPort = 6467
         val session = AndroidTvPairingSession(device.ipAddress, pairingPort, "SmartClick", "atvremote")
         pairingSession = session
         try {
-            session.startPairing(this)
+            session.startPairing(object : FlowCollector<PairingStep> {
+                override suspend fun emit(value: PairingStep) {
+                    send(value)
+                }
+            })
         } finally {
             pairingSession = null
         }
