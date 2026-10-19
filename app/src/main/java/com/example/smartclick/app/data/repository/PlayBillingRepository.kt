@@ -159,8 +159,14 @@ class PlayBillingRepository @Inject constructor(
             )
             val params = QueryProductDetailsParams.newBuilder().setProductList(productList).build()
             billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    productDetailsMap = productDetailsList.associateBy { it.productId }
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList != null) {
+                    val newMap = mutableMapOf<String, ProductDetails>()
+                    (productDetailsList as List<*>).forEach { details ->
+                        if (details is ProductDetails) {
+                            newMap[details.productId] = details
+                        }
+                    }
+                    productDetailsMap = newMap
                 } else {
                     Log.e(TAG, "Lỗi queryProducts: ${billingResult.debugMessage}")
                 }

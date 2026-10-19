@@ -1,8 +1,8 @@
 [versions]
 # Kotlin 1.9.24 corresponds to KSP 1.9.24-1.0.20
-ksp = "1.9.24-1.0.20"
+ksp = "2.1.0-1.0.29"
 agp = "8.9.1"
-kotlin = "1.9.24"
+kotlin = "2.1.0"
 coreKtx = "1.12.0"
 junit = "4.13.2"
 junitVersion = "1.1.5"
@@ -52,7 +52,7 @@ androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscree
 okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version = "1.6.1" }
 json = { group = "org.json", name = "json", version = "20240303" }
-play-billing = { group = "com.android.billingclient", name = "billing-ktx", version = "7.0.0" }
+play-billing = { group = "com.android.billingclient", name = "billing-ktx", version = "8.0.0" }
 nanohttpd = { group = "org.nanohttpd", name = "nanohttpd", version = "2.3.1" }
 
 protobuf-lite = { group = "com.google.protobuf", name = "protobuf-javalite", version = "3.25.3" }
@@ -63,3 +63,4 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 protobuf = { id = "com.google.protobuf", version = "0.9.4" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

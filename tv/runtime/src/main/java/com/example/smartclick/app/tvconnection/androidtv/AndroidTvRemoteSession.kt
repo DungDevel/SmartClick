@@ -14,12 +14,16 @@ import com.example.smartclick.app.tvconnection.androidtv.proto.RemotePingRespons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.InputStream
 import java.io.OutputStream
 import java.security.KeyStore
@@ -31,7 +35,6 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 import com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils
 
 class AndroidTvRemoteSession(
@@ -51,7 +54,9 @@ class AndroidTvRemoteSession(
 
     private var socket: SSLSocket? = null
     private var outputStream: OutputStream? = null
-    private var sessionScope: CoroutineScope? = null
+    private val sessionScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var readJob: Job? = null
+    private val writeMutex = Mutex()
 
     override suspend fun connect(device: TvDevice): Result<Unit> = withContext(Dispatchers.IO) {
         if (!NetworkSecurityUtils.isPrivateLanAddress(device.ipAddress)) {
@@ -84,8 +89,8 @@ class AndroidTvRemoteSession(
 
             outputStream = socket?.outputStream
 
-            sessionScope = CoroutineScope(Dispatchers.IO + Job())
-            startReadLoop(socket!!.inputStream)
+            readJob?.cancel()
+            readJob = startReadLoop(socket!!.inputStream)
 
             _connectionState.value = TvConnectionState.Connected(device)
             Result.success(Unit)
@@ -96,8 +101,8 @@ class AndroidTvRemoteSession(
         }
     }
 
-    private fun startReadLoop(inputStream: InputStream) {
-        sessionScope?.launch {
+    private fun startReadLoop(inputStream: InputStream): Job {
+        return sessionScope.launch {
             try {
                 while (isActive) {
                     val msg = RemoteMessage.parseDelimitedFrom(inputStream)
@@ -121,9 +126,10 @@ class AndroidTvRemoteSession(
                         .setVal1(req.val1)
                         .build()
                 ).build()
-            sendMsg(resp)
+            runBlocking {
+                sendMsg(resp)
+            }
         } else if (msg.hasRemoteConfigure()) {
-            // Android TV v2 handshake initial configuration
             val resp = RemoteMessage.newBuilder()
                 .setRemoteConfigure(
                     com.example.smartclick.app.tvconnection.androidtv.proto.RemoteConfigure.newBuilder()
@@ -139,28 +145,31 @@ class AndroidTvRemoteSession(
                                 .build()
                         ).build()
                 ).build()
-            sendMsg(resp)
+            runBlocking {
+                sendMsg(resp)
+            }
         } else if (msg.hasRemoteSetActive()) {
-            // Last handshake step to activate session
             val resp = RemoteMessage.newBuilder()
                 .setRemoteSetActive(
                     com.example.smartclick.app.tvconnection.androidtv.proto.RemoteSetActive.newBuilder()
                         .setActive(622)
                         .build()
                 ).build()
-            sendMsg(resp)
+            runBlocking {
+                sendMsg(resp)
+            }
         }
     }
 
     override suspend fun disconnect() {
         withContext(Dispatchers.IO) {
+            readJob?.cancel()
+            readJob = null
             try {
                 socket?.close()
             } catch (e: Exception) {}
             socket = null
             outputStream = null
-            sessionScope?.cancel()
-            sessionScope = null
             _connectionState.value = TvConnectionState.Idle
         }
     }
@@ -190,9 +199,15 @@ class AndroidTvRemoteSession(
         }
     }
 
-    private fun sendMsg(msg: RemoteMessage) {
-        val out = outputStream ?: return
-        msg.writeDelimitedTo(out)
-        out.flush()
+    private suspend fun sendMsg(msg: RemoteMessage) {
+        writeMutex.withLock {
+            val out = outputStream ?: return@withLock
+            try {
+                msg.writeDelimitedTo(out)
+                out.flush()
+            } catch (e: Exception) {
+                Log.e("AndroidTvRemote", "Failed to send message", e)
+            }
+        }
     }
 }

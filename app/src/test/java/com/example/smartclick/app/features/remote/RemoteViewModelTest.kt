@@ -199,4 +199,41 @@ class RemoteViewModelTest {
         job2.cancel()
         job.cancel()
     }
+
+    @Test
+    fun `mute commands update mute state when successful`() = runTest {
+        coEvery { sendCommandUseCase(RemoteCommand.MuteOn) } returns SendCommandResult.SUCCESS
+        viewModel.sendCommand(RemoteCommand.MuteOn)
+        advanceUntilIdle()
+        assertEquals(1, viewModel.muteState.value)
+
+        coEvery { sendCommandUseCase(RemoteCommand.MuteOff) } returns SendCommandResult.SUCCESS
+        viewModel.sendCommand(RemoteCommand.MuteOff)
+        advanceUntilIdle()
+        assertEquals(0, viewModel.muteState.value)
+    }
+
+    @Test
+    fun `screen lock toggles correctly`() = runTest {
+        assertEquals(false, viewModel.isLocked.value)
+        viewModel.toggleScreenLock()
+        assertEquals(true, viewModel.isLocked.value)
+        viewModel.unlockScreen()
+        assertEquals(false, viewModel.isLocked.value)
+    }
+
+    @Test
+    fun `sendCommand emits CommandNotSupported when UseCase returns NOT_SUPPORTED`() = runTest {
+        val command = RemoteCommand.PointerClick
+        coEvery { sendCommandUseCase(command) } returns SendCommandResult.NOT_SUPPORTED
+
+        val events = mutableListOf<RemoteUiEvent>()
+        val job = launch { viewModel.uiEvents.collect { events.add(it) } }
+
+        viewModel.sendCommand(command)
+        advanceUntilIdle()
+
+        assertEquals(true, events.contains(RemoteUiEvent.CommandNotSupported))
+        job.cancel()
+    }
 }
