@@ -270,8 +270,8 @@ class DevicesViewModel @Inject constructor(
     fun logSupportRequest() {
         val unknownList = _unknownDevices.value
         unknownList.forEach { device ->
-            // In a real app this would go to telemetry/analytics.
-            android.util.Log.i("SmartClickSupport", "User requested support for unknown device: ${device.brand} at ${device.ipAddress} - protocol: ${device.protocol}")
+            // Privacy-compliant support request logging: excludes IP and MAC addresses.
+            android.util.Log.i("SmartClickSupport", "User requested support for unknown device brand: ${device.brand} - protocol: ${device.protocol}")
         }
     }
 }

@@ -62,7 +62,9 @@ class LgWebOsDriver @Inject constructor(
     // (giống cách LgWebOsController nhận okHttpClient qua constructor để test được).
     internal var pairingClient: OkHttpClient = OkHttpClient.Builder()
         .sslSocketFactory(sslContext.socketFactory, tofuTrustManager)
-        .hostnameVerifier { _, _ -> true }
+        .hostnameVerifier { hostname, _ ->
+            com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils.isPrivateLanAddress(hostname) || hostname.equals("localhost", ignoreCase = true)
+        }
         .build()
 
     override suspend fun fingerprint(candidate: RawCandidate): Fingerprint? = withContext(Dispatchers.IO) {

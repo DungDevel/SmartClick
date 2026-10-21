@@ -67,7 +67,9 @@ class SamsungTizenDriver @Inject constructor(
     // Test seam: internal var for unit testing
     internal var okHttpClient = OkHttpClient.Builder()
         .sslSocketFactory(sslContext.socketFactory, tofuTrustManager)
-        .hostnameVerifier { _, _ -> true }
+        .hostnameVerifier { hostname, _ ->
+            com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils.isPrivateLanAddress(hostname) || hostname.equals("localhost", ignoreCase = true)
+        }
         .build()
 
     override suspend fun fingerprint(candidate: RawCandidate): Fingerprint? {

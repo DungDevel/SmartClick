@@ -42,12 +42,10 @@ class SendCommandUseCase @Inject constructor(
             }
             is RemoteCommand.PowerOn -> {
                 if (caps.contains(TvCapability.POWER_ON)) command
-                else if (caps.contains(TvCapability.POWER_TOGGLE)) RemoteCommand.Power
                 else null
             }
             is RemoteCommand.PowerOff -> {
                 if (caps.contains(TvCapability.POWER_OFF)) command
-                else if (caps.contains(TvCapability.POWER_TOGGLE)) RemoteCommand.Power
                 else null
             }
             is RemoteCommand.VolumeUp, is RemoteCommand.VolumeDown -> {

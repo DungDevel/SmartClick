@@ -84,13 +84,18 @@ class AndroidTvRemoteSession(
             }
 
             val factory: SSLSocketFactory = sslContext.socketFactory
-            socket = factory.createSocket(ipAddress, port) as SSLSocket
-            socket?.startHandshake()
+            val newSocket = factory.createSocket(ipAddress, port) as SSLSocket
+            newSocket.startHandshake()
 
-            outputStream = socket?.outputStream
+            try {
+                socket?.close()
+            } catch (e: Exception) {}
+
+            socket = newSocket
+            outputStream = newSocket.outputStream
 
             readJob?.cancel()
-            readJob = startReadLoop(socket!!.inputStream)
+            readJob = startReadLoop(newSocket.inputStream, newSocket)
 
             _connectionState.value = TvConnectionState.Connected(device)
             Result.success(Unit)
@@ -101,10 +106,10 @@ class AndroidTvRemoteSession(
         }
     }
 
-    private fun startReadLoop(inputStream: InputStream): Job {
+    private fun startReadLoop(inputStream: InputStream, targetSocket: SSLSocket): Job {
         return sessionScope.launch {
             try {
-                while (isActive) {
+                while (isActive && socket == targetSocket) {
                     val msg = RemoteMessage.parseDelimitedFrom(inputStream)
                     if (msg == null) break
                     handleMessage(msg)
@@ -112,7 +117,9 @@ class AndroidTvRemoteSession(
             } catch (e: Exception) {
                 Log.e("AndroidTvRemote", "Read loop error", e)
             } finally {
-                disconnect()
+                if (socket == targetSocket) {
+                    disconnect()
+                }
             }
         }
     }

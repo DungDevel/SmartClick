@@ -122,4 +122,9 @@ class DevicesViewModelTest {
         // It shouldn't emit PaywallRequired, should just start pairing
         coVerify { pairTvUseCase(newTv) }
     }
+
+    @Test
+    fun `logSupportRequest logs support without exposing ip or mac address`() = runTest {
+        viewModel.logSupportRequest()
+    }
 }

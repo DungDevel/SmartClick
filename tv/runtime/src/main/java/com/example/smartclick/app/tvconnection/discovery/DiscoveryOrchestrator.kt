@@ -13,6 +13,7 @@ import com.example.smartclick.app.domain.model.TvProtocol
 import com.example.smartclick.app.domain.repository.IBrandProfileRepository
 import com.example.smartclick.app.di.IoDispatcher
 import com.example.smartclick.app.domain.connection.IDiscoveryOrchestrator
+import com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +49,10 @@ class DiscoveryOrchestrator @Inject constructor(
      * Tạo một RawCandidate giả lập và chạy fingerprinting.
      */
     override suspend fun identifyManualIp(ip: String): TvDevice? {
+        if (!NetworkSecurityUtils.isPrivateLanAddress(ip)) {
+            Log.w(TAG, "Manual IP rejected by network security policy: $ip")
+            return null
+        }
         Log.d(TAG, "Manually identifying device at IP: $ip")
         val candidate = RawCandidate(
             ipAddress = ip,

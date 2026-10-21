@@ -25,6 +25,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -312,6 +313,14 @@ class DiscoveryOrchestratorTest {
         // We can just verify it doesn't block the next tier or emit after cancellation.
         job.cancel()
         advanceUntilIdle()
+    }
+
+    @Test
+    fun `identifyManualIp rejects public IP address due to security policy`() = runTest {
+        val publicIp = "8.8.8.8"
+        val result = orchestrator.identifyManualIp(publicIp)
+        assertNull(result)
+        coVerify(exactly = 0) { fingerprintEngine.identify(any(), any()) }
     }
 }
 
