@@ -9,6 +9,7 @@ import com.example.smartclick.app.tvconnection.sony.SonyBraviaDriver
 import com.example.smartclick.app.tvconnection.vizio.VizioDriver
 import com.example.smartclick.app.tvconnection.firetv.FireTvDriver
 import com.example.smartclick.app.tvconnection.vidaa.VidaaDriver
+import com.example.smartclick.app.tvconnection.dial.DialDriver
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,7 +32,8 @@ object TvDriverModule {
         sonyBraviaDriverProvider: Provider<SonyBraviaDriver>,
         vizioDriverProvider: Provider<VizioDriver>,
         fireTvDriverProvider: Provider<FireTvDriver>,
-        vidaaDriverProvider: Provider<VidaaDriver>
+        vidaaDriverProvider: Provider<VidaaDriver>,
+        dialDriverProvider: Provider<DialDriver>
     ): Set<IProtocolDriver> {
         return setOf(
             rokuDriverProvider.get(),
@@ -41,7 +43,8 @@ object TvDriverModule {
             sonyBraviaDriverProvider.get(),
             vizioDriverProvider.get(),
             fireTvDriverProvider.get(),
-            vidaaDriverProvider.get()
+            vidaaDriverProvider.get(),
+            dialDriverProvider.get()
         )
     }
 }
