@@ -33,6 +33,11 @@ class DialDriver @Inject constructor(
         TvCapability.INSTALLED_APPS
     )
 
+    private val redirectDisabledClient = httpClient.newBuilder()
+        .followRedirects(false)
+        .followSslRedirects(false)
+        .build()
+
     override suspend fun fingerprint(candidate: RawCandidate): Fingerprint? = withContext(Dispatchers.IO) {
         if (candidate.protocolHint != TvProtocol.UNKNOWN && candidate.protocolHint != TvProtocol.DIAL_ONLY) {
             return@withContext null
@@ -49,7 +54,7 @@ class DialDriver @Inject constructor(
         if (location != null && NetworkSecurityUtils.isPrivateLanAddress(extractHostFromUrl(location) ?: "")) {
             try {
                 val req = Request.Builder().url(location).build()
-                httpClient.newCall(req).execute().use { response ->
+                redirectDisabledClient.newCall(req).execute().use { response ->
                     if (response.isSuccessful) {
                         val body = response.body?.string()
                         if (body != null) {

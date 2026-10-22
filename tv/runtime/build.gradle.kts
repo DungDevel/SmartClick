@@ -49,6 +49,7 @@ dependencies {
     testImplementation(libs.json)
     testImplementation("org.bouncycastle:bcprov-jdk15to18:1.77")
     testImplementation("org.bouncycastle:bcpkix-jdk15to18:1.77")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 }
 
 protobuf {

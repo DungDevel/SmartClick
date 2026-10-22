@@ -36,8 +36,14 @@ class DialController @Inject constructor(
 
     private var applicationUrl: String? = null
 
+    private val redirectDisabledClient = httpClient.newBuilder()
+        .followRedirects(false)
+        .followSslRedirects(false)
+        .build()
+
     override suspend fun connect(device: TvDevice): Result<Unit> = withContext(Dispatchers.IO) {
-        if (!NetworkSecurityUtils.isPrivateLanAddress(device.ipAddress)) {
+        val hostPart = device.ipAddress.substringBefore(":")
+        if (!NetworkSecurityUtils.isPrivateLanAddress(hostPart)) {
             _connectionState.value = TvConnectionState.Failed("Invalid IP address")
             return@withContext Result.failure(SecurityException("IP address is not in private LAN range"))
         }
@@ -46,7 +52,8 @@ class DialController @Inject constructor(
         _connectionState.value = TvConnectionState.Connecting(ConnectProgress.CONNECTING_SOCKET)
 
         try {
-            applicationUrl = "http://${device.ipAddress}:56700/apps/"
+            val portPart = if (device.ipAddress.contains(":")) device.ipAddress.substringAfter(":") else "56700"
+            applicationUrl = "http://$hostPart:$portPart/apps/"
             _connectionState.value = TvConnectionState.Connected(device)
             Result.success(Unit)
         } catch (e: Exception) {
@@ -95,7 +102,7 @@ class DialController @Inject constructor(
                 .post("".toRequestBody(null))
                 .build()
 
-            httpClient.newCall(request).execute().use { response ->
+            redirectDisabledClient.newCall(request).execute().use { response ->
                 if (response.code == 201 || response.code == 200) {
                     Result.success(Unit)
                 } else {

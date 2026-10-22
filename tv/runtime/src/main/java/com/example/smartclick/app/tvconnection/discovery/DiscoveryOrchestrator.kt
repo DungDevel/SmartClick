@@ -17,6 +17,7 @@ import com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -106,15 +107,21 @@ class DiscoveryOrchestrator @Inject constructor(
                                 val probes = tier.protocols.flatMap { probeFactory.createProbesForProtocol(it) }
                                 probes.forEach { probe ->
                                     launch(ioDispatcher) {
-                                        probe.discover(network).collect { candidate ->
-                                            if (processedIps.putIfAbsent(candidate.ipAddress, true) == null) {
-                                                val device = fingerprintEngine.identify(candidate, profile.displayName)
-                                                if (device != null) {
-                                                    if (foundDevices.putIfAbsent(device.id, device) == null) {
-                                                        trySend(foundDevices.values.toList())
+                                        try {
+                                            probe.discover(network).collect { candidate ->
+                                                if (processedIps.putIfAbsent(candidate.ipAddress, true) == null) {
+                                                    val device = fingerprintEngine.identify(candidate, profile.displayName)
+                                                    if (device != null) {
+                                                        if (foundDevices.putIfAbsent(device.id, device) == null) {
+                                                            trySend(foundDevices.values.toList())
+                                                        }
                                                     }
                                                 }
                                             }
+                                        } catch (e: CancellationException) {
+                                            throw e
+                                        } catch (e: Exception) {
+                                            Log.e(TAG, "Probe failed in Tier ${tier.tier}", e)
                                         }
                                     }
                                 }
@@ -127,15 +134,21 @@ class DiscoveryOrchestrator @Inject constructor(
                         val probes = probeFactory.createAllProbes()
                         probes.forEach { probe ->
                             launch(ioDispatcher) {
-                                probe.discover(network).collect { candidate ->
-                                    if (processedIps.putIfAbsent(candidate.ipAddress, true) == null) {
-                                        val device = fingerprintEngine.identify(candidate, null)
-                                        if (device != null) {
-                                            if (foundDevices.putIfAbsent(device.id, device) == null) {
-                                                trySend(foundDevices.values.toList())
+                                try {
+                                    probe.discover(network).collect { candidate ->
+                                        if (processedIps.putIfAbsent(candidate.ipAddress, true) == null) {
+                                            val device = fingerprintEngine.identify(candidate, null)
+                                            if (device != null) {
+                                                if (foundDevices.putIfAbsent(device.id, device) == null) {
+                                                    trySend(foundDevices.values.toList())
+                                                }
                                             }
                                         }
                                     }
+                                } catch (e: CancellationException) {
+                                    throw e
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Probe failed in All plan", e)
                                 }
                             }
                         }
