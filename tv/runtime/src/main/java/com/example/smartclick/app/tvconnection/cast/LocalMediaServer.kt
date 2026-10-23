@@ -63,8 +63,8 @@ class LocalMediaServer @Inject constructor(
         try {
             val ip = getActiveIpv4Address() ?: return Result.failure(Exception("No active IPv4 LAN connection found"))
 
-            // start at random available port (0)
-            val newServer = InternalServer(0)
+            // start at random available port (0) bound specifically to the active LAN IP (I40 security hardening)
+            val newServer = InternalServer(ip, 0)
             newServer.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
             server = newServer
 
@@ -164,7 +164,7 @@ class LocalMediaServer @Inject constructor(
         return true
     }
 
-    private inner class InternalServer(port: Int) : NanoHTTPD(port) {
+    private inner class InternalServer(hostname: String, port: Int) : NanoHTTPD(hostname, port) {
         override fun serve(session: IHTTPSession): Response {
             val uriStr = session.uri
 

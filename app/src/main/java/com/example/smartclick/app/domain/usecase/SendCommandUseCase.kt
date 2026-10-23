@@ -56,12 +56,10 @@ class SendCommandUseCase @Inject constructor(
             }
             is RemoteCommand.MuteOn -> {
                 if (caps.contains(TvCapability.MUTE_ON_OFF)) command
-                else if (caps.contains(TvCapability.VOLUME)) RemoteCommand.Mute
                 else null
             }
             is RemoteCommand.MuteOff -> {
                 if (caps.contains(TvCapability.MUTE_ON_OFF)) command
-                else if (caps.contains(TvCapability.VOLUME)) RemoteCommand.Mute
                 else null
             }
             is RemoteCommand.ChannelUp, is RemoteCommand.ChannelDown -> {

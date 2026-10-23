@@ -238,4 +238,7 @@ một cách dễ dàng</string>
     <string name="billing_not_connected_retrying">Dịch vụ thanh toán chưa kết nối. Đang thử lại...</string>
     <string name="billing_restoring">Đang khôi phục giao dịch...</string>
     <string name="billing_processing_pending">Giao dịch của bạn đang được xử lý (Pending). Bạn sẽ nhận được quyền lợi khi thanh toán hoàn tất.</string>
+    <string name="cast_pause">Tạm dừng</string>
+    <string name="cast_play">Phát</string>
+    <string name="cast_stop">Dừng</string>
 </resources>
