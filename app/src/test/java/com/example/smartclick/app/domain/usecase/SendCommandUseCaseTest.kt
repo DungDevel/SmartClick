@@ -122,15 +122,15 @@ class SendCommandUseCaseTest {
     }
 
     @Test
-    fun `MuteOn should fallback to Mute if only VOLUME supported`() = runTest {
+    fun `MuteOn should return NOT_SUPPORTED if only VOLUME supported`() = runTest {
         every { mockController.capabilities } returns setOf(TvCapability.VOLUME)
         val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
         every { mockController.connectionState } returns connectState
 
         val result = useCase(RemoteCommand.MuteOn)
 
-        assertEquals(SendCommandResult.SUCCESS, result)
-        coVerify { mockController.sendCommand(RemoteCommand.Mute) }
+        assertEquals(SendCommandResult.NOT_SUPPORTED, result)
+        coVerify(exactly = 0) { mockController.sendCommand(any()) }
     }
 
     @Test
@@ -158,15 +158,15 @@ class SendCommandUseCaseTest {
     }
 
     @Test
-    fun `MuteOff should fallback to Mute if only VOLUME supported`() = runTest {
+    fun `MuteOff should return NOT_SUPPORTED if only VOLUME supported`() = runTest {
         every { mockController.capabilities } returns setOf(TvCapability.VOLUME)
         val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac")))
         every { mockController.connectionState } returns connectState
 
         val result = useCase(RemoteCommand.MuteOff)
 
-        assertEquals(SendCommandResult.SUCCESS, result)
-        coVerify { mockController.sendCommand(RemoteCommand.Mute) }
+        assertEquals(SendCommandResult.NOT_SUPPORTED, result)
+        coVerify(exactly = 0) { mockController.sendCommand(any()) }
     }
 
     @Test

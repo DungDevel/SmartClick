@@ -96,6 +96,7 @@ fun RemoteScreen(
                     if (isHapticEnabled) {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
+                    android.widget.Toast.makeText(context, context.getString(R.string.command_failed), android.widget.Toast.LENGTH_SHORT).show()
                 }
                 RemoteUiEvent.WolSent -> {
                     android.widget.Toast.makeText(context, context.getString(R.string.wol_sent), android.widget.Toast.LENGTH_SHORT).show()
@@ -331,6 +332,7 @@ fun RemoteScreen(
                     )
                 }
 
+                val hasMuteOnOff = capabilities.contains(TvCapability.MUTE_ON_OFF)
                 val muteIcon = when (muteState) {
                     1 -> R.drawable.mute
                     else -> R.drawable.volume
@@ -345,10 +347,14 @@ fun RemoteScreen(
                         .border(1.dp, colors.bord, CircleShape)
                         .alpha(mAlpha)
                         .clickable(enabled = hasVolume) {
-                            if (muteState == -1 || muteState == 0) {
-                                dispatchCommand(RemoteCommand.MuteOn)
+                            if (hasMuteOnOff) {
+                                if (muteState == -1 || muteState == 0) {
+                                    dispatchCommand(RemoteCommand.MuteOn)
+                                } else {
+                                    dispatchCommand(RemoteCommand.MuteOff)
+                                }
                             } else {
-                                dispatchCommand(RemoteCommand.MuteOff)
+                                dispatchCommand(RemoteCommand.Mute)
                             }
                         },
                     contentAlignment = Alignment.Center

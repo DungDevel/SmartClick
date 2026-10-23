@@ -214,6 +214,39 @@ class RemoteViewModelTest {
     }
 
     @Test
+    fun `sendCommand SUCCESS does not emit failure events`() = runTest {
+        val command = RemoteCommand.VolumeUp
+        coEvery { sendCommandUseCase(command) } returns SendCommandResult.SUCCESS
+
+        val events = mutableListOf<RemoteUiEvent>()
+        val job = launch { viewModel.uiEvents.collect { events.add(it) } }
+
+        viewModel.sendCommand(command)
+        advanceUntilIdle()
+
+        assertEquals(0, events.size)
+        job.cancel()
+    }
+
+    @Test
+    fun `different failure types are not hidden by shared timers`() = runTest {
+        coEvery { sendCommandUseCase(RemoteCommand.VolumeUp) } returns SendCommandResult.FAILED
+        coEvery { sendCommandUseCase(RemoteCommand.PointerClick) } returns SendCommandResult.NOT_SUPPORTED
+
+        val events = mutableListOf<RemoteUiEvent>()
+        val job = launch { viewModel.uiEvents.collect { events.add(it) } }
+
+        viewModel.sendCommand(RemoteCommand.VolumeUp)
+        advanceUntilIdle()
+        viewModel.sendCommand(RemoteCommand.PointerClick)
+        advanceUntilIdle()
+
+        assertEquals(true, events.contains(RemoteUiEvent.CommandFailed))
+        assertEquals(true, events.contains(RemoteUiEvent.CommandNotSupported))
+        job.cancel()
+    }
+
+    @Test
     fun `screen lock toggles correctly`() = runTest {
         assertEquals(false, viewModel.isLocked.value)
         viewModel.toggleScreenLock()

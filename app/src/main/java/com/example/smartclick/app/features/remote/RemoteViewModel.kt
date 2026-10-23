@@ -70,6 +70,16 @@ class RemoteViewModel @Inject constructor(
     val uiEvents = _uiEvents.asSharedFlow()
 
     private var lastToastTime = 0L
+    private var lastToastEvent: RemoteUiEvent? = null
+
+    private fun emitThrottledEvent(event: RemoteUiEvent) {
+        val now = System.currentTimeMillis()
+        if (event != lastToastEvent || now - lastToastTime > 2000L) {
+            lastToastTime = now
+            lastToastEvent = event
+            _uiEvents.tryEmit(event)
+        }
+    }
 
     val activeMode: StateFlow<RemoteMode> = settingsRepository.settings
         .map { settings ->
@@ -204,9 +214,9 @@ class RemoteViewModel @Inject constructor(
                 activeDevice.value?.macAddress?.let { mac ->
                     val success = com.example.smartclick.app.domain.connection.WakeOnLan.wake(mac)
                     if (success) {
-                        _uiEvents.tryEmit(RemoteUiEvent.WolSent)
+                        emitThrottledEvent(RemoteUiEvent.WolSent)
                     } else {
-                        _uiEvents.tryEmit(RemoteUiEvent.CommandFailed)
+                        emitThrottledEvent(RemoteUiEvent.CommandFailed)
                     }
                     return@launch
                 }
@@ -221,23 +231,11 @@ class RemoteViewModel @Inject constructor(
                     else -> {}
                 }
             }
-            val now = System.currentTimeMillis()
-            if (now - lastToastTime > 2000L) { // Debounce toasts 2s
-                when (result) {
-                    SendCommandResult.NOT_SUPPORTED -> {
-                        lastToastTime = now
-                        _uiEvents.tryEmit(RemoteUiEvent.CommandNotSupported)
-                    }
-                    SendCommandResult.NOT_CONNECTED -> {
-                        lastToastTime = now
-                        _uiEvents.tryEmit(RemoteUiEvent.CommandNotConnected)
-                    }
-                    SendCommandResult.FAILED -> {
-                        lastToastTime = now
-                        _uiEvents.tryEmit(RemoteUiEvent.CommandFailed)
-                    }
-                    else -> {}
-                }
+            when (result) {
+                SendCommandResult.NOT_SUPPORTED -> emitThrottledEvent(RemoteUiEvent.CommandNotSupported)
+                SendCommandResult.NOT_CONNECTED -> emitThrottledEvent(RemoteUiEvent.CommandNotConnected)
+                SendCommandResult.FAILED -> emitThrottledEvent(RemoteUiEvent.CommandFailed)
+                else -> {}
             }
         }
     }

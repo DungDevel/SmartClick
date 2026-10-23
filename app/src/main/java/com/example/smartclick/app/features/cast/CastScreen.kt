@@ -160,14 +160,14 @@ fun CastScreen(
                                 onClick = { viewModel.pause() },
                                 colors = ButtonDefaults.buttonColors(containerColor = colors.acc)
                             ) {
-                                Text("⏸ Pause", color = Color.White, fontSize = 12.sp)
+                                Text("⏸ " + stringResource(R.string.cast_pause), color = Color.White, fontSize = 12.sp)
                             }
                         } else {
                             Button(
                                 onClick = { viewModel.play() },
                                 colors = ButtonDefaults.buttonColors(containerColor = colors.acc)
                             ) {
-                                Text("▶ Play", color = Color.White, fontSize = 12.sp)
+                                Text("▶ " + stringResource(R.string.cast_play), color = Color.White, fontSize = 12.sp)
                             }
                         }
                         Spacer(modifier = Modifier.width(12.dp))
@@ -175,7 +175,7 @@ fun CastScreen(
                             onClick = { viewModel.stop() },
                             colors = ButtonDefaults.buttonColors(containerColor = colors.red)
                         ) {
-                            Text("⏹ Stop", color = Color.White, fontSize = 12.sp)
+                            Text("⏹ " + stringResource(R.string.cast_stop), color = Color.White, fontSize = 12.sp)
                         }
                     }
                 }
