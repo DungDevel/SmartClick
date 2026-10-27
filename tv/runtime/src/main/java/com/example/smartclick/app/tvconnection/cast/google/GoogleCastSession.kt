@@ -58,6 +58,9 @@ class GoogleCastSession(
 
     private val writeMutex = Mutex()
 
+    var isAudioOnly: Boolean = false
+        private set
+
     suspend fun connect(): Result<Unit> {
         val currentState = _connectionState.value
         if (currentState == State.CONNECTED || currentState == State.AUTHENTICATED || currentState == State.CONNECTING) {
@@ -159,7 +162,8 @@ class GoogleCastSession(
             }
 
             // 4. Verify Response using the captured TLS peer certificate
-            authManager.verifyResponse(challenge, response, peerCert).onSuccess {
+            authManager.verifyResponse(challenge, response, peerCert).onSuccess { audioOnly ->
+                isAudioOnly = audioOnly
                 _connectionState.value = State.AUTHENTICATED
             }.onFailure {
                 _connectionState.value = State.FAILED

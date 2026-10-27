@@ -66,6 +66,10 @@ class GoogleCastController(
         type: CastMediaType,
         title: String
     ): Result<Unit> {
+        if (type == CastMediaType.VIDEO && castSession?.isAudioOnly == true) {
+            return Result.failure(CastError.ProtocolCommandFailed("Audio-Only receiver rejects video casting"))
+        }
+
         return try {
             // 1. Ensure session is established
             val mc = ensureMediaController()
@@ -186,6 +190,15 @@ class GoogleCastController(
             return null
         }
         castSession = session
+
+        // Step 1b: Authenticate session
+        val authResult = session.authenticate()
+        if (authResult.isFailure) {
+            Log.e(TAG, "Device authentication failed: ${authResult.exceptionOrNull()?.message}")
+            session.disconnect()
+            castSession = null
+            return null
+        }
 
         // Step 2: Create protocol client (virtual connection to receiver-0)
         val protocol = GoogleCastProtocolClient(session, controllerScope)
