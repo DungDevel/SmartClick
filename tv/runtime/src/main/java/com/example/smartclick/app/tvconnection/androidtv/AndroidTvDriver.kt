@@ -13,6 +13,7 @@ import com.example.smartclick.app.domain.model.TvProtocol
 import com.example.smartclick.app.tvconnection.cast.LocalMediaServer
 import com.example.smartclick.app.tvconnection.cast.google.GoogleCastAuthManager
 import com.example.smartclick.app.tvconnection.cast.google.GoogleCastController
+import com.example.smartclick.app.tvconnection.security.GoogleCastRootCertificates
 import com.example.smartclick.app.tvconnection.security.GoogleCastTrustManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
@@ -92,8 +93,7 @@ class AndroidTvDriver : IProtocolDriver {
         }
 
         // 2. Cast DeviceAuth Trust Manager (for AuthResponse chain validation)
-        // Should be initialized with proper Google Cast Root CAs.
-        val castTrustManager = GoogleCastTrustManager(emptyList()) // TODO: Inject actual Root CAs
+        val castTrustManager = GoogleCastTrustManager(GoogleCastRootCertificates.getDefaultRoots())
 
         val sslContext = SSLContext.getInstance("TLSv1.2").apply {
             init(null, arrayOf(tlsTrustManager), java.security.SecureRandom())

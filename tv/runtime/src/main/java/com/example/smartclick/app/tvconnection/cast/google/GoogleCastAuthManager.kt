@@ -2,6 +2,7 @@
 
 import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.AuthChallenge
 import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.AuthResponse
+import com.example.smartclick.app.tvconnection.security.GoogleCastTrustManager
 import java.security.PublicKey
 import java.security.Signature
 import java.security.cert.X509Certificate
@@ -29,7 +30,7 @@ class GoogleCastAuthManager(
         challenge: AuthChallenge,
         response: AuthResponse,
         tlsPeerCertDer: ByteArray
-    ): Result<Unit> {
+    ): Result<Boolean> {
         // 1. Verify Nonce match
         if (!challenge.senderNonce.toByteArray().contentEquals(response.senderNonce.toByteArray())) {
             return Result.failure(SecurityException("Nonce mismatch: the device responded with a different nonce than requested"))
@@ -54,6 +55,9 @@ class GoogleCastAuthManager(
             // 4. Verify Certificate Chain to Trust Anchor
             verifyChain(chain)
 
+            // Determine if the validated chain/root indicates an Audio-Only device policy (OID 1.3.6.1.4.1.11129.2.5.2)
+            val isAudioOnly = (trustManager as? GoogleCastTrustManager)?.isAudioOnlyDevice() ?: false
+
             // C1 SECURITY FIX: Check certificate validity (NotBefore/NotAfter)
             chain.forEach { it.checkValidity() }
 
@@ -62,7 +66,7 @@ class GoogleCastAuthManager(
             val signedData = challenge.senderNonce.toByteArray() + tlsPeerCertDer
             verifySignature(signedData, response.signature.toByteArray(), deviceCert.publicKey, response.signatureAlgorithm)
 
-            return Result.success(Unit)
+            return Result.success(isAudioOnly)
         } catch (e: Exception) {
             return Result.failure(SecurityException("Authentication verification failed: ${e.message}", e))
         }

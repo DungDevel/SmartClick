@@ -28,6 +28,11 @@ class AndroidTvDriverTest : AbstractDriverContractTest() {
 
     @Before
     fun setup() {
+        org.bouncycastle.jce.provider.BouncyCastleProvider().let {
+            if (java.security.Security.getProvider(it.name) == null) {
+                java.security.Security.addProvider(it)
+            }
+        }
         mockkObject(AndroidTvCertificateManager)
         every { AndroidTvCertificateManager.getOrGenerateClientKeyAndCertificate() } returns Pair(
             mockk<PrivateKey>(relaxed = true),

@@ -43,6 +43,8 @@ dependencies {
 
     // Security
     implementation("androidx.security:security-crypto:1.1.0")
+    implementation("org.bouncycastle:bcprov-jdk15to18:1.77")
+    implementation("org.bouncycastle:bcpkix-jdk15to18:1.77")
     
     // Testing
     testImplementation(libs.junit)
