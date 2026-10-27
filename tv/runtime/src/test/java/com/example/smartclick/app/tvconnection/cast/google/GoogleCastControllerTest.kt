@@ -8,6 +8,12 @@ import com.example.smartclick.app.domain.model.CastMediaType
 import com.example.smartclick.app.tvconnection.cast.CastMediaSession
 import com.example.smartclick.app.tvconnection.cast.LocalMediaServer
 import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.CastMessage
+import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.DeviceAuthMessage
+import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.AuthResponse
+import com.example.smartclick.app.tvconnection.cast.google.proto.CastChannel.AuthChallenge
+import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import io.mockk.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
@@ -18,11 +24,16 @@ import org.junit.Before
 import org.junit.Test
 import java.io.InputStream
 import java.io.OutputStream
+import java.math.BigInteger
 import java.net.ServerSocket
 import java.net.Socket
+import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.Signature
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
 import java.util.Collections
+import java.util.Date
 import javax.net.ssl.SSLSession
 import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
@@ -35,6 +46,10 @@ class GoogleCastControllerTest {
     private lateinit var authManager: GoogleCastAuthManager
     private lateinit var mockLocalMediaServer: LocalMediaServer
     private val acceptedSockets = Collections.synchronizedList(mutableListOf<Socket>())
+
+    private lateinit var testKeyPair: KeyPair
+    private lateinit var testCert: X509Certificate
+    private lateinit var testCertDer: ByteArray
 
     private fun acceptSocket(): Socket {
         val socket = serverSocket.accept()
@@ -53,6 +68,30 @@ class GoogleCastControllerTest {
 
     @Before
     fun setup() {
+        org.bouncycastle.jce.provider.BouncyCastleProvider().let {
+            if (java.security.Security.getProvider(it.name) == null) {
+                java.security.Security.addProvider(it)
+            }
+        }
+
+        val kpg = KeyPairGenerator.getInstance("RSA")
+        kpg.initialize(2048)
+        testKeyPair = kpg.generateKeyPair()
+
+        val issuer = X500Name("CN=TestCastDevice")
+        val serialNumber = BigInteger.valueOf(System.currentTimeMillis())
+        val notBefore = Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24)
+        val notAfter = Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 2)
+
+        val certBuilder = JcaX509v3CertificateBuilder(
+            issuer, serialNumber, notBefore, notAfter, issuer, testKeyPair.public
+        )
+        val signer = JcaContentSignerBuilder("SHA256withRSA").build(testKeyPair.private)
+        testCert = org.bouncycastle.cert.jcajce.JcaX509CertificateConverter()
+            .setProvider("BC")
+            .getCertificate(certBuilder.build(signer))
+        testCertDer = testCert.encoded
+
         mockkStatic(Uri::class)
         every { Uri.parse(any()) } returns mockk(relaxed = true)
 
@@ -107,58 +146,102 @@ class GoogleCastControllerTest {
 
                 while (isActive) {
                     val msg = CastV2Framing.readFrame(input)
-                    val payload = JSONObject(msg.payloadUtf8)
-                    val type = payload.optString("type")
-
                     when (msg.namespace) {
-                        "urn:x-cast:com.google.cast.tp.connection" -> {
-                            // CONNECT message received, no reply needed
-                        }
-                        "urn:x-cast:com.google.cast.tp.heartbeat" -> {
-                            if (type == "PING") {
-                                val pong = CastMessage.newBuilder()
-                                    .setProtocolVersion(CastMessage.ProtocolVersion.CASTV2_1_0)
-                                    .setSourceId("receiver-0")
-                                    .setDestinationId(msg.sourceId)
-                                    .setNamespace("urn:x-cast:com.google.cast.tp.heartbeat")
-                                    .setPayloadType(CastMessage.PayloadType.STRING)
-                                    .setPayloadUtf8("""{"type":"PONG"}""")
-                                    .build()
-                                CastV2Framing.writeFrame(output, pong)
-                            }
-                        }
-                        "urn:x-cast:com.google.cast.receiver" -> {
-                            if (type == "LAUNCH") {
-                                val reqId = payload.optInt("requestId")
-                                val appsArray = JSONArray().put(JSONObject().apply {
-                                    put("appId", GoogleCastController.DEFAULT_MEDIA_RECEIVER_APP_ID)
-                                    put("displayName", "Default Media Receiver")
-                                    put("sessionId", "cast-session-1")
-                                    put("transportId", transportId)
-                                    put("statusText", "Ready")
-                                })
-                                val receiverStatus = JSONObject().apply {
-                                    put("type", "RECEIVER_STATUS")
-                                    put("requestId", reqId)
-                                    put("applications", appsArray)
-                                    put("status", JSONObject().apply {
-                                        put("applications", appsArray)
-                                    })
-                                }
+                        "urn:x-cast:com.google.cast.tp.deviceauth" -> {
+                            try {
+                                val deviceAuthMsg = DeviceAuthMessage.parseFrom(msg.payloadBinary)
+                                if (deviceAuthMsg.hasChallenge()) {
+                                    val challenge = deviceAuthMsg.challenge
+                                    val signedData = challenge.senderNonce.toByteArray() + testCertDer
+                                    val sig = Signature.getInstance("SHA256withRSA").apply {
+                                        initSign(testKeyPair.private)
+                                        update(signedData)
+                                    }.sign()
 
-                                val statusMsg = CastMessage.newBuilder()
-                                    .setProtocolVersion(CastMessage.ProtocolVersion.CASTV2_1_0)
-                                    .setSourceId("receiver-0")
-                                    .setDestinationId(msg.sourceId)
-                                    .setNamespace("urn:x-cast:com.google.cast.receiver")
-                                    .setPayloadType(CastMessage.PayloadType.STRING)
-                                    .setPayloadUtf8(receiverStatus.toString())
-                                    .build()
-                                CastV2Framing.writeFrame(output, statusMsg)
-                            }
+                                    val response = AuthResponse.newBuilder()
+                                        .setSenderNonce(challenge.senderNonce)
+                                        .setSignature(com.google.protobuf.ByteString.copyFrom(sig))
+                                        .setClientAuthCertificate(com.google.protobuf.ByteString.copyFrom(testCertDer))
+                                        .setSignatureAlgorithm(AuthChallenge.SignatureAlgorithm.RSASSA_PKCS1v15)
+                                        .setHashAlgorithm(AuthChallenge.HashAlgorithm.SHA256)
+                                        .build()
+
+                                    val authMsgOut = DeviceAuthMessage.newBuilder()
+                                        .setResponse(response)
+                                        .build()
+
+                                    val castMsgOut = CastMessage.newBuilder()
+                                        .setProtocolVersion(CastMessage.ProtocolVersion.CASTV2_1_0)
+                                        .setSourceId("receiver-0")
+                                        .setDestinationId(msg.sourceId)
+                                        .setNamespace("urn:x-cast:com.google.cast.tp.deviceauth")
+                                        .setPayloadType(CastMessage.PayloadType.BINARY)
+                                        .setPayloadBinary(com.google.protobuf.ByteString.copyFrom(authMsgOut.toByteArray()))
+                                        .build()
+
+                                    CastV2Framing.writeFrame(output, castMsgOut)
+                                }
+                            } catch (_: Exception) {}
                         }
-                        GoogleCastMediaController.MEDIA_NAMESPACE -> {
-                            onMediaMessage?.invoke(payload, output)
+                        else -> {
+                            val payload = if (msg.hasPayloadUtf8() && msg.payloadUtf8.isNotEmpty()) {
+                                try { JSONObject(msg.payloadUtf8) } catch (_: Exception) { JSONObject() }
+                            } else {
+                                JSONObject()
+                            }
+                            val type = payload.optString("type")
+
+                            when (msg.namespace) {
+                                "urn:x-cast:com.google.cast.tp.connection" -> {
+                                    // CONNECT message received, no reply needed
+                                }
+                                "urn:x-cast:com.google.cast.tp.heartbeat" -> {
+                                    if (type == "PING") {
+                                        val pong = CastMessage.newBuilder()
+                                            .setProtocolVersion(CastMessage.ProtocolVersion.CASTV2_1_0)
+                                            .setSourceId("receiver-0")
+                                            .setDestinationId(msg.sourceId)
+                                            .setNamespace("urn:x-cast:com.google.cast.tp.heartbeat")
+                                            .setPayloadType(CastMessage.PayloadType.STRING)
+                                            .setPayloadUtf8("""{"type":"PONG"}""")
+                                            .build()
+                                        CastV2Framing.writeFrame(output, pong)
+                                    }
+                                }
+                                "urn:x-cast:com.google.cast.receiver" -> {
+                                    if (type == "LAUNCH") {
+                                        val reqId = payload.optInt("requestId")
+                                        val appsArray = JSONArray().put(JSONObject().apply {
+                                            put("appId", GoogleCastController.DEFAULT_MEDIA_RECEIVER_APP_ID)
+                                            put("displayName", "Default Media Receiver")
+                                            put("sessionId", "cast-session-1")
+                                            put("transportId", transportId)
+                                            put("statusText", "Ready")
+                                        })
+                                        val receiverStatus = JSONObject().apply {
+                                            put("type", "RECEIVER_STATUS")
+                                            put("requestId", reqId)
+                                            put("applications", appsArray)
+                                            put("status", JSONObject().apply {
+                                                put("applications", appsArray)
+                                            })
+                                        }
+
+                                        val statusMsg = CastMessage.newBuilder()
+                                            .setProtocolVersion(CastMessage.ProtocolVersion.CASTV2_1_0)
+                                            .setSourceId("receiver-0")
+                                            .setDestinationId(msg.sourceId)
+                                            .setNamespace("urn:x-cast:com.google.cast.receiver")
+                                            .setPayloadType(CastMessage.PayloadType.STRING)
+                                            .setPayloadUtf8(receiverStatus.toString())
+                                            .build()
+                                        CastV2Framing.writeFrame(output, statusMsg)
+                                    }
+                                }
+                                GoogleCastMediaController.MEDIA_NAMESPACE -> {
+                                    onMediaMessage?.invoke(payload, output)
+                                }
+                            }
                         }
                     }
                 }
@@ -320,6 +403,11 @@ class GoogleCastControllerTest {
             // Pause
             val pauseResult = controller.controlCast(CastCommand.Pause)
             assertTrue(pauseResult.isSuccess)
+            withTimeout(2000) {
+                while (controller.castPlaybackState.value != CastPlaybackState.PAUSED) {
+                    delay(10)
+                }
+            }
             assertEquals(CastPlaybackState.PAUSED, controller.castPlaybackState.value)
 
             // SeekTo (ms -> s)
@@ -335,6 +423,11 @@ class GoogleCastControllerTest {
             // Stop
             val stopResult = controller.controlCast(CastCommand.Stop)
             assertTrue(stopResult.isSuccess)
+            withTimeout(2000) {
+                while (controller.castPlaybackState.value != CastPlaybackState.STOPPED) {
+                    delay(10)
+                }
+            }
             assertEquals(CastPlaybackState.STOPPED, controller.castPlaybackState.value)
 
             assertTrue(receivedCommands.contains("PLAY"))
@@ -461,7 +554,7 @@ class GoogleCastControllerTest {
             .build()
     }
 
-    private class MockSSLSocket(private val delegate: Socket) : SSLSocket() {
+    private inner class MockSSLSocket(private val delegate: Socket) : SSLSocket() {
         override fun startHandshake() {}
         override fun connect(endpoint: java.net.SocketAddress?, timeout: Int) = delegate.connect(endpoint, timeout)
         override fun connect(endpoint: java.net.SocketAddress?) = delegate.connect(endpoint)
@@ -487,9 +580,7 @@ class GoogleCastControllerTest {
         override fun getSession(): SSLSession {
             return object : SSLSession {
                 override fun getPeerCertificates(): Array<Certificate> {
-                    val cert = mockk<X509Certificate>(relaxed = true)
-                    every { cert.encoded } returns ByteArray(100) { 1 }
-                    return arrayOf(cert)
+                    return arrayOf(testCert)
                 }
                 override fun getId(): ByteArray = ByteArray(0)
                 override fun getSessionContext(): javax.net.ssl.SSLSessionContext? = null
