@@ -17,6 +17,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -89,5 +90,16 @@ class CastMediaUseCaseTest {
         val result = useCase(media)
 
         assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `castMedia returns failure when creating pinned cast controller throws`() = runTest {
+        every { mockDriver.createCastController(any(), any()) } throws IllegalStateException("pinned cast setup failed")
+        val media = MediaItem("m1", "Video", "http://example.com/video.mp4", "video/mp4")
+
+        val result = useCase(media)
+
+        assertTrue(result.isFailure)
+        assertEquals("pinned cast setup failed", result.exceptionOrNull()?.message)
     }
 }

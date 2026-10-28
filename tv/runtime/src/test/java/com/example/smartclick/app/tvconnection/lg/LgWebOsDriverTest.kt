@@ -104,6 +104,23 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
     }
 
     @Test
+    fun `createCastController fails closed when pinned client SSL context creation fails`() {
+        val driver = LgWebOsDriver(mockk(relaxed = true))
+        mockkStatic(SSLContext::class)
+        every { SSLContext.getInstance("TLSv1.2") } throws IllegalStateException("forced pinned cast client failure")
+
+        val error = assertThrows(IllegalStateException::class.java) {
+            driver.createCastController(
+                lgDevice(),
+                Credentials(mapOf("client-key" to "abcdef", "cert_sha256" to "a".repeat(64)))
+            )
+        }
+
+        assertEquals("Failed to create certificate-pinned LG WebOS cast client", error.message)
+        assertEquals("forced pinned cast client failure", error.cause?.message)
+    }
+
+    @Test
     fun `createController with null credentials still returns controller`() {
         val driver = LgWebOsDriver(mockk(relaxed = true))
         val controller = driver.createController(lgDevice(), null)

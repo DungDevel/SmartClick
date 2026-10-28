@@ -211,7 +211,7 @@ class LgWebOsDriver @Inject constructor(
                     .sslSocketFactory(newSslContext.socketFactory, trustManager)
                     .build()
             } catch (e: Exception) {
-                pairingClient
+                throw IllegalStateException("Failed to create certificate-pinned LG WebOS cast client", e)
             }
         } else {
             pairingClient

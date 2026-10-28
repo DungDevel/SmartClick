@@ -15,6 +15,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
@@ -99,5 +100,17 @@ class ConnectToTvUseCaseTest {
 
         assertTrue(result is ConnectOutcome.Connected)
         coVerify { mockController.connect(newTv) }
+    }
+
+    @Test
+    fun `connect returns failure when creating pinned controller throws`() = runTest {
+        val pairedTv = TvDevice("oldId", "Old TV", "ip", "mac", isPaired = true)
+        every { tvDeviceRepository.getPairedDevices() } returns flowOf(listOf(pairedTv))
+        every { mockDriver.createController(any(), any()) } throws IllegalStateException("pinned setup failed")
+
+        val result = useCase(pairedTv)
+
+        assertTrue(result is ConnectOutcome.Failed)
+        verify(exactly = 0) { activeTvSession.setActiveController(any()) }
     }
 }

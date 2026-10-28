@@ -9,6 +9,7 @@ import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.ITvCredentialStore
 import com.example.smartclick.app.domain.connection.ConnectOutcome
 import com.example.smartclick.app.domain.connection.DriverRegistry
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -35,7 +36,13 @@ class ConnectToTvUseCase @Inject constructor(
         val credentials = device.credentialsRef?.let { ref ->
             tvCredentialStore.getCredentials(device.id, ref)
         }
-        val controller = driver.createController(device, credentials)
+        val controller = try {
+            driver.createController(device, credentials)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return ConnectOutcome.Failed(e.message ?: "Failed to create TV controller")
+        }
         activeTvSession.setActiveController(controller)
 
         val result = controller.connect(device)
