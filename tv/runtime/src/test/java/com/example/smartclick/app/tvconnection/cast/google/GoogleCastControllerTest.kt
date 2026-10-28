@@ -502,6 +502,11 @@ class GoogleCastControllerTest {
 
         try {
             controller.castMedia("https://x.com/v.mp4", "video/mp4", CastMediaType.VIDEO, "V")
+            withTimeout(2000) {
+                while (controller.castPlaybackState.value != CastPlaybackState.PLAYING) {
+                    delay(10)
+                }
+            }
             assertEquals(CastPlaybackState.PLAYING, controller.castPlaybackState.value)
 
             val teardownResult = controller.teardown()
