@@ -80,7 +80,7 @@ class SamsungTizenDriverTest : AbstractDriverContractTest() {
             )
         }
 
-        assertEquals("Failed to create certificate-pinned Samsung Tizen client", error.message)
+        assertEquals("Pairing credentials invalid: failed to create pinned Samsung Tizen client", error.message)
         assertEquals("forced pinned client failure", error.cause?.message)
     }
 

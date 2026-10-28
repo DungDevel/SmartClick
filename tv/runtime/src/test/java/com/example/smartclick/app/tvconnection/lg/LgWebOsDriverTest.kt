@@ -99,7 +99,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
             )
         }
 
-        assertEquals("Failed to create certificate-pinned LG WebOS client", error.message)
+        assertEquals("Pairing credentials invalid: failed to create pinned LG WebOS client", error.message)
         assertEquals("forced pinned client failure", error.cause?.message)
     }
 
@@ -116,7 +116,7 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
             )
         }
 
-        assertEquals("Failed to create certificate-pinned LG WebOS cast client", error.message)
+        assertEquals("Pairing credentials invalid: failed to create pinned LG WebOS cast client", error.message)
         assertEquals("forced pinned cast client failure", error.cause?.message)
     }
 

@@ -178,7 +178,7 @@ class SamsungTizenDriver @Inject constructor(
                     .sslSocketFactory(newSslContext.socketFactory, trustManager)
                     .build()
             } catch (e: Exception) {
-                throw IllegalStateException("Failed to create certificate-pinned Samsung Tizen client", e)
+                throw IllegalStateException("Pairing credentials invalid: failed to create pinned Samsung Tizen client", e)
             }
         } else {
             okHttpClient
