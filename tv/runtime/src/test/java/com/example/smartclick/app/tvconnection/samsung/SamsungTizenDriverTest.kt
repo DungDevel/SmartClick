@@ -18,10 +18,13 @@ import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
 import okhttp3.WebSocket
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import java.util.UUID
+import javax.net.ssl.SSLContext
 
 class SamsungTizenDriverTest : AbstractDriverContractTest() {
 
@@ -62,6 +65,23 @@ class SamsungTizenDriverTest : AbstractDriverContractTest() {
 
         assertNotNull(controller)
         assertNotNull(controller as SamsungTizenController)
+    }
+
+    @Test
+    fun `createController fails closed when pinned client SSL context creation fails`() {
+        val driver = SamsungTizenDriver(context, localMediaServer)
+        mockkStatic(SSLContext::class)
+        every { SSLContext.getInstance("TLSv1.2") } throws IllegalStateException("forced pinned client failure")
+
+        val error = assertThrows(IllegalStateException::class.java) {
+            driver.createController(
+                createDummyDevice(),
+                Credentials(mapOf("token" to "12345678", "cert_sha256" to "a".repeat(64)))
+            )
+        }
+
+        assertEquals("Pairing credentials invalid: failed to create pinned Samsung Tizen client", error.message)
+        assertEquals("forced pinned client failure", error.cause?.message)
     }
 
     @Test

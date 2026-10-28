@@ -99,6 +99,20 @@ class ReconnectWatcherTest {
     }
 
     @Test
+    fun `pinned client setup failure stops retries as a permanent pairing failure`() = testScope.runTest {
+        coEvery { connectToTvUseCase(sampleDevice) } returns ConnectOutcome.Failed(
+            "Pairing credentials invalid: failed to create pinned LG WebOS client"
+        )
+
+        reconnectWatcher.onCommandResult(false)
+        reconnectWatcher.onCommandResult(false)
+
+        testScope.advanceTimeBy(40000L)
+
+        coVerify(exactly = 1) { connectToTvUseCase(sampleDevice) }
+    }
+
+    @Test
     fun `explicit cancellation stops reconnect loop`() = testScope.runTest {
         coEvery { connectToTvUseCase(sampleDevice) } returns ConnectOutcome.Failed("Timeout")
 

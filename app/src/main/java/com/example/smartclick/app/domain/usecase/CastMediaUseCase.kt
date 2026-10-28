@@ -6,6 +6,7 @@ import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.DriverRegistry
 import com.example.smartclick.app.domain.connection.ITvCredentialStore
 import com.example.smartclick.app.domain.connection.TvConnectionState
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 class CastMediaUseCase @Inject constructor(
@@ -32,8 +33,13 @@ class CastMediaUseCase @Inject constructor(
             tvCredentialStore.getCredentials(device.id, ref)
         }
 
-        val castController = driver.createCastController(device, credentials)
-            ?: return Result.failure(Exception("Casting not supported by driver ${device.protocol}"))
+        val castController = try {
+            driver.createCastController(device, credentials)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return Result.failure(e)
+        } ?: return Result.failure(Exception("Casting not supported by driver ${device.protocol}"))
 
         val mediaType = when {
             media.mimeType.startsWith("video", ignoreCase = true) -> CastMediaType.VIDEO
