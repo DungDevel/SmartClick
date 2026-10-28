@@ -178,7 +178,7 @@ class SamsungTizenDriver @Inject constructor(
                     .sslSocketFactory(newSslContext.socketFactory, trustManager)
                     .build()
             } catch (e: Exception) {
-                okHttpClient // Fallback to trust all if something fails, though it shouldn't
+                throw IllegalStateException("Failed to create certificate-pinned Samsung Tizen client", e)
             }
         } else {
             okHttpClient

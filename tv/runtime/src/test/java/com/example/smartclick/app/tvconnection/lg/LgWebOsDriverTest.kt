@@ -11,6 +11,7 @@ import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.model.TvProtocol
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
@@ -25,11 +26,13 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.security.MessageDigest
 import java.security.cert.Certificate
 import java.util.UUID
+import javax.net.ssl.SSLContext
 
 /**
  * Task 7: Unit test cho LgWebOsDriver — ba nhóm kịch bản:
@@ -81,6 +84,23 @@ class LgWebOsDriverTest : com.example.smartclick.app.domain.connection.contract.
         val controller = driver.createController(lgDevice(), creds)
 
         assertNotNull(controller as LgWebOsController)
+    }
+
+    @Test
+    fun `createController fails closed when pinned client SSL context creation fails`() {
+        val driver = LgWebOsDriver(mockk(relaxed = true))
+        mockkStatic(SSLContext::class)
+        every { SSLContext.getInstance("TLSv1.2") } throws IllegalStateException("forced pinned client failure")
+
+        val error = assertThrows(IllegalStateException::class.java) {
+            driver.createController(
+                lgDevice(),
+                Credentials(mapOf("client-key" to "abcdef", "cert_sha256" to "a".repeat(64)))
+            )
+        }
+
+        assertEquals("Failed to create certificate-pinned LG WebOS client", error.message)
+        assertEquals("forced pinned client failure", error.cause?.message)
     }
 
     @Test
