@@ -175,6 +175,9 @@
     <string name="support_email_device_details">Brand: %1$s; Protocol: %2$s</string>
     <string name="support_email_app_not_found">No email app found</string>
     <string name="support_channel_unavailable">Support contact is not configured yet.</string>
+    <string name="touchpad_left_click">Left Click</string>
+    <string name="touchpad_keyboard">Keyboard</string>
+    <string name="touchpad_right_click">Right Click</string>
 
     <string name="login_welcome_back">Welcome Back</string>
     <string name="login_forgot_password">Forgot password?</string>
@@ -197,6 +200,8 @@ Effortlessly
     <string name="data_and_privacy">Data &amp; privacy</string>
     <string name="legal_information">Legal information</string>
     <string name="system_default">System Default</string>
+    <string name="language_english">English</string>
+    <string name="language_vietnamese">Tiếng Việt</string>
     <string name="system">System</string>
     <string name="on_text">On</string>
     <string name="off_text">Off</string>

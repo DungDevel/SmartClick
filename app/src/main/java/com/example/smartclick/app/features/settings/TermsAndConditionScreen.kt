@@ -21,11 +21,11 @@ import com.example.smartclick.R
 fun TermsAndConditionScreen(onBack: () -> Unit) {
     val colors = SmartClickThemeTokens.colors
     val terms = listOf(
-        Pair("1. Acceptance of Terms", "By accessing and using SmartClick, you accept and agree to be bound by the terms and provision of this agreement."),
-        Pair("2. License Use", "We grant you a personal, non-exclusive, non-transferable license to use the app for personal and non-commercial purposes."),
-        Pair("3. Restrictions", "You may not reverse engineer, decompile, or disassemble the app, except and only to the extent that such activity is expressly permitted by applicable law."),
-        Pair("4. User Accounts", "You are responsible for maintaining the confidentiality of your account and password and for restricting access to your device."),
-        Pair("5. Termination", "We may terminate or suspend access to our service immediately, without prior notice or liability, for any reason whatsoever.")
+        Pair(stringResource(R.string.legal_terms_acceptance_title), stringResource(R.string.legal_terms_acceptance_body)),
+        Pair(stringResource(R.string.legal_terms_license_title), stringResource(R.string.legal_terms_license_body)),
+        Pair(stringResource(R.string.legal_terms_restrictions_title), stringResource(R.string.legal_terms_restrictions_body)),
+        Pair(stringResource(R.string.legal_terms_accounts_title), stringResource(R.string.legal_terms_accounts_body)),
+        Pair(stringResource(R.string.legal_terms_termination_title), stringResource(R.string.legal_terms_termination_body))
     )
 
     Column(

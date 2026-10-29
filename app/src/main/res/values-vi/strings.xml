@@ -175,6 +175,9 @@
     <string name="support_email_device_details">Hãng: %1$s; Giao thức: %2$s</string>
     <string name="support_email_app_not_found">Không tìm thấy ứng dụng email</string>
     <string name="support_channel_unavailable">Chưa có kênh hỗ trợ.</string>
+    <string name="touchpad_left_click">Nhấp chuột trái</string>
+    <string name="touchpad_keyboard">Bàn phím</string>
+    <string name="touchpad_right_click">Nhấp chuột phải</string>
 
     <string name="login_welcome_back">Chào mừng trở lại</string>
     <string name="login_forgot_password">Quên mật khẩu?</string>
@@ -196,6 +199,8 @@ một cách dễ dàng</string>
     <string name="data_and_privacy">Dữ liệu &amp; quyền riêng tư</string>
     <string name="legal_information">Thông tin pháp lý</string>
     <string name="system_default">Mặc định hệ thống</string>
+    <string name="language_english">English</string>
+    <string name="language_vietnamese">Tiếng Việt</string>
     <string name="system">Hệ thống</string>
     <string name="on_text">Bật</string>
     <string name="off_text">Tắt</string>

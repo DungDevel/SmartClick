@@ -38,12 +38,12 @@ import com.example.smartclick.app.core.ui.theme.Typography
 import androidx.compose.ui.res.stringResource
 import com.example.smartclick.R
 
-data class LanguageItem(val code: String, val nameRes: Int?, val defaultName: String, val flag: String)
+data class LanguageItem(val code: String, val nameRes: Int, val flag: String)
 
 val LANGUAGES = listOf(
-    LanguageItem("sys", R.string.system_default, "System Default", "📱"),
-    LanguageItem("en", null, "English", "🇺🇸"),
-    LanguageItem("vi", null, "Tiếng Việt", "🇻🇳")
+    LanguageItem("sys", R.string.system_default, "📱"),
+    LanguageItem("en", R.string.language_english, "🇺🇸"),
+    LanguageItem("vi", R.string.language_vietnamese, "🇻🇳")
 )
 
 @Composable
@@ -114,7 +114,7 @@ fun LanguageScreen(
                         Text(text = language.flag, fontSize = 24.sp)
 
                         Text(
-                            text = language.nameRes?.let { stringResource(id = it) } ?: language.defaultName,
+                            text = stringResource(id = language.nameRes),
                             color = colors.tx1,
                             style = Typography.titleMedium.copy(
                                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
