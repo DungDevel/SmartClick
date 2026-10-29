@@ -83,6 +83,37 @@ class LgWebOsControllerTest {
         return listener
     }
 
+    private data class PointerConnection(
+        val mainSocket: WebSocket,
+        val mainListener: WebSocketListener,
+        val pointerSocket: WebSocket,
+        val pointerListener: WebSocketListener
+    )
+
+    private suspend fun kotlinx.coroutines.CoroutineScope.establishPointerConnection(): PointerConnection {
+        val mainSocket = mockk<WebSocket>(relaxed = true)
+        val pointerSocket = mockk<WebSocket>(relaxed = true)
+        val listeners = mutableListOf<WebSocketListener>()
+        every { mockOkHttpClient.newWebSocket(any(), any()) } answers {
+            listeners.add(secondArg<WebSocketListener>())
+            if (listeners.size == 1) mainSocket else pointerSocket
+        }
+
+        val connectJob = launch { controller.connect(testDevice) }
+        delay(50)
+        val mainListener = listeners.firstOrNull() ?: error("Main WebSocket listener was not captured")
+        mainListener.onOpen(mainSocket, mockk(relaxed = true))
+        mainListener.onMessage(mainSocket, """{"type":"registered"}""")
+        connectJob.join()
+        mainListener.onMessage(
+            mainSocket,
+            """{"type":"response","id":"req_pointer","payload":{"socketPath":"ws://192.168.1.100:3000"}}"""
+        )
+        val pointerListener = listeners.getOrNull(1) ?: error("Pointer WebSocket listener was not captured")
+        pointerListener.onOpen(pointerSocket, mockk(relaxed = true))
+        return PointerConnection(mainSocket, mainListener, pointerSocket, pointerListener)
+    }
+
     // ---------------------------------------------------------------------
     // connect() & disconnect()
     // ---------------------------------------------------------------------
@@ -216,6 +247,68 @@ class LgWebOsControllerTest {
 
         assertTrue(result.isFailure)
         assertEquals("Pointer socket not ready", result.exceptionOrNull()?.message)
+    }
+
+    @Test
+    fun `PointerMove fails when pointer socket is null`() = runTest {
+        establishConnection()
+
+        val result = controller.sendCommand(RemoteCommand.PointerMove(2f, -3f))
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `PointerMove fails when pointer socket has closed`() = runTest {
+        val pointer = establishPointerConnection()
+        pointer.pointerListener.onClosed(pointer.pointerSocket, 1000, "closed")
+
+        val result = controller.sendCommand(RemoteCommand.PointerMove(2f, -3f))
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `PointerMove sends the existing frame when pointer socket is ready`() = runTest {
+        val pointer = establishPointerConnection()
+        every { pointer.pointerSocket.send(any<String>()) } returns true
+
+        val result = controller.sendCommand(RemoteCommand.PointerMove(12.5f, -4f))
+
+        assertTrue(result.isSuccess)
+        verify(exactly = 1) {
+            pointer.pointerSocket.send("type:move\ndx:12.5\ndy:-4.0\ndown:0\n\n")
+        }
+    }
+
+    @Test
+    fun `PointerClick sends ENTER when pointer socket is ready`() = runTest {
+        val pointer = establishPointerConnection()
+        every { pointer.pointerSocket.send(any<String>()) } returns true
+
+        val result = controller.sendCommand(RemoteCommand.PointerClick)
+
+        assertTrue(result.isSuccess)
+        verify(exactly = 1) { pointer.pointerSocket.send("type:button\nname:ENTER\n\n") }
+    }
+
+    @Test
+    fun `PointerClick fails when pointer socket is null`() = runTest {
+        establishConnection()
+
+        val result = controller.sendCommand(RemoteCommand.PointerClick)
+
+        assertTrue(result.isFailure)
+    }
+
+    @Test
+    fun `pointer send failure is returned as command failure`() = runTest {
+        val pointer = establishPointerConnection()
+        every { pointer.pointerSocket.send(any<String>()) } returns false
+
+        val result = controller.sendCommand(RemoteCommand.PointerMove(1f, 1f))
+
+        assertTrue(result.isFailure)
     }
 
     // ---------------------------------------------------------------------
