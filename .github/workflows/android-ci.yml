@@ -39,20 +39,20 @@ jobs:
           printf '%s\n%s\n' "8.9.1" "$AGP" | sort -V -C || { echo "::error::AGP ($AGP) < 8.9.1"; exit 1; }
 
       - name: Assemble debug
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew :app:assembleDebug --stacktrace
 
       - name: Assemble release
-        run: ./gradlew assembleRelease --stacktrace
+        run: ./gradlew :app:assembleRelease --stacktrace
 
       - name: Unit tests
-        run: ./gradlew test --stacktrace
+        run: ./gradlew :tv:runtime:testDebugUnitTest :tv:runtime:testReleaseUnitTest :app:testDebugUnitTest :app:testReleaseUnitTest :core:model:testDebugUnitTest :core:tv-api:testDebugUnitTest --stacktrace
 
       - name: Lint
-        run: ./gradlew lintDebug --stacktrace
+        run: ./gradlew :app:lintDebug :tv:runtime:lintDebug --stacktrace
 
       # E1: cổng chặn chuỗi hardcode trong UI Compose
       - name: Check hardcoded UI strings (E1)
-        run: ./gradlew checkHardcodedStrings
+        run: ./gradlew :app:checkHardcodedStrings
 
       - name: Upload test reports
         if: always()
@@ -62,6 +62,10 @@ jobs:
           path: |
             app/build/reports/tests/
             app/build/reports/lint-results-*.html
+            core/model/build/reports/tests/
+            core/tv-api/build/reports/tests/
+            tv/runtime/build/reports/tests/
+            tv/runtime/build/reports/lint-results-*.html
           if-no-files-found: ignore
 
       - name: Upload debug APK
