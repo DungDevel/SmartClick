@@ -223,14 +223,6 @@ Effortlessly
     <string name="disconnect">Disconnect</string>
     <string name="feature_coming_soon">%1$s: feature coming soon!</string>
     <string name="feature_coming_soon_no_args">Feature coming soon!</string>
-    <!-- Extra Buttons -->
-    <string name="btn_first">First</string>
-    <string name="btn_headphones">Headphones</string>
-    <string name="btn_mic">Mic</string>
-    <string name="btn_repeat">Repeat</string>
-    <string name="btn_chat">Chat</string>
-    <string name="btn_favorite">Favorite</string>
-    <string name="btn_volume">Volume</string>
     <string name="btn_menu">Menu</string>
     <string name="btn_home">Home</string>
     <string name="btn_input">Input</string>

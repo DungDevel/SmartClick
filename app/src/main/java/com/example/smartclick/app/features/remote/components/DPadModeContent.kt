@@ -9,8 +9,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import android.widget.Toast
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -22,7 +20,6 @@ import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.domain.model.TvCapability
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.draw.alpha
 
 @Composable
 fun DPadModeContent(
@@ -138,39 +135,4 @@ fun DPadModeContent(
     }
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Extra icon grid (2 rows x 4)
-    
-    val extraRows = listOf(
-        listOf(
-            stringResource(R.string.btn_first) to R.drawable.backward,
-            stringResource(R.string.back) to R.drawable.left_arrow,
-            stringResource(R.string.btn_headphones) to R.drawable.podcast,
-            stringResource(R.string.btn_mic) to R.drawable.microphone
-        ),
-        listOf(
-            stringResource(R.string.btn_repeat) to R.drawable.repost,
-            stringResource(R.string.btn_chat) to R.drawable.chat,
-            stringResource(R.string.btn_favorite) to R.drawable.star,
-            stringResource(R.string.btn_volume) to R.drawable.volume
-        )
-    )
-    val context = LocalContext.current
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        extraRows.forEach { row ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                row.forEach { (desc, icon) ->
-                    RemoteSquareButton(
-                        icon = icon,
-                        contentDescription = desc,
-                        onClick = {
-                            Toast.makeText(context, context.getString(R.string.feature_coming_soon, desc), Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                }
-            }
-        }
-    }
 }

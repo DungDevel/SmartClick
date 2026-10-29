@@ -187,13 +187,6 @@
     <string name="disconnect">Desconectar</string>
     <string name="feature_coming_soon">%1$s: recurso em breve!</string>
     <string name="feature_coming_soon_no_args">Recurso em breve!</string>
-    <string name="btn_first">Primeiro</string>
-    <string name="btn_headphones">Fones de ouvido</string>
-    <string name="btn_mic">Microfone</string>
-    <string name="btn_repeat">Repetir</string>
-    <string name="btn_chat">Bate-papo</string>
-    <string name="btn_favorite">Favoritos</string>
-    <string name="btn_volume">Volume</string>
     <string name="btn_menu">Menu</string>
     <string name="btn_home">Início</string>
     <string name="btn_input">Entrada</string>

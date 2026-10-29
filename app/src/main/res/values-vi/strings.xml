@@ -222,14 +222,6 @@ một cách dễ dàng</string>
     <string name="feature_coming_soon">%1$s: tính năng sắp ra mắt!</string>
     <string name="feature_coming_soon_no_args">Tính năng sắp ra mắt!</string>
 
-    <!-- Extra Buttons -->
-    <string name="btn_first">Bắt đầu</string>
-    <string name="btn_headphones">Tai nghe</string>
-    <string name="btn_mic">Mic</string>
-    <string name="btn_repeat">Lặp lại</string>
-    <string name="btn_chat">Trò chuyện</string>
-    <string name="btn_favorite">Yêu thích</string>
-    <string name="btn_volume">Âm lượng</string>
     <string name="btn_menu">Menu</string>
     <string name="btn_home">Trang chủ</string>
     <string name="btn_input">Đầu vào</string>
