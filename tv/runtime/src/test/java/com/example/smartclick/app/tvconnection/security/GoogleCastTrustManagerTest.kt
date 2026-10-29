@@ -14,6 +14,9 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.math.BigInteger
 import java.security.KeyPairGenerator
 import java.security.MessageDigest
@@ -229,11 +232,9 @@ class GoogleCastTrustManagerTest {
         val chainRootExcluded = arrayOf(leafCert)
         val chainRootIncluded = arrayOf(leafCert, rootCert)
 
-        trustManager.checkServerTrusted(chainRootExcluded, "RSA")
-        assertTrue(trustManager.isAudioOnlyDevice())
+        assertTrue(trustManager.isAudioOnlyDevice(chainRootExcluded, "RSA"))
 
-        trustManager.checkServerTrusted(chainRootIncluded, "RSA")
-        assertTrue(trustManager.isAudioOnlyDevice())
+        assertTrue(trustManager.isAudioOnlyDevice(chainRootIncluded, "RSA"))
     }
 
     @Test
@@ -257,6 +258,132 @@ class GoogleCastTrustManagerTest {
         assertThrows(CertificateException::class.java) {
             trustManager.checkServerTrusted(chain, "RSA")
         }
+    }
+
+    @Test
+    fun `9 - valid chain with trusted root included at the end is accepted`() {
+        val chain = syntheticChain(rootPathLen = 1, intermediateCount = 0)
+        GoogleCastTrustManager(listOf(chain.root)).checkServerTrusted(arrayOf(chain.leaf, chain.root), "RSA")
+    }
+
+    @Test
+    fun `10 - valid chain with trusted root omitted is accepted`() {
+        val chain = syntheticChain(rootPathLen = 1, intermediateCount = 0)
+        GoogleCastTrustManager(listOf(chain.root)).checkServerTrusted(arrayOf(chain.leaf), "RSA")
+    }
+
+    @Test
+    fun `11 - parallel validations do not share audio-only result`() {
+        val rootPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
+        val rootName = X500Name("CN=Concurrent Root")
+        val root = makeCertificate(rootName, rootName, rootPair.public, rootPair.private, 100, caPathLen = 1)
+        val regularLeaf = makeCertificate(
+            X500Name("CN=Regular Device"), rootName,
+            KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair().public,
+            rootPair.private, 101, issuerIsCa = true
+        )
+        val audioLeafPair = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }.generateKeyPair()
+        val audioLeafBuilder = JcaX509v3CertificateBuilder(
+            rootName, BigInteger.valueOf(102), validityStart(), validityEnd(),
+            X500Name("CN=Audio Device"), audioLeafPair.public
+        )
+        audioLeafBuilder.addExtension(Extension.keyUsage, true, KeyUsage(KeyUsage.digitalSignature))
+        audioLeafBuilder.addExtension(
+            Extension.certificatePolicies, false,
+            CertificatePolicies(PolicyInformation(org.bouncycastle.asn1.ASN1ObjectIdentifier(CAST_AUDIO_POLICY)))
+        )
+        val audioLeaf = org.bouncycastle.cert.jcajce.JcaX509CertificateConverter().setProvider("BC")
+            .getCertificate(audioLeafBuilder.build(JcaContentSignerBuilder("SHA256withRSA").build(rootPair.private)))
+        val trustManager = GoogleCastTrustManager(listOf(root))
+        val regularChecked = CountDownLatch(1)
+        val audioChecked = CountDownLatch(1)
+        val pool = Executors.newFixedThreadPool(2)
+        try {
+            val regularResult = pool.submit<Boolean> {
+                val result = trustManager.isAudioOnlyDevice(arrayOf(regularLeaf), "RSA")
+                regularChecked.countDown()
+                check(audioChecked.await(10, TimeUnit.SECONDS))
+                result
+            }
+            val audioResult = pool.submit<Boolean> {
+                check(regularChecked.await(10, TimeUnit.SECONDS))
+                val result = trustManager.isAudioOnlyDevice(arrayOf(audioLeaf), "RSA")
+                audioChecked.countDown()
+                result
+            }
+            assertEquals(false, regularResult.get(15, TimeUnit.SECONDS))
+            assertEquals(true, audioResult.get(15, TimeUnit.SECONDS))
+        } finally {
+            pool.shutdownNow()
+        }
+    }
+
+    @Test
+    fun `12 - pathLen exact limit is accepted and exceeding it is rejected`() {
+        val exactLimit = syntheticChain(rootPathLen = 1, intermediateCount = 1)
+        GoogleCastTrustManager(listOf(exactLimit.root))
+            .checkServerTrusted(arrayOf(exactLimit.leaf, exactLimit.intermediates.single()), "RSA")
+
+        val overLimit = syntheticChain(rootPathLen = 1, intermediateCount = 2)
+        assertThrows(CertificateException::class.java) {
+            GoogleCastTrustManager(listOf(overLimit.root))
+                .checkServerTrusted(arrayOf(overLimit.leaf) + overLimit.intermediates, "RSA")
+        }
+    }
+
+    private data class SyntheticChain(
+        val root: X509Certificate,
+        val leaf: X509Certificate,
+        val intermediates: List<X509Certificate>
+    )
+
+    private fun syntheticChain(rootPathLen: Int, intermediateCount: Int): SyntheticChain {
+        val kpg = KeyPairGenerator.getInstance("RSA").apply { initialize(2048) }
+        val rootPair = kpg.generateKeyPair()
+        val rootName = X500Name("CN=Synthetic Root ${System.nanoTime()}")
+        val root = makeCertificate(rootName, rootName, rootPair.public, rootPair.private, 200, caPathLen = rootPathLen)
+        var issuerName = rootName
+        var issuerKey = rootPair
+        val intermediates = mutableListOf<X509Certificate>()
+        repeat(intermediateCount) { index ->
+            val subject = X500Name("CN=Synthetic Intermediate $index ${System.nanoTime()}")
+            val pair = kpg.generateKeyPair()
+            intermediates += makeCertificate(subject, issuerName, pair.public, issuerKey.private, 210L + index, caPathLen = 0)
+            issuerName = subject
+            issuerKey = pair
+        }
+        val leafPair = kpg.generateKeyPair()
+        val leaf = makeCertificate(X500Name("CN=Synthetic Leaf"), issuerName, leafPair.public, issuerKey.private, 220, issuerIsCa = true)
+        return SyntheticChain(root, leaf, intermediates)
+    }
+
+    private fun makeCertificate(
+        subject: X500Name,
+        issuer: X500Name,
+        publicKey: java.security.PublicKey,
+        signingKey: java.security.PrivateKey,
+        serial: Long,
+        caPathLen: Int? = null,
+        issuerIsCa: Boolean = false
+    ): X509Certificate {
+        val builder = JcaX509v3CertificateBuilder(
+            issuer, BigInteger.valueOf(serial), validityStart(), validityEnd(), subject, publicKey
+        )
+        if (caPathLen != null) {
+            builder.addExtension(Extension.basicConstraints, true, BasicConstraints(caPathLen))
+            builder.addExtension(Extension.keyUsage, true, KeyUsage(KeyUsage.keyCertSign or KeyUsage.cRLSign))
+        } else {
+            builder.addExtension(Extension.keyUsage, true, KeyUsage(KeyUsage.digitalSignature))
+        }
+        return org.bouncycastle.cert.jcajce.JcaX509CertificateConverter().setProvider("BC")
+            .getCertificate(builder.build(JcaContentSignerBuilder("SHA256withRSA").build(signingKey)))
+    }
+
+    private fun validityStart() = Date(System.currentTimeMillis() - 60_000)
+    private fun validityEnd() = Date(System.currentTimeMillis() + 60_000)
+
+    private companion object {
+        const val CAST_AUDIO_POLICY = "1.3.6.1.4.1.11129.2.5.2"
     }
 
     private fun sha256Hex(bytes: ByteArray): String {

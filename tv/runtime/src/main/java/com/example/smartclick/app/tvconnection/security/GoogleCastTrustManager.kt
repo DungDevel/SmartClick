@@ -27,12 +27,17 @@ class GoogleCastTrustManager(
         const val CAST_AUDIO_ONLY_POLICY_OID = "1.3.6.1.4.1.11129.2.5.2"
     }
 
-    private var lastValidatedIsAudioOnly: Boolean = false
-
-    fun isAudioOnlyDevice(): Boolean = lastValidatedIsAudioOnly
-
     @Throws(CertificateException::class)
     override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {
+        validateServerTrusted(chain, authType)
+    }
+
+    /** Validates this chain and returns its audio-only policy without shared per-connection state. */
+    @Throws(CertificateException::class)
+    fun isAudioOnlyDevice(chain: Array<out X509Certificate>?, authType: String?): Boolean =
+        validateServerTrusted(chain, authType)
+
+    private fun validateServerTrusted(chain: Array<out X509Certificate>?, authType: String?): Boolean {
         if (chain.isNullOrEmpty()) throw CertificateException("Empty certificate chain")
 
         try {
@@ -120,8 +125,6 @@ class GoogleCastTrustManager(
                     break
                 }
             }
-            lastValidatedIsAudioOnly = audioOnlyFound
-
             // 6. JCA PKIX Validation
             val cf = CertificateFactory.getInstance("X.509")
             val certPath = cf.generateCertPath(normalizedChainList)
@@ -133,6 +136,8 @@ class GoogleCastTrustManager(
 
             val validator = CertPathValidator.getInstance("PKIX")
             validator.validate(certPath, pkixParams)
+
+            return audioOnlyFound
 
         } catch (e: Exception) {
             if (e is CertificateException) throw e
