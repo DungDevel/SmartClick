@@ -34,7 +34,6 @@ class FireTvController(
         TvCapability.POWER_ON,
         TvCapability.POWER_OFF,
         TvCapability.DPAD,
-        TvCapability.KEYBOARD_TEXT,
         TvCapability.BACKSPACE
     )
 

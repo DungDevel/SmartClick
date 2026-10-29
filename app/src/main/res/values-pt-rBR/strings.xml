@@ -123,6 +123,9 @@
     <string name="enter_pin_title">Digite o PIN</string>
     <string name="enter_pin_message">Digite o PIN exibido na sua TV.</string>
     <string name="submit">Enviar</string>
+    <string name="keyboard">Teclado</string>
+    <string name="dictate_text">Ditado de texto</string>
+    <string name="headphone">Fones de ouvido</string>
     <string name="confirm_on_tv_title">Confirmar na TV</string>
     <string name="confirm_on_tv_message">Aceite a solicitação de conexão na tela da sua TV.</string>
     <string name="pairing_rejected">A conexão foi rejeitada na TV.</string>

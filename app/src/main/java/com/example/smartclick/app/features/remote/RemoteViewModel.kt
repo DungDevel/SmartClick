@@ -72,6 +72,10 @@ class RemoteViewModel @Inject constructor(
 
     private var lastToastTime = 0L
     private var lastToastEvent: RemoteUiEvent? = null
+    private var dictationSession = false
+    private val _dictationResults = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val dictationResults = _dictationResults.asSharedFlow()
+    val dictationAvailable: Boolean get() = speechToTextEngine.isAvailable
 
     private fun emitThrottledEvent(event: RemoteUiEvent) {
         val now = System.currentTimeMillis()
@@ -158,7 +162,10 @@ class RemoteViewModel @Inject constructor(
         viewModelScope.launch {
             speechToTextEngine.state.collect { state ->
                 when (state) {
-                    is SpeechState.Result -> processVoiceResult(state.text)
+                    is SpeechState.Result -> if (dictationSession) {
+                        dictationSession = false
+                        _dictationResults.tryEmit(state.text)
+                    } else processVoiceResult(state.text)
                     is SpeechState.Error -> {
                         _uiEvents.tryEmit(RemoteUiEvent.VoiceError(state.message))
                     }
@@ -184,6 +191,13 @@ class RemoteViewModel @Inject constructor(
                 _uiEvents.tryEmit(RemoteUiEvent.RequestVoicePermission)
             }
         }
+    }
+
+    fun prepareDictation(hasRecordAudioPermission: Boolean) {
+        if (!dictationAvailable) return
+        dictationSession = true
+        if (hasRecordAudioPermission) speechToTextEngine.startListening()
+        else _uiEvents.tryEmit(RemoteUiEvent.RequestVoicePermission)
     }
 
     private suspend fun startListeningIfAllowed() {

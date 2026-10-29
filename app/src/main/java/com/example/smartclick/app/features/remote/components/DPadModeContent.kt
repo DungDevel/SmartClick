@@ -29,7 +29,12 @@ fun DPadModeContent(
     navigationEnabled: Boolean = TvCapability.DPAD in capabilities,
     onHoldCommand: (suspend (RemoteCommand) -> SendCommandResult)? = null,
     onPressStart: () -> Unit = {},
-    controlsEnabled: Boolean = true
+    controlsEnabled: Boolean = true,
+    onKeyboard: () -> Unit = {},
+    onDictate: () -> Unit = {},
+    showKeyboard: Boolean = false,
+    showDictation: Boolean = false,
+    showHeadphone: Boolean = false
 ) {
     val colors = SmartClickThemeTokens.colors
 
@@ -91,6 +96,21 @@ fun DPadModeContent(
         )
     }
     Spacer(modifier = Modifier.height(16.dp))
+
+    if (showKeyboard || showDictation || showHeadphone) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (showKeyboard) androidx.compose.material3.OutlinedButton(onClick = onKeyboard, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.keyboard))
+            }
+            if (showDictation) androidx.compose.material3.OutlinedButton(onClick = onDictate, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.dictate_text))
+            }
+            if (showHeadphone) androidx.compose.material3.OutlinedButton(onClick = {}, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.headphone))
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+    }
 
     // VOL / CH
     Row(

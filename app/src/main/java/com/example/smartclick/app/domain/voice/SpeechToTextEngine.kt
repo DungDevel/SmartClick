@@ -19,6 +19,7 @@ sealed class SpeechState {
  */
 interface SpeechToTextEngine {
     val state: StateFlow<SpeechState>
+    val isAvailable: Boolean get() = true
 
     fun startListening()
     fun stopListening()

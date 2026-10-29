@@ -147,6 +147,9 @@
     <string name="enter_pin_title">Enter PIN</string>
     <string name="enter_pin_message">Please enter the PIN shown on your TV.</string>
     <string name="submit">Submit</string>
+    <string name="keyboard">Keyboard</string>
+    <string name="dictate_text">Dictate text</string>
+    <string name="headphone">Headphone</string>
     <string name="confirm_on_tv_title">Confirm on TV</string>
     <string name="confirm_on_tv_message">Please accept the connection request on your TV screen.</string>
     <string name="pairing_rejected">Connection rejected on TV.</string>

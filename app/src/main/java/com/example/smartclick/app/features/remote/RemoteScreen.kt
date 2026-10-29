@@ -484,10 +484,13 @@ fun RemoteScreen(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 16.dp, vertical = 16.dp)
             ) {
+                var showKeyboard by remember { mutableStateOf(false) }
+                var dictatedText by remember { mutableStateOf("") }
+                val secondaryActions = RemoteSecondaryActions.forCapabilities(capabilities, viewModel.dictationAvailable)
+                val hasKeyboard = secondaryActions.keyboard
+                val canDictate = secondaryActions.dictation
                 when {
                     activeMode == RemoteMode.TOUCHPAD -> {
-                        var showKeyboard by remember { mutableStateOf(false) }
-
                         when (RemotePadBehavior.layoutFor(capabilities)) {
                             RemotePadLayout.POINTER -> TouchPad(
                                 onMove = { dx, dy -> dispatchCommand(RemoteCommand.PointerMove(dx, dy)) },
@@ -515,15 +518,6 @@ fun RemoteScreen(
                             }
                         }
 
-                        if (showKeyboard) {
-                            KeyboardModal(
-                                onDismissRequest = { showKeyboard = false },
-                                onTextChange = { text -> dispatchCommand(RemoteCommand.Text(text)) },
-                                onEnter = { dispatchCommand(RemoteCommand.Ok) },
-                                onBackspace = { dispatchCommand(RemoteCommand.Backspace) },
-                                canDelete = capabilities.contains(TvCapability.BACKSPACE)
-                            )
-                        }
                     }
 
                     activeMode == RemoteMode.NUMPAD -> {
@@ -553,9 +547,32 @@ fun RemoteScreen(
                         ),
                         onHoldCommand = ::dispatchHeldCommand,
                         onPressStart = ::onHeldPressStart,
-                        controlsEnabled = controlsEnabled && !isLocked
+                        controlsEnabled = controlsEnabled && !isLocked,
+                        showKeyboard = hasKeyboard,
+                        showDictation = canDictate,
+                        showHeadphone = secondaryActions.headphone,
+                        onKeyboard = { showKeyboard = true },
+                        onDictate = {
+                            showKeyboard = true
+                            val hasPerm = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                            viewModel.prepareDictation(hasPerm)
+                        }
                     )
                 }
+
+                if (showKeyboard && TvCapability.KEYBOARD_TEXT in capabilities) {
+                    KeyboardModal(
+                        onDismissRequest = { showKeyboard = false },
+                        onSendText = { command -> dispatchCommand(command) },
+                        dictatedText = dictatedText,
+                        onDictate = {
+                            val hasPerm = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                            viewModel.prepareDictation(hasPerm)
+                        }
+                    )
+                }
+
+                LaunchedEffect(viewModel) { viewModel.dictationResults.collect { dictatedText = it } }
 
                 Spacer(modifier = Modifier.height(16.dp))
 

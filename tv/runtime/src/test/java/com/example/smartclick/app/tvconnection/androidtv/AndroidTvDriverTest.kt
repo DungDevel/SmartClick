@@ -16,6 +16,7 @@ import org.junit.After
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 import kotlinx.coroutines.test.runTest
@@ -65,6 +66,13 @@ class AndroidTvDriverTest : AbstractDriverContractTest() {
         assertTrue(driver.capabilities.contains(TvCapability.CAST_IMAGE))
         assertTrue(driver.capabilities.contains(TvCapability.CAST_PLAYBACK))
         assertTrue(driver.capabilities.contains(TvCapability.CAST_SEEK))
+    }
+
+    @Test
+    fun `keyboard text is not advertised because the key mapper has no text transport`() {
+        val driver = AndroidTvDriver()
+        assertFalse(TvCapability.KEYBOARD_TEXT in driver.capabilities)
+        assertNull(AndroidTvKeyMapper.mapCommand(com.example.smartclick.app.domain.model.RemoteCommand.Text("hello")))
     }
 
     @Test

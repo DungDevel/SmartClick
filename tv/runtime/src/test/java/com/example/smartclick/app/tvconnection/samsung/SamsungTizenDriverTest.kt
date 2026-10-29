@@ -8,6 +8,8 @@ import com.example.smartclick.app.domain.connection.Credentials
 import com.example.smartclick.app.domain.connection.IProtocolDriver
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.model.TvProtocol
+import com.example.smartclick.app.domain.model.TvCapability
+import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.tvconnection.cast.LocalMediaServer
 import io.mockk.every
 import io.mockk.mockk
@@ -19,7 +21,9 @@ import okhttp3.OkHttpClient
 import okhttp3.WebSocket
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
@@ -55,6 +59,13 @@ class SamsungTizenDriverTest : AbstractDriverContractTest() {
         isPaired = true,
         capabilities = setOf()
     )
+
+    @Test
+    fun `keyboard text is not advertised because remote key mapper has no text command`() {
+        val driver = SamsungTizenDriver(context, localMediaServer)
+        assertFalse(TvCapability.KEYBOARD_TEXT in driver.capabilities)
+        assertNull(SamsungKeyMapper.mapCommand(RemoteCommand.Text("hello")))
+    }
 
     @Test
     fun testCreateController() {
