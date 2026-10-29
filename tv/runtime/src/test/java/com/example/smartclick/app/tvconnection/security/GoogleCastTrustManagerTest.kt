@@ -232,11 +232,9 @@ class GoogleCastTrustManagerTest {
         val chainRootExcluded = arrayOf(leafCert)
         val chainRootIncluded = arrayOf(leafCert, rootCert)
 
-        trustManager.checkServerTrusted(chainRootExcluded, "RSA")
-        assertTrue(trustManager.isAudioOnlyDevice())
+        assertTrue(trustManager.isAudioOnlyDevice(chainRootExcluded, "RSA"))
 
-        trustManager.checkServerTrusted(chainRootIncluded, "RSA")
-        assertTrue(trustManager.isAudioOnlyDevice())
+        assertTrue(trustManager.isAudioOnlyDevice(chainRootIncluded, "RSA"))
     }
 
     @Test
@@ -302,16 +300,16 @@ class GoogleCastTrustManagerTest {
         val pool = Executors.newFixedThreadPool(2)
         try {
             val regularResult = pool.submit<Boolean> {
-                trustManager.checkServerTrusted(arrayOf(regularLeaf), "RSA")
+                val result = trustManager.isAudioOnlyDevice(arrayOf(regularLeaf), "RSA")
                 regularChecked.countDown()
                 check(audioChecked.await(10, TimeUnit.SECONDS))
-                trustManager.isAudioOnlyDevice()
+                result
             }
             val audioResult = pool.submit<Boolean> {
                 check(regularChecked.await(10, TimeUnit.SECONDS))
-                trustManager.checkServerTrusted(arrayOf(audioLeaf), "RSA")
+                val result = trustManager.isAudioOnlyDevice(arrayOf(audioLeaf), "RSA")
                 audioChecked.countDown()
-                trustManager.isAudioOnlyDevice()
+                result
             }
             assertEquals(false, regularResult.get(15, TimeUnit.SECONDS))
             assertEquals(true, audioResult.get(15, TimeUnit.SECONDS))

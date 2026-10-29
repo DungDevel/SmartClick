@@ -53,10 +53,8 @@ class GoogleCastAuthManager(
             }
 
             // 4. Verify Certificate Chain to Trust Anchor
-            verifyChain(chain)
-
-            // Determine if the validated chain/root indicates an Audio-Only device policy (OID 1.3.6.1.4.1.11129.2.5.2)
-            val isAudioOnly = (trustManager as? GoogleCastTrustManager)?.isAudioOnlyDevice() ?: false
+            // Validation returns this chain's policy directly; no shared TrustManager state is read.
+            val isAudioOnly = verifyChain(chain)
 
             // C1 SECURITY FIX: Check certificate validity (NotBefore/NotAfter)
             chain.forEach { it.checkValidity() }
@@ -83,10 +81,16 @@ class GoogleCastAuthManager(
         }
     }
 
-    private fun verifyChain(chain: List<X509Certificate>) {
+    private fun verifyChain(chain: List<X509Certificate>): Boolean {
         // Convert our chain to the format expected by X509TrustManager
         // The trustManager is mandatory in the constructor, so we don't need null checks here.
-        trustManager.checkServerTrusted(chain.toTypedArray(), "RSA")
+        val certs = chain.toTypedArray()
+        return if (trustManager is GoogleCastTrustManager) {
+            trustManager.isAudioOnlyDevice(certs, "RSA")
+        } else {
+            trustManager.checkServerTrusted(certs, "RSA")
+            false
+        }
     }
 
     private fun verifySignature(data: ByteArray, signatureBytes: ByteArray, publicKey: PublicKey, algo: AuthChallenge.SignatureAlgorithm) {
