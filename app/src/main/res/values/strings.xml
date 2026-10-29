@@ -253,4 +253,14 @@ Effortlessly
     <string name="cast_pause">Pause</string>
     <string name="cast_play">Play</string>
     <string name="cast_stop">Stop</string>
+    <string name="voice_listening">Listening…</string>
+    <string name="voice_processing">Processing: %1$s</string>
+    <string name="voice_result">Result: %1$s</string>
+    <string name="voice_error_display">Error: %1$s</string>
+    <string name="voice_error_service_unavailable">No speech recognition service is available.</string>
+    <string name="voice_error_permission_denied">Microphone permission was denied.</string>
+    <string name="voice_error_network">Speech recognition network error.</string>
+    <string name="voice_error_no_speech">No speech was heard. Try again.</string>
+    <string name="voice_error_busy">Speech recognition is busy. Try again.</string>
+    <string name="voice_error_generic">Speech recognition failed. Try again.</string>
 </resources>

@@ -82,10 +82,10 @@ fun BottomActions(
     val isListening = speechState is SpeechState.Listening || speechState is SpeechState.Processing
     val voiceTextStr = when (speechState) {
         is SpeechState.Idle -> stringResource(R.string.voice_search)
-        is SpeechState.Listening -> "Listening..."
-        is SpeechState.Processing -> "Processing: ${speechState.partialText}"
-        is SpeechState.Result -> "Result: ${speechState.text}"
-        is SpeechState.Error -> "Error: ${speechState.message}"
+        is SpeechState.Listening -> stringResource(R.string.voice_listening)
+        is SpeechState.Processing -> stringResource(R.string.voice_processing, speechState.partialText)
+        is SpeechState.Result -> stringResource(R.string.voice_result, speechState.text)
+        is SpeechState.Error -> stringResource(R.string.voice_error_display, speechState.message)
     }
 
     val boxColor = if (isListening) colors.acc.copy(alpha = 0.3f) else colors.acc.copy(alpha = 0.15f)

@@ -6,9 +6,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,13 +20,19 @@ import androidx.compose.ui.unit.sp
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 
 import androidx.compose.ui.draw.alpha
+import com.example.smartclick.app.domain.model.RemoteCommand
+import com.example.smartclick.app.domain.usecase.SendCommandResult
 
 @Composable
 fun RowScope.RemoteStepperCard(
     title: String,
     onMinus: () -> Unit = {},
     onPlus: () -> Unit = {},
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    minusCommand: RemoteCommand? = null,
+    plusCommand: RemoteCommand? = null,
+    onHoldCommand: (suspend (RemoteCommand) -> SendCommandResult)? = null,
+    onPressStart: () -> Unit = {}
 ) {
     val colors = SmartClickThemeTokens.colors
     Column(
@@ -47,22 +53,20 @@ fun RowScope.RemoteStepperCard(
             modifier = Modifier.padding(bottom = 8.dp)
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(
-                onClick = onMinus,
-                enabled = enabled,
-                colors = ButtonDefaults.buttonColors(containerColor = colors.surfEl),
-                modifier = Modifier.weight(1f).height(42.dp),
-                shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(0.dp)
-            ) { Text("-", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors.tx1) }
-            Button(
-                onClick = onPlus,
-                enabled = enabled,
-                colors = ButtonDefaults.buttonColors(containerColor = colors.surfEl),
-                modifier = Modifier.weight(1f).height(42.dp),
-                shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(0.dp)
-            ) { Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors.tx1) }
+            arrayOf(Triple("-", minusCommand, onMinus), Triple("+", plusCommand, onPlus)).forEach { (label, command, onClick) ->
+                val repeatModifier = if (command != null && onHoldCommand != null) {
+                    Modifier.heldCommandInput(command, enabled, onPressStart, onHoldCommand)
+                } else {
+                    Modifier.clickable(enabled = enabled, onClick = onClick)
+                }
+                Box(
+                    modifier = Modifier.weight(1f).height(48.dp)
+                        .background(colors.surfEl, RoundedCornerShape(8.dp))
+                        .then(repeatModifier)
+                        .semantics { contentDescription = title + label },
+                    contentAlignment = Alignment.Center
+                ) { Text(label, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors.tx1) }
+            }
         }
     }
 }

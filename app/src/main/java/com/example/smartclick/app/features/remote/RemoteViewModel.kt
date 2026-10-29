@@ -45,6 +45,7 @@ sealed class RemoteUiEvent {
     object VoiceUnrecognizedError : RemoteUiEvent()
     data class VoiceError(val message: String) : RemoteUiEvent()
     object VoicePremiumRequired : RemoteUiEvent()
+    object RequestVoicePermission : RemoteUiEvent()
     object RequestPowerOffConfirmation : RemoteUiEvent()
 }
 
@@ -169,18 +170,43 @@ class RemoteViewModel @Inject constructor(
 
     fun startListening() {
         viewModelScope.launch {
-            val userPlan = subscriptionRepository.currentPlan.first()
-            val isVoiceAllowed = featureGate.isFeatureAllowed(PremiumFeature.VOICE, userPlan)
-            if (isVoiceAllowed) {
+            startListeningIfAllowed()
+        }
+    }
+
+    fun prepareVoiceListening(hasRecordAudioPermission: Boolean) {
+        viewModelScope.launch {
+            if (!isVoiceAllowed()) {
+                _uiEvents.tryEmit(RemoteUiEvent.VoicePremiumRequired)
+            } else if (hasRecordAudioPermission) {
                 speechToTextEngine.startListening()
             } else {
-                _uiEvents.tryEmit(RemoteUiEvent.VoicePremiumRequired)
+                _uiEvents.tryEmit(RemoteUiEvent.RequestVoicePermission)
             }
         }
     }
 
+    private suspend fun startListeningIfAllowed() {
+        if (isVoiceAllowed()) speechToTextEngine.startListening()
+        else _uiEvents.tryEmit(RemoteUiEvent.VoicePremiumRequired)
+    }
+
+    private suspend fun isVoiceAllowed(): Boolean {
+        val userPlan = subscriptionRepository.currentPlan.first()
+        return featureGate.isFeatureAllowed(PremiumFeature.VOICE, userPlan)
+    }
+
     fun stopListening() {
         speechToTextEngine.stopListening()
+    }
+
+    fun cancelVoiceSession() {
+        speechToTextEngine.destroy()
+    }
+
+    override fun onCleared() {
+        speechToTextEngine.destroy()
+        super.onCleared()
     }
 
     private suspend fun processVoiceResult(text: String) {
@@ -222,21 +248,26 @@ class RemoteViewModel @Inject constructor(
                 }
             }
 
-            val result = sendCommandUseCase(command)
-            if (result == SendCommandResult.SUCCESS) {
-                when (command) {
-                    RemoteCommand.MuteOn -> _muteState.value = 1
-                    RemoteCommand.MuteOff -> _muteState.value = 0
-                    RemoteCommand.Mute -> _muteState.value = if (_muteState.value == 1) 0 else 1
-                    else -> {}
-                }
-            }
-            when (result) {
-                SendCommandResult.NOT_SUPPORTED -> emitThrottledEvent(RemoteUiEvent.CommandNotSupported)
-                SendCommandResult.NOT_CONNECTED -> emitThrottledEvent(RemoteUiEvent.CommandNotConnected)
-                SendCommandResult.FAILED -> emitThrottledEvent(RemoteUiEvent.CommandFailed)
+            sendCommandForHold(command)
+        }
+    }
+
+    suspend fun sendCommandForHold(command: RemoteCommand): SendCommandResult {
+        val result = sendCommandUseCase(command)
+        if (result == SendCommandResult.SUCCESS) {
+            when (command) {
+                RemoteCommand.MuteOn -> _muteState.value = 1
+                RemoteCommand.MuteOff -> _muteState.value = 0
+                RemoteCommand.Mute -> _muteState.value = if (_muteState.value == 1) 0 else 1
                 else -> {}
             }
         }
+        when (result) {
+            SendCommandResult.NOT_SUPPORTED -> emitThrottledEvent(RemoteUiEvent.CommandNotSupported)
+            SendCommandResult.NOT_CONNECTED -> emitThrottledEvent(RemoteUiEvent.CommandNotConnected)
+            SendCommandResult.FAILED -> emitThrottledEvent(RemoteUiEvent.CommandFailed)
+            else -> {}
+        }
+        return result
     }
 }

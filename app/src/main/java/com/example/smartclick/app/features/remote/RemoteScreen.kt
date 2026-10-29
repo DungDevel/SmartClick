@@ -47,6 +47,7 @@ import com.example.smartclick.app.features.remote.components.DPad
 import com.example.smartclick.app.features.remote.components.KeyboardModal
 import com.example.smartclick.app.features.remote.components.NumPad
 import com.example.smartclick.app.features.remote.components.TouchPad
+import com.example.smartclick.app.domain.usecase.SendCommandResult
 
 @Composable
 fun RemoteScreen(
@@ -77,8 +78,12 @@ fun RemoteScreen(
         if (isGranted) {
             viewModel.startListening()
         } else {
-            android.widget.Toast.makeText(context, context.getString(R.string.voice_not_supported), android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, context.getString(R.string.voice_error_permission_denied), android.widget.Toast.LENGTH_SHORT).show()
         }
+    }
+
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.cancelVoiceSession() }
     }
 
     var showPowerOffDialog by remember { mutableStateOf(false) }
@@ -103,6 +108,9 @@ fun RemoteScreen(
                 }
                 RemoteUiEvent.VoicePremiumRequired -> {
                     android.widget.Toast.makeText(context, context.getString(R.string.voice_premium_required), android.widget.Toast.LENGTH_SHORT).show()
+                }
+                RemoteUiEvent.RequestVoicePermission -> {
+                    recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                 }
                 RemoteUiEvent.VoiceNotSupportedError -> {
                     android.widget.Toast.makeText(context, context.getString(R.string.command_not_supported), android.widget.Toast.LENGTH_SHORT).show()
@@ -151,6 +159,16 @@ fun RemoteScreen(
         }
 
         viewModel.sendCommand(command)
+    }
+
+    suspend fun dispatchHeldCommand(command: RemoteCommand): SendCommandResult {
+        if (!isRepeatableHeldCommand(command)) return SendCommandResult.NOT_SUPPORTED
+        if (isLocked || !controlsEnabled) return SendCommandResult.NOT_CONNECTED
+        return viewModel.sendCommandForHold(command)
+    }
+
+    fun onHeldPressStart() {
+        if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
     }
 
     if (showPowerOffDialog) {
@@ -490,7 +508,9 @@ fun RemoteScreen(
                                     onDown = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.DOWN, navigationEnabled, ::dispatchCommand) },
                                     onLeft = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.LEFT, navigationEnabled, ::dispatchCommand) },
                                     onRight = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.RIGHT, navigationEnabled, ::dispatchCommand) },
-                                    onOk = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.OK, navigationEnabled, ::dispatchCommand) }
+                                    onOk = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.OK, navigationEnabled, ::dispatchCommand) },
+                                    onHoldCommand = ::dispatchHeldCommand,
+                                    onPressStart = ::onHeldPressStart
                                 )
                             }
                         }
@@ -530,7 +550,10 @@ fun RemoteScreen(
                             connected = controlsEnabled,
                             locked = isLocked,
                             capabilities = capabilities
-                        )
+                        ),
+                        onHoldCommand = ::dispatchHeldCommand,
+                        onPressStart = ::onHeldPressStart,
+                        controlsEnabled = controlsEnabled && !isLocked
                     )
                 }
 
@@ -548,12 +571,7 @@ fun RemoteScreen(
                             context,
                             Manifest.permission.RECORD_AUDIO
                         ) == PackageManager.PERMISSION_GRANTED
-
-                        if (hasPerm) {
-                            viewModel.startListening()
-                        } else {
-                            recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        }
+                        viewModel.prepareVoiceListening(hasRecordAudioPermission = hasPerm)
                     },
                     onStopVoice = {
                         viewModel.stopListening()

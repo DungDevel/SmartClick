@@ -20,12 +20,16 @@ import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.domain.model.TvCapability
 import androidx.compose.ui.res.stringResource
+import com.example.smartclick.app.domain.usecase.SendCommandResult
 
 @Composable
 fun DPadModeContent(
     dispatchCommand: (RemoteCommand) -> Unit,
     capabilities: Set<TvCapability>,
-    navigationEnabled: Boolean = TvCapability.DPAD in capabilities
+    navigationEnabled: Boolean = TvCapability.DPAD in capabilities,
+    onHoldCommand: (suspend (RemoteCommand) -> SendCommandResult)? = null,
+    onPressStart: () -> Unit = {},
+    controlsEnabled: Boolean = true
 ) {
     val colors = SmartClickThemeTokens.colors
 
@@ -81,7 +85,9 @@ fun DPadModeContent(
             onLeft = { dispatchCommand(RemoteCommand.DPadLeft) },
             onRight = { dispatchCommand(RemoteCommand.DPadRight) },
             onOk = { dispatchCommand(RemoteCommand.Ok) },
-            enabled = navigationEnabled
+            enabled = navigationEnabled,
+            onHoldCommand = onHoldCommand,
+            onPressStart = onPressStart
         )
     }
     Spacer(modifier = Modifier.height(16.dp))
@@ -95,13 +101,21 @@ fun DPadModeContent(
             title = stringResource(R.string.vol),
             onMinus = { dispatchCommand(RemoteCommand.VolumeDown) },
             onPlus = { dispatchCommand(RemoteCommand.VolumeUp) },
-            enabled = capabilities.contains(TvCapability.VOLUME)
+            minusCommand = RemoteCommand.VolumeDown,
+            plusCommand = RemoteCommand.VolumeUp,
+            enabled = controlsEnabled && capabilities.contains(TvCapability.VOLUME),
+            onHoldCommand = onHoldCommand,
+            onPressStart = onPressStart
         )
         RemoteStepperCard(
             title = stringResource(R.string.ch),
             onMinus = { dispatchCommand(RemoteCommand.ChannelDown) },
             onPlus = { dispatchCommand(RemoteCommand.ChannelUp) },
-            enabled = capabilities.contains(TvCapability.CHANNEL_CONTROL)
+            minusCommand = RemoteCommand.ChannelDown,
+            plusCommand = RemoteCommand.ChannelUp,
+            enabled = controlsEnabled && capabilities.contains(TvCapability.CHANNEL_CONTROL),
+            onHoldCommand = onHoldCommand,
+            onPressStart = onPressStart
         )
     }
     Spacer(modifier = Modifier.height(16.dp))
