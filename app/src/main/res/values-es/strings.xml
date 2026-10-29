@@ -217,4 +217,14 @@
     <string name="cast_pause">Pausar</string>
     <string name="cast_play">Reproducir</string>
     <string name="cast_stop">Detener</string>
+    <string name="voice_listening">Escuchando…</string>
+    <string name="voice_processing">Procesando: %1$s</string>
+    <string name="voice_result">Resultado: %1$s</string>
+    <string name="voice_error_display">Error: %1$s</string>
+    <string name="voice_error_service_unavailable">No hay ningún servicio de reconocimiento de voz disponible.</string>
+    <string name="voice_error_permission_denied">Se denegó el permiso del micrófono.</string>
+    <string name="voice_error_network">Error de red en el reconocimiento de voz.</string>
+    <string name="voice_error_no_speech">No se detectó voz. Inténtalo de nuevo.</string>
+    <string name="voice_error_busy">El servicio de reconocimiento de voz está ocupado. Inténtalo de nuevo.</string>
+    <string name="voice_error_generic">No se pudo reconocer la voz. Inténtalo de nuevo.</string>
 </resources>

@@ -78,8 +78,12 @@ fun RemoteScreen(
         if (isGranted) {
             viewModel.startListening()
         } else {
-            android.widget.Toast.makeText(context, context.getString(R.string.voice_not_supported), android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, context.getString(R.string.voice_error_permission_denied), android.widget.Toast.LENGTH_SHORT).show()
         }
+    }
+
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.cancelVoiceSession() }
     }
 
     var showPowerOffDialog by remember { mutableStateOf(false) }
@@ -104,6 +108,9 @@ fun RemoteScreen(
                 }
                 RemoteUiEvent.VoicePremiumRequired -> {
                     android.widget.Toast.makeText(context, context.getString(R.string.voice_premium_required), android.widget.Toast.LENGTH_SHORT).show()
+                }
+                RemoteUiEvent.RequestVoicePermission -> {
+                    recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                 }
                 RemoteUiEvent.VoiceNotSupportedError -> {
                     android.widget.Toast.makeText(context, context.getString(R.string.command_not_supported), android.widget.Toast.LENGTH_SHORT).show()
@@ -564,12 +571,7 @@ fun RemoteScreen(
                             context,
                             Manifest.permission.RECORD_AUDIO
                         ) == PackageManager.PERMISSION_GRANTED
-
-                        if (hasPerm) {
-                            viewModel.startListening()
-                        } else {
-                            recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        }
+                        viewModel.prepareVoiceListening(hasRecordAudioPermission = hasPerm)
                     },
                     onStopVoice = {
                         viewModel.stopListening()

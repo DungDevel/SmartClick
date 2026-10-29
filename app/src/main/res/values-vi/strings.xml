@@ -252,4 +252,14 @@ một cách dễ dàng</string>
     <string name="cast_pause">Tạm dừng</string>
     <string name="cast_play">Phát</string>
     <string name="cast_stop">Dừng</string>
+    <string name="voice_listening">Đang nghe…</string>
+    <string name="voice_processing">Đang xử lý: %1$s</string>
+    <string name="voice_result">Kết quả: %1$s</string>
+    <string name="voice_error_display">Lỗi: %1$s</string>
+    <string name="voice_error_service_unavailable">Không có dịch vụ nhận dạng giọng nói.</string>
+    <string name="voice_error_permission_denied">Quyền dùng micrô đã bị từ chối.</string>
+    <string name="voice_error_network">Lỗi mạng khi nhận dạng giọng nói.</string>
+    <string name="voice_error_no_speech">Không nghe thấy giọng nói. Hãy thử lại.</string>
+    <string name="voice_error_busy">Dịch vụ nhận dạng giọng nói đang bận. Hãy thử lại.</string>
+    <string name="voice_error_generic">Không thể nhận dạng giọng nói. Hãy thử lại.</string>
 </resources>

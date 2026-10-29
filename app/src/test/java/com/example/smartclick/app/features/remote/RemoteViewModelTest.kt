@@ -269,4 +269,40 @@ class RemoteViewModelTest {
         assertEquals(true, events.contains(RemoteUiEvent.CommandNotSupported))
         job.cancel()
     }
+
+    @Test
+    fun `free plan is gated before permission request`() = runTest {
+        every { subscriptionRepository.currentPlan } returns MutableStateFlow(SubscriptionPlan.FREE)
+        every { featureGate.isFeatureAllowed(com.example.smartclick.app.domain.policy.PremiumFeature.VOICE, SubscriptionPlan.FREE) } returns false
+        val events = mutableListOf<RemoteUiEvent>()
+        val job = launch { viewModel.uiEvents.collect { events += it } }
+
+        viewModel.prepareVoiceListening(hasRecordAudioPermission = false)
+        advanceUntilIdle()
+
+        assertEquals(listOf(RemoteUiEvent.VoicePremiumRequired), events)
+        io.mockk.verify(exactly = 0) { speechToTextEngine.startListening() }
+        job.cancel()
+    }
+
+    @Test
+    fun `premium user is asked for permission before speech starts`() = runTest {
+        every { subscriptionRepository.currentPlan } returns MutableStateFlow(SubscriptionPlan.PREMIUM)
+        every { featureGate.isFeatureAllowed(com.example.smartclick.app.domain.policy.PremiumFeature.VOICE, SubscriptionPlan.PREMIUM) } returns true
+        val events = mutableListOf<RemoteUiEvent>()
+        val job = launch { viewModel.uiEvents.collect { events += it } }
+
+        viewModel.prepareVoiceListening(hasRecordAudioPermission = false)
+        advanceUntilIdle()
+
+        assertEquals(listOf(RemoteUiEvent.RequestVoicePermission), events)
+        io.mockk.verify(exactly = 0) { speechToTextEngine.startListening() }
+        job.cancel()
+    }
+
+    @Test
+    fun `leaving remote screen destroys speech recognizer session`() {
+        viewModel.cancelVoiceSession()
+        io.mockk.verify(exactly = 1) { speechToTextEngine.destroy() }
+    }
 }

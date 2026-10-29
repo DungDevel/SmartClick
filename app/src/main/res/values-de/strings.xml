@@ -216,4 +216,14 @@
     <string name="cast_pause">Pause</string>
     <string name="cast_play">Wiedergabe</string>
     <string name="cast_stop">Stopp</string>
+    <string name="voice_listening">Höre zu…</string>
+    <string name="voice_processing">Verarbeitung: %1$s</string>
+    <string name="voice_result">Ergebnis: %1$s</string>
+    <string name="voice_error_display">Fehler: %1$s</string>
+    <string name="voice_error_service_unavailable">Kein Spracherkennungsdienst verfügbar.</string>
+    <string name="voice_error_permission_denied">Die Mikrofonberechtigung wurde verweigert.</string>
+    <string name="voice_error_network">Netzwerkfehler bei der Spracherkennung.</string>
+    <string name="voice_error_no_speech">Keine Sprache erkannt. Bitte erneut versuchen.</string>
+    <string name="voice_error_busy">Der Spracherkennungsdienst ist beschäftigt. Bitte erneut versuchen.</string>
+    <string name="voice_error_generic">Spracherkennung fehlgeschlagen. Bitte erneut versuchen.</string>
 </resources>
