@@ -3,30 +3,224 @@
     "id": "vtv1",
     "name": "VTV1",
     "channel_number": "1",
-    "keywords": ["vtv1", "v t v 1", "kênh một", "vê tê vê 1", "vê tê vê một"]
+    "keywords": [
+      "vtv1",
+      "v t v 1",
+      "kênh một",
+      "vê tê vê 1",
+      "vê tê vê một"
+    ]
   },
   {
     "id": "vtv2",
     "name": "VTV2",
     "channel_number": "2",
-    "keywords": ["vtv2", "v t v 2", "kênh hai", "vê tê vê 2", "vê tê vê hai"]
+    "keywords": [
+      "vtv2",
+      "v t v 2",
+      "kênh hai",
+      "vê tê vê 2",
+      "vê tê vê hai"
+    ]
   },
   {
     "id": "vtv3",
     "name": "VTV3",
     "channel_number": "3",
-    "keywords": ["vtv3", "v t v 3", "kênh ba", "vê tê vê 3", "vê tê vê ba"]
+    "keywords": [
+      "vtv3",
+      "v t v 3",
+      "kênh ba",
+      "vê tê vê 3",
+      "vê tê vê ba"
+    ]
   },
   {
     "id": "vtv6",
     "name": "VTV6",
     "channel_number": "6",
-    "keywords": ["vtv6", "v t v 6", "kênh sáu", "vê tê vê 6", "vê tê vê sáu"]
+    "keywords": [
+      "vtv6",
+      "v t v 6",
+      "kênh sáu",
+      "vê tê vê 6",
+      "vê tê vê sáu"
+    ]
   },
   {
     "id": "htv7",
     "name": "HTV7",
     "channel_number": "7",
-    "keywords": ["htv7", "h t v 7", "kênh htv", "hát tê vê 7", "hát tê vê bảy"]
+    "keywords": [
+      "htv7",
+      "h t v 7",
+      "kênh htv",
+      "hát tê vê 7",
+      "hát tê vê bảy"
+    ]
+  },
+  {
+    "name": "YouTube",
+    "id": "app:youtube",
+    "protocol_ids": {
+      "lgwebos": "youtube.logan",
+      "androidtv": "com.google.android.youtube.tv",
+      "roku": "837",
+      "samsung": "111299001912"
+    },
+    "keywords": [
+      "youtube",
+      "du túp",
+      "jút túp",
+      "phim youtube"
+    ],
+    "category": "apps",
+    "symbol": "YOUTUBE",
+    "type": "app"
+  },
+  {
+    "name": "Netflix",
+    "id": "app:netflix",
+    "protocol_ids": {
+      "lgwebos": "netflix",
+      "androidtv": "com.netflix.ninja",
+      "roku": "12",
+      "samsung": "11101200001"
+    },
+    "keywords": [
+      "netflix",
+      "nét phích",
+      "lét phích"
+    ],
+    "category": "apps",
+    "symbol": "NETFLIX",
+    "type": "app"
+  },
+  {
+    "name": "Prime Video",
+    "id": "app:prime_video",
+    "protocol_ids": {
+      "lgwebos": "amazon",
+      "androidtv": "com.amazon.amazonvideo.livingroom",
+      "roku": "13",
+      "samsung": "3201512006785"
+    },
+    "keywords": [
+      "prime video",
+      "amazon",
+      "prime",
+      "amazon prime"
+    ],
+    "category": "apps",
+    "symbol": "PRIME_VIDEO",
+    "type": "app"
+  },
+  {
+    "name": "Hulu",
+    "id": "app:hulu",
+    "protocol_ids": {
+      "lgwebos": "hulu",
+      "androidtv": "com.hulu.livingroomplus",
+      "roku": "2285",
+      "samsung": "3201601007625"
+    },
+    "keywords": [
+      "hulu"
+    ],
+    "category": "apps",
+    "symbol": "HULU",
+    "type": "app"
+  },
+  {
+    "name": "Disney+",
+    "id": "app:disney_plus",
+    "protocol_ids": {
+      "lgwebos": "disney",
+      "androidtv": "com.disney.disneyplus",
+      "roku": "291097",
+      "samsung": "3201901017640"
+    },
+    "keywords": [
+      "disney",
+      "disney plus",
+      "đít ni",
+      "đít nây"
+    ],
+    "category": "apps",
+    "symbol": "DISNEY_PLUS",
+    "type": "app"
+  },
+  {
+    "name": "Spotify",
+    "id": "app:spotify",
+    "protocol_ids": {
+      "lgwebos": "spotify",
+      "androidtv": "com.spotify.tv.android",
+      "roku": "19977",
+      "samsung": "3201606009684"
+    },
+    "keywords": [
+      "spotify",
+      "nhạc",
+      "nghe nhạc",
+      "sờ pót ti phai"
+    ],
+    "category": "apps",
+    "symbol": "SPOTIFY",
+    "type": "app"
+  },
+  {
+    "name": "Apple TV",
+    "id": "app:apple_tv",
+    "protocol_ids": {
+      "lgwebos": "apple.app",
+      "androidtv": "com.apple.atve.androidtv.appletv",
+      "roku": "551012",
+      "samsung": "3201807016597"
+    },
+    "keywords": [
+      "apple tv",
+      "áp pồ"
+    ],
+    "category": "apps",
+    "symbol": "APPLE_TV",
+    "type": "app"
+  },
+  {
+    "name": "HBO Max",
+    "id": "app:hbo_max",
+    "protocol_ids": {
+      "lgwebos": "hbo.max",
+      "androidtv": "com.hbo.hbonow",
+      "roku": "61322",
+      "samsung": "3201601007230"
+    },
+    "keywords": [
+      "hbo",
+      "hbo max",
+      "hát bê ô"
+    ],
+    "category": "apps",
+    "symbol": "HBO_MAX",
+    "type": "app"
+  },
+  {
+    "name": "Browser",
+    "id": "app:browser",
+    "protocol_ids": {
+      "lgwebos": "com.webos.app.browser",
+      "androidtv": "com.android.chrome",
+      "samsung": "org.tizen.browser"
+    },
+    "keywords": [
+      "browser",
+      "lướt web",
+      "trình duyệt",
+      "chrome",
+      "web"
+    ],
+    "category": "apps",
+    "symbol": "BROWSER",
+    "type": "app"
   }
 ]
