@@ -40,6 +40,7 @@ class LgWebOsController(
         TvCapability.KEYBOARD_TEXT,
         TvCapability.INSTALLED_APPS,
         TvCapability.POINTER,
+        TvCapability.DPAD,
         TvCapability.CHANNEL_CONTROL,
         TvCapability.BACKSPACE,
         TvCapability.MUTE_ON_OFF,

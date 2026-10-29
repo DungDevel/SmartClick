@@ -33,7 +33,8 @@ class VizioController(
         TvCapability.MUTE_ON_OFF,
         TvCapability.POWER_TOGGLE,
         TvCapability.POWER_ON,
-        TvCapability.POWER_OFF
+        TvCapability.POWER_OFF,
+        TvCapability.DPAD
     )
 
     override suspend fun connect(device: TvDevice): Result<Unit> = withContext(Dispatchers.IO) {

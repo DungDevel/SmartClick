@@ -4,6 +4,7 @@ enum class TvCapability {
     VOLUME,
     DIGITS,
     POINTER,
+    DPAD,
     KEYBOARD_TEXT,
     INSTALLED_APPS,
     CAST_IMAGE,

@@ -20,6 +20,7 @@ class FakeDriver @Inject constructor() : IProtocolDriver {
         TvCapability.VOLUME,
         TvCapability.DIGITS,
         TvCapability.POINTER,
+        TvCapability.DPAD,
         TvCapability.KEYBOARD_TEXT,
         TvCapability.INSTALLED_APPS
     )

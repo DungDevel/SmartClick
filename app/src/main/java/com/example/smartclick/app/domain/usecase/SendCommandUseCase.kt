@@ -68,6 +68,10 @@ class SendCommandUseCase @Inject constructor(
             is RemoteCommand.PointerMove, is RemoteCommand.PointerClick -> {
                 if (caps.contains(TvCapability.POINTER)) command else null
             }
+            RemoteCommand.DPadUp, RemoteCommand.DPadDown, RemoteCommand.DPadLeft,
+            RemoteCommand.DPadRight, RemoteCommand.Ok -> {
+                if (caps.contains(TvCapability.DPAD)) command else null
+            }
             is RemoteCommand.Text -> {
                 if (caps.contains(TvCapability.KEYBOARD_TEXT)) command else null
             }

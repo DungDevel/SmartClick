@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -26,6 +27,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import com.example.smartclick.R
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 
@@ -36,14 +40,19 @@ fun DPad(
     onDown: () -> Unit = {},
     onLeft: () -> Unit = {},
     onRight: () -> Unit = {},
-    onOk: () -> Unit = {}
+    onOk: () -> Unit = {},
+    enabled: Boolean = true
 ) {
     val colors = SmartClickThemeTokens.colors
+    val okDescription = stringResource(R.string.ok_btn)
     val armWidth = 68.dp
     val armLength = 100.dp
     val corner = armWidth / 2
 
-    Box(modifier = modifier.size(220.dp), contentAlignment = Alignment.Center) {
+    Box(
+        modifier = modifier.size(220.dp).alpha(if (enabled) 1f else 0.4f),
+        contentAlignment = Alignment.Center
+    ) {
         // Glow
         Box(
             modifier = Modifier
@@ -61,7 +70,9 @@ fun DPad(
                 iconAlignment = Alignment.TopCenter,
                 rotation = 0f,
                 description = stringResource(R.string.dir_up),
-                onClick = onUp
+                onClick = onUp,
+                enabled = enabled,
+                testTag = "navigation_pad_up"
             )
             DPadArm(
                 modifier = Modifier.align(Alignment.BottomCenter).size(armWidth, armLength),
@@ -69,7 +80,9 @@ fun DPad(
                 iconAlignment = Alignment.BottomCenter,
                 rotation = 180f,
                 description = stringResource(R.string.dir_down),
-                onClick = onDown
+                onClick = onDown,
+                enabled = enabled,
+                testTag = "navigation_pad_down"
             )
             DPadArm(
                 modifier = Modifier.align(Alignment.CenterStart).size(armLength, armWidth),
@@ -77,7 +90,9 @@ fun DPad(
                 iconAlignment = Alignment.CenterStart,
                 rotation = 270f,
                 description = stringResource(R.string.dir_left),
-                onClick = onLeft
+                onClick = onLeft,
+                enabled = enabled,
+                testTag = "navigation_pad_left"
             )
             DPadArm(
                 modifier = Modifier.align(Alignment.CenterEnd).size(armLength, armWidth),
@@ -85,7 +100,9 @@ fun DPad(
                 iconAlignment = Alignment.CenterEnd,
                 rotation = 90f,
                 description = stringResource(R.string.dir_right),
-                onClick = onRight
+                onClick = onRight,
+                enabled = enabled,
+                testTag = "navigation_pad_right"
             )
 
             // OK
@@ -96,7 +113,9 @@ fun DPad(
                     .clip(CircleShape)
                     .background(lerp(colors.acc, Color.Black, 0.3f))
                     .border(1.dp, Color.White.copy(alpha = 0.12f), CircleShape)
-                    .clickable(onClick = onOk),
+                    .semantics { contentDescription = okDescription }
+                    .testTag("navigation_pad_ok")
+                    .clickable(enabled = enabled, onClick = onOk),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -117,7 +136,9 @@ private fun DPadArm(
     iconAlignment: Alignment,
     rotation: Float,
     description: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean,
+    testTag: String
 ) {
     val colors = SmartClickThemeTokens.colors
     Box(
@@ -125,7 +146,9 @@ private fun DPadArm(
             .clip(shape)
             .background(colors.acc)
             .border(1.dp, Color.White.copy(alpha = 0.12f), shape)
-            .clickable(onClick = onClick),
+            .semantics { contentDescription = description }
+            .testTag(testTag)
+            .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = iconAlignment
     ) {
         Icon(

@@ -33,6 +33,7 @@ class SonyBraviaDriver @Inject constructor(
         TvCapability.POWER_TOGGLE,
         TvCapability.POWER_ON,
         TvCapability.POWER_OFF,
+        TvCapability.DPAD,
         TvCapability.CHANNEL_CONTROL
     )
 

@@ -40,10 +40,10 @@ import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import com.example.smartclick.app.domain.connection.NetworkState
 import com.example.smartclick.app.domain.connection.TvConnectionState
 import com.example.smartclick.app.domain.model.RemoteCommand
-import com.example.smartclick.app.domain.model.SwipeToDpadMapper
 import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.features.remote.components.BottomActions
 import com.example.smartclick.app.features.remote.components.DPadModeContent
+import com.example.smartclick.app.features.remote.components.DPad
 import com.example.smartclick.app.features.remote.components.KeyboardModal
 import com.example.smartclick.app.features.remote.components.NumPad
 import com.example.smartclick.app.features.remote.components.TouchPad
@@ -470,32 +470,30 @@ fun RemoteScreen(
                     activeMode == RemoteMode.TOUCHPAD -> {
                         var showKeyboard by remember { mutableStateOf(false) }
 
-                        val isPointerSupported = capabilities.contains(TvCapability.POINTER)
-                        val density = androidx.compose.ui.platform.LocalDensity.current
-                        val swipeMapper = remember(density) {
-                            SwipeToDpadMapper(
-                                thresholdPx = with(density) { 50.dp.toPx() },
-                                cooldownMs = 150L
+                        when (RemotePadBehavior.layoutFor(capabilities)) {
+                            RemotePadLayout.POINTER -> TouchPad(
+                                onMove = { dx, dy -> dispatchCommand(RemoteCommand.PointerMove(dx, dy)) },
+                                onTap = { dispatchCommand(RemoteCommand.PointerClick) },
+                                onLeftClick = { dispatchCommand(RemoteCommand.PointerClick) },
+                                onRightClick = { dispatchCommand(RemoteCommand.Back) },
+                                onKeyboardRequest = { showKeyboard = true }
                             )
+                            RemotePadLayout.CIRCULAR_DPAD -> {
+                                val navigationEnabled = RemotePadBehavior.navigationEnabled(
+                                    connected = controlsEnabled,
+                                    locked = isLocked,
+                                    capabilities = capabilities
+                                )
+                                DPad(
+                                    enabled = navigationEnabled,
+                                    onUp = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.UP, navigationEnabled, ::dispatchCommand) },
+                                    onDown = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.DOWN, navigationEnabled, ::dispatchCommand) },
+                                    onLeft = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.LEFT, navigationEnabled, ::dispatchCommand) },
+                                    onRight = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.RIGHT, navigationEnabled, ::dispatchCommand) },
+                                    onOk = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.OK, navigationEnabled, ::dispatchCommand) }
+                                )
+                            }
                         }
-
-                        TouchPad(
-                            onMove = { dx, dy ->
-                                if (isPointerSupported) {
-                                    dispatchCommand(RemoteCommand.PointerMove(dx, dy))
-                                } else {
-                                    val command = swipeMapper.onMove(dx, dy, System.currentTimeMillis())
-                                    if (command != null) {
-                                        dispatchCommand(command)
-                                    }
-                                }
-                            },
-                            onDragEnd = { swipeMapper.onDragEnd() },
-                            onTap = { dispatchCommand(if (isPointerSupported) RemoteCommand.PointerClick else RemoteCommand.Ok) },
-                            onLeftClick = { dispatchCommand(if (isPointerSupported) RemoteCommand.PointerClick else RemoteCommand.Ok) },
-                            onRightClick = { dispatchCommand(RemoteCommand.Back) },
-                            onKeyboardRequest = { showKeyboard = true }
-                        )
 
                         if (showKeyboard) {
                             KeyboardModal(
@@ -527,7 +525,12 @@ fun RemoteScreen(
                         dispatchCommand = { cmd ->
                             dispatchCommand(cmd)
                         },
-                        capabilities = capabilities
+                        capabilities = capabilities,
+                        navigationEnabled = RemotePadBehavior.navigationEnabled(
+                            connected = controlsEnabled,
+                            locked = isLocked,
+                            capabilities = capabilities
+                        )
                     )
                 }
 

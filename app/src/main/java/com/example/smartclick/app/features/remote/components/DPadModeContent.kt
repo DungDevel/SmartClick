@@ -25,7 +25,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.alpha
 
 @Composable
-fun DPadModeContent(dispatchCommand: (RemoteCommand) -> Unit, capabilities: Set<TvCapability>) {
+fun DPadModeContent(
+    dispatchCommand: (RemoteCommand) -> Unit,
+    capabilities: Set<TvCapability>,
+    navigationEnabled: Boolean = TvCapability.DPAD in capabilities
+) {
     val colors = SmartClickThemeTokens.colors
 
     // Nav row
@@ -79,7 +83,8 @@ fun DPadModeContent(dispatchCommand: (RemoteCommand) -> Unit, capabilities: Set<
             onDown = { dispatchCommand(RemoteCommand.DPadDown) },
             onLeft = { dispatchCommand(RemoteCommand.DPadLeft) },
             onRight = { dispatchCommand(RemoteCommand.DPadRight) },
-            onOk = { dispatchCommand(RemoteCommand.Ok) }
+            onOk = { dispatchCommand(RemoteCommand.Ok) },
+            enabled = navigationEnabled
         )
     }
     Spacer(modifier = Modifier.height(16.dp))

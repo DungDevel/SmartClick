@@ -26,6 +26,7 @@ class FakeTvController @Inject constructor() : ITvController {
         TvCapability.VOLUME,
         TvCapability.DIGITS,
         TvCapability.POINTER,
+        TvCapability.DPAD,
         TvCapability.KEYBOARD_TEXT,
         TvCapability.INSTALLED_APPS
     )
