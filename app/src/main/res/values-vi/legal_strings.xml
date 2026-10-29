@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="legal_privacy_collect_title">Data We Collect</string>
+    <string name="legal_privacy_collect_body">We collect device identifiers, network info, and usage analytics.</string>
+    <string name="legal_privacy_use_title">How We Use Data</string>
+    <string name="legal_privacy_use_body">Data is used to provide TV connectivity and improve features.</string>
+    <string name="legal_privacy_sharing_title">Data Sharing</string>
+    <string name="legal_privacy_sharing_body">We do not sell your personal data. Anonymized analytics only.</string>
+    <string name="legal_privacy_retention_title">Data Retention</string>
+    <string name="legal_privacy_retention_body">Your data is retained for 90 days after account deletion.</string>
+    <string name="legal_privacy_rights_title">Your Rights</string>
+    <string name="legal_privacy_rights_body">You can access, correct, or delete your data at any time.</string>
+    <string name="legal_privacy_contact_title">Contact Us</string>
+    <string name="legal_privacy_contact_body">privacy@smartclick.app</string>
+
+    <string name="legal_terms_acceptance_title">1. Acceptance of Terms</string>
+    <string name="legal_terms_acceptance_body">By accessing and using SmartClick, you accept and agree to be bound by the terms and provision of this agreement.</string>
+    <string name="legal_terms_license_title">2. License Use</string>
+    <string name="legal_terms_license_body">We grant you a personal, non-exclusive, non-transferable license to use the app for personal and non-commercial purposes.</string>
+    <string name="legal_terms_restrictions_title">3. Restrictions</string>
+    <string name="legal_terms_restrictions_body">You may not reverse engineer, decompile, or disassemble the app, except and only to the extent that such activity is expressly permitted by applicable law.</string>
+    <string name="legal_terms_accounts_title">4. User Accounts</string>
+    <string name="legal_terms_accounts_body">You are responsible for maintaining the confidentiality of your account and password and for restricting access to your device.</string>
+    <string name="legal_terms_termination_title">5. Termination</string>
+    <string name="legal_terms_termination_body">We may terminate or suspend access to our service immediately, without prior notice or liability, for any reason whatsoever.</string>
+</resources>

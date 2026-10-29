@@ -36,12 +36,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
+import com.example.smartclick.R
 import kotlin.math.roundToInt
 
 @Composable
@@ -128,11 +130,11 @@ fun TouchPad(
         Spacer(modifier = Modifier.height(12.dp))
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            PadTextButton("Left Click", onLeftClick)
+            PadTextButton(stringResource(R.string.touchpad_left_click), onLeftClick)
             if (onKeyboardRequest != null) {
-                PadTextButton("Keyboard", onKeyboardRequest)
+                PadTextButton(stringResource(R.string.touchpad_keyboard), onKeyboardRequest)
             }
-            PadTextButton("Right Click", onRightClick)
+            PadTextButton(stringResource(R.string.touchpad_right_click), onRightClick)
         }
     }
 }

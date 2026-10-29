@@ -21,12 +21,12 @@ import com.example.smartclick.R
 fun PrivacyPolicyScreen(onBack: () -> Unit) {
     val colors = SmartClickThemeTokens.colors
     val sections = listOf(
-        Pair("Data We Collect", "We collect device identifiers, network info, and usage analytics."),
-        Pair("How We Use Data", "Data is used to provide TV connectivity and improve features."),
-        Pair("Data Sharing", "We do not sell your personal data. Anonymized analytics only."),
-        Pair("Data Retention", "Your data is retained for 90 days after account deletion."),
-        Pair("Your Rights", "You can access, correct, or delete your data at any time."),
-        Pair("Contact Us", "privacy@smartclick.app")
+        Pair(stringResource(R.string.legal_privacy_collect_title), stringResource(R.string.legal_privacy_collect_body)),
+        Pair(stringResource(R.string.legal_privacy_use_title), stringResource(R.string.legal_privacy_use_body)),
+        Pair(stringResource(R.string.legal_privacy_sharing_title), stringResource(R.string.legal_privacy_sharing_body)),
+        Pair(stringResource(R.string.legal_privacy_retention_title), stringResource(R.string.legal_privacy_retention_body)),
+        Pair(stringResource(R.string.legal_privacy_rights_title), stringResource(R.string.legal_privacy_rights_body)),
+        Pair(stringResource(R.string.legal_privacy_contact_title), stringResource(R.string.legal_privacy_contact_body))
     )
 
     Column(

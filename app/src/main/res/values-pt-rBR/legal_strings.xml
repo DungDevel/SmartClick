@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="legal_privacy_collect_title" tools:ignore="MissingTranslation">Data We Collect</string>
+    <string name="legal_privacy_collect_body" tools:ignore="MissingTranslation">We collect device identifiers, network info, and usage analytics.</string>
+    <string name="legal_privacy_use_title" tools:ignore="MissingTranslation">How We Use Data</string>
+    <string name="legal_privacy_use_body" tools:ignore="MissingTranslation">Data is used to provide TV connectivity and improve features.</string>
+    <string name="legal_privacy_sharing_title" tools:ignore="MissingTranslation">Data Sharing</string>
+    <string name="legal_privacy_sharing_body" tools:ignore="MissingTranslation">We do not sell your personal data. Anonymized analytics only.</string>
+    <string name="legal_privacy_retention_title" tools:ignore="MissingTranslation">Data Retention</string>
+    <string name="legal_privacy_retention_body" tools:ignore="MissingTranslation">Your data is retained for 90 days after account deletion.</string>
+    <string name="legal_privacy_rights_title" tools:ignore="MissingTranslation">Your Rights</string>
+    <string name="legal_privacy_rights_body" tools:ignore="MissingTranslation">You can access, correct, or delete your data at any time.</string>
+    <string name="legal_privacy_contact_title" tools:ignore="MissingTranslation">Contact Us</string>
+    <string name="legal_privacy_contact_body" tools:ignore="MissingTranslation">privacy@smartclick.app</string>
+    <string name="legal_terms_acceptance_title" tools:ignore="MissingTranslation">1. Acceptance of Terms</string>
+    <string name="legal_terms_acceptance_body" tools:ignore="MissingTranslation">By accessing and using SmartClick, you accept and agree to be bound by the terms and provision of this agreement.</string>
+    <string name="legal_terms_license_title" tools:ignore="MissingTranslation">2. License Use</string>
+    <string name="legal_terms_license_body" tools:ignore="MissingTranslation">We grant you a personal, non-exclusive, non-transferable license to use the app for personal and non-commercial purposes.</string>
+    <string name="legal_terms_restrictions_title" tools:ignore="MissingTranslation">3. Restrictions</string>
+    <string name="legal_terms_restrictions_body" tools:ignore="MissingTranslation">You may not reverse engineer, decompile, or disassemble the app, except and only to the extent that such activity is expressly permitted by applicable law.</string>
+    <string name="legal_terms_accounts_title" tools:ignore="MissingTranslation">4. User Accounts</string>
+    <string name="legal_terms_accounts_body" tools:ignore="MissingTranslation">You are responsible for maintaining the confidentiality of your account and password and for restricting access to your device.</string>
+    <string name="legal_terms_termination_title" tools:ignore="MissingTranslation">5. Termination</string>
+    <string name="legal_terms_termination_body" tools:ignore="MissingTranslation">We may terminate or suspend access to our service immediately, without prior notice or liability, for any reason whatsoever.</string>
+</resources>

@@ -76,17 +76,30 @@ tasks.register("checkHardcodedStrings") {
             Regex("""Toast\.makeText\([^,]+,\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
             Regex("""title\s*=\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
             Regex("""placeholder\s*=\s*\{\s*Text\(\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
-            Regex("""label\s*=\s*\{\s*Text\(\s*"[^"]*[A-Za-z]{2,}[^"]*"""")
+            Regex("""label\s*=\s*\{\s*Text\(\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
+            // Display data passed through Pair or UI-specific data classes/functions.
+            Regex("""Pair\(\s*"[^"]*[A-Za-z]{2,}[^"]*"\s*,\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
+            Regex("""LanguageItem\(\s*"[^"]*"\s*,\s*(?:null|R\.string\.\w+)\s*,\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
+            Regex("""(?:FeatureItem|PadTextButton)\(\s*"[^"]*[A-Za-z]{2,}[^"]*""""),
+            // Catch direct human-readable literals in simple collection declarations.
+            Regex("""\b(?:listOf|mapOf)\s*\([^\n)]*"[^"]*[A-Za-z]{2,}[^"]*"""")
         )
         // Cho phép: emoji/ký tự đơn, và các chuỗi kỹ thuật đã whitelisted
         val allow = Regex("""Text\(\s*"[^A-Za-z]*"""")
+        // These contexts carry identifiers/diagnostics rather than UI copy; keep this narrow.
+        val nonUiContexts = Regex("""(?:android\.util\.Log|\bLog\.\w+\(|NavRoutes\.|navigate\(|composable\(|https?://|mailto:|xmlns|(?:\d{1,3}\.){3}\d{1,3})""")
+        val controlKeyTokens = listOf("\"EXIT\"", "\"DEL\"")
         val offenders = mutableListOf<String>()
 
         uiDir.walkTopDown()
             .filter { it.isFile && it.extension == "kt" }
             .forEach { f ->
+                // Voice phrase lists are recognition data, not interface text.
+                if (f.invariantSeparatorsPath.contains("/domain/voice/")) return@forEach
                 f.readLines().forEachIndexed { idx, line ->
                     if (line.trimStart().startsWith("//")) return@forEachIndexed
+                    if (nonUiContexts.containsMatchIn(line)) return@forEachIndexed
+                    if (line.contains("listOf(") && controlKeyTokens.any(line::contains)) return@forEachIndexed
                     if (allow.containsMatchIn(line)) return@forEachIndexed
                     if (patterns.any { it.containsMatchIn(line) }) {
                         offenders += "${f.relativeTo(projectDir)}:${idx + 1}: ${line.trim()}"

@@ -91,7 +91,7 @@ fun AppearanceScreen(
                         Text(desc, color = colors.tx2, fontSize = 12.sp)
                     }
                     if (isSelected) {
-                        Icon(imageVector = Icons.Default.Check, contentDescription = stringResource(R.string.selected), tint = colors.acc)
+                        Icon(imageVector = Icons.Default.Check, contentDescription = stringResource(R.string.selected_state_description), tint = colors.acc)
                     }
                 }
             }
