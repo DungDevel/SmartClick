@@ -66,10 +66,17 @@ class LocaleResourcesConsistencyTest {
             }
             if (key !in legalKeys && resource.translatable) {
                 assertEquals("Resource type mismatch for $key in $languageTag", base.getValue(key).type, resource.type)
+                val sourceResource = base.getValue(key)
                 assertEquals(
                     "Placeholder mismatch for $key in $languageTag",
-                    placeholders(base.getValue(key)),
-                    placeholders(resource)
+                    resource.values.keys.associateWith { quantity ->
+                        placeholderTokens(
+                            sourceResource.values[quantity]
+                                ?: sourceResource.values["other"]
+                                ?: sourceResource.values.values.first()
+                        )
+                    },
+                    resource.values.mapValues { (_, value) -> placeholderTokens(value) }
                 )
             }
         }
@@ -137,9 +144,8 @@ class LocaleResourcesConsistencyTest {
         return result
     }
 
-    private fun placeholders(resource: Resource): Map<String, List<String>> = resource.values.mapValues { (_, value) ->
+    private fun placeholderTokens(value: String): List<String> =
         Regex("%(?:[0-9]+\\$)?[sd]").findAll(value).map { it.value }.sorted().toList()
-    }
 
     private fun checkXmlEscaping(directory: File, languageTag: String) {
         val unescapedApostrophe = Regex("(?<!\\\\)'")

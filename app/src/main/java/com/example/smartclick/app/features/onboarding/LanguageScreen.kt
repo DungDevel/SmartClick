@@ -128,7 +128,7 @@ fun LanguageScreen(
                         if (isSelected) {
                             Icon(
                                 imageVector = Icons.Default.Check,
-                                contentDescription = stringResource(R.string.selected),
+                                contentDescription = stringResource(R.string.selected_state_description),
                                 tint = colors.acc
                             )
                         }

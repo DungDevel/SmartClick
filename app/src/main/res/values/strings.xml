@@ -4,7 +4,7 @@
 
     <!-- General / Common -->
     <string name="back">Back</string>
-    <string name="selected">Selected</string>
+    <string name="selected_state_description">Selected</string>
     <string name="go">Go</string>
     <string name="stop">Stop</string>
     <string name="exit">Exit</string>

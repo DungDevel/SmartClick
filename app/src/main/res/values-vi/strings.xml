@@ -4,7 +4,7 @@
 
     <!-- General / Common -->
     <string name="back">Quay lại</string>
-    <string name="selected">Đã chọn</string>
+    <string name="selected_state_description">Đã chọn</string>
     <string name="go">Đi</string>
     <string name="stop">Dừng</string>
     <string name="exit">Thoát</string>
