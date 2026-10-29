@@ -187,13 +187,6 @@
     <string name="disconnect">Desconectar</string>
     <string name="feature_coming_soon">%1$s: función próximamente</string>
     <string name="feature_coming_soon_no_args">Función próximamente</string>
-    <string name="btn_first">Primero</string>
-    <string name="btn_headphones">Auriculares</string>
-    <string name="btn_mic">Micrófono</string>
-    <string name="btn_repeat">Repetir</string>
-    <string name="btn_chat">Chat</string>
-    <string name="btn_favorite">Favoritos</string>
-    <string name="btn_volume">Volumen</string>
     <string name="btn_menu">Menú</string>
     <string name="btn_home">Inicio</string>
     <string name="btn_input">Entrada</string>

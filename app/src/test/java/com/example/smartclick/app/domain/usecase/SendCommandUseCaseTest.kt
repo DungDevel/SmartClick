@@ -75,6 +75,32 @@ class SendCommandUseCaseTest {
     }
 
     @Test
+    fun `DPad commands should report NOT_SUPPORTED when DPAD capability is absent`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.VOLUME)
+        every { mockController.connectionState } returns MutableStateFlow(
+            TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac"))
+        )
+
+        val result = useCase(RemoteCommand.DPadUp)
+
+        assertEquals(SendCommandResult.NOT_SUPPORTED, result)
+        coVerify(exactly = 0) { mockController.sendCommand(any()) }
+    }
+
+    @Test
+    fun `DPad commands should be sent when DPAD capability is present`() = runTest {
+        every { mockController.capabilities } returns setOf(TvCapability.DPAD)
+        every { mockController.connectionState } returns MutableStateFlow(
+            TvConnectionState.Connected(TvDevice("1", "T", "ip", "mac"))
+        )
+
+        val result = useCase(RemoteCommand.Ok)
+
+        assertEquals(SendCommandResult.SUCCESS, result)
+        coVerify(exactly = 1) { mockController.sendCommand(RemoteCommand.Ok) }
+    }
+
+    @Test
     fun `send command should NOT be sent and report NOT_CONNECTED when state is Idle`() = runTest {
         // Arrange
         val connectState = MutableStateFlow<TvConnectionState>(TvConnectionState.Idle)

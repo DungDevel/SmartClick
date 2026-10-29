@@ -27,6 +27,7 @@ class LgWebOsController(
 
     private var webSocket: WebSocket? = null
     private var pointerSocket: WebSocket? = null
+    private var pointerSocketReady: Boolean = false
 
     private val _connectionState = MutableStateFlow<TvConnectionState>(TvConnectionState.Idle)
     override val connectionState: StateFlow<TvConnectionState> = _connectionState.asStateFlow()
@@ -39,6 +40,7 @@ class LgWebOsController(
         TvCapability.KEYBOARD_TEXT,
         TvCapability.INSTALLED_APPS,
         TvCapability.POINTER,
+        TvCapability.DPAD,
         TvCapability.CHANNEL_CONTROL,
         TvCapability.BACKSPACE,
         TvCapability.MUTE_ON_OFF,
@@ -138,6 +140,7 @@ class LgWebOsController(
                 }
                 pointerSocket?.close(1000, "Main closed")
                 pointerSocket = null
+                pointerSocketReady = false
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
@@ -148,6 +151,7 @@ class LgWebOsController(
                 }
                 pointerSocket?.close(1000, "Main failed")
                 pointerSocket = null
+                pointerSocketReady = false
             }
         }
 
@@ -165,9 +169,38 @@ class LgWebOsController(
 
     private fun connectPointerSocket(socketPath: String) {
         val request = Request.Builder().url(socketPath).build()
+        pointerSocketReady = false
         pointerSocket = okHttpClient.newWebSocket(request, object: WebSocketListener() {
-            // we just keep the socket open
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                pointerSocket = webSocket
+                pointerSocketReady = true
+            }
+
+            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                clearPointerSocketIfCurrent(webSocket)
+            }
+
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                clearPointerSocketIfCurrent(webSocket)
+            }
         })
+    }
+
+    private fun clearPointerSocketIfCurrent(socket: WebSocket) {
+        if (pointerSocket === socket) {
+            pointerSocket = null
+            pointerSocketReady = false
+        }
+    }
+
+    private fun sendPointerFrame(frame: String): Result<Unit> {
+        val socket = pointerSocket?.takeIf { pointerSocketReady }
+            ?: return Result.failure(Exception("Pointer socket not ready"))
+        return if (socket.send(frame)) {
+            Result.success(Unit)
+        } else {
+            Result.failure(Exception("Failed to send pointer socket payload"))
+        }
     }
 
     override suspend fun disconnect() {
@@ -175,6 +208,7 @@ class LgWebOsController(
         webSocket = null
         pointerSocket?.close(1000, "User requested disconnect")
         pointerSocket = null
+        pointerSocketReady = false
         _connectionState.value = TvConnectionState.Idle
         _device = null
     }
@@ -210,13 +244,7 @@ class LgWebOsController(
         }
 
         if (pointerKey != null) {
-            val pSocket = pointerSocket
-            if (pSocket == null) {
-                return Result.failure(Exception("Pointer socket not ready"))
-            } else {
-                pSocket.send("type:button\nname:$pointerKey\n\n")
-                return Result.success(Unit)
-            }
+            return sendPointerFrame("type:button\nname:$pointerKey\n\n")
         }
 
         when (command) {
@@ -234,8 +262,7 @@ class LgWebOsController(
                 return if (sent) Result.success(Unit) else Result.failure(Exception("Failed to send mute payload"))
             }
             is RemoteCommand.PointerMove -> {
-                pointerSocket?.send("type:move\ndx:${command.dx}\ndy:${command.dy}\ndown:0\n\n")
-                return Result.success(Unit)
+                return sendPointerFrame("type:move\ndx:${command.dx}\ndy:${command.dy}\ndown:0\n\n")
             }
             is RemoteCommand.Text -> {
                  val req = JSONObject().apply {

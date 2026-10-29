@@ -32,7 +32,8 @@ class VizioDriver @Inject constructor(
         TvCapability.MUTE_ON_OFF,
         TvCapability.POWER_TOGGLE,
         TvCapability.POWER_ON,
-        TvCapability.POWER_OFF
+        TvCapability.POWER_OFF,
+        TvCapability.DPAD
     )
 
     override suspend fun fingerprint(candidate: RawCandidate): Fingerprint? = withContext(Dispatchers.IO) {

@@ -36,6 +36,7 @@ class SamsungTizenController(
     override val capabilities: Set<TvCapability> = setOf(
         TvCapability.VOLUME,
         TvCapability.DIGITS,
+        TvCapability.DPAD,
         TvCapability.CHANNEL_CONTROL,
         TvCapability.OPEN_SEARCH_UI,
         TvCapability.POWER_TOGGLE,

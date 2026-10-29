@@ -27,6 +27,7 @@ class FireTvDriver @Inject constructor() : IProtocolDriver {
         TvCapability.POWER_TOGGLE,
         TvCapability.POWER_ON,
         TvCapability.POWER_OFF,
+        TvCapability.DPAD,
         TvCapability.KEYBOARD_TEXT
     )
 

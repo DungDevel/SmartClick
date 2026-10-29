@@ -33,6 +33,7 @@ class SonyBraviaController(
         TvCapability.POWER_TOGGLE,
         TvCapability.POWER_ON,
         TvCapability.POWER_OFF,
+        TvCapability.DPAD,
         TvCapability.CHANNEL_CONTROL,
         TvCapability.SEARCH_CONTENT
     )
