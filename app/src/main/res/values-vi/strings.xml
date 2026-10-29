@@ -148,6 +148,9 @@
     <string name="enter_pin_title">Nhập mã PIN</string>
     <string name="enter_pin_message">Vui lòng nhập mã PIN hiển thị trên TV của bạn.</string>
     <string name="submit">Gửi</string>
+    <string name="keyboard">Bàn phím</string>
+    <string name="dictate_text">Đọc chính tả</string>
+    <string name="headphone">Tai nghe</string>
     <string name="confirm_on_tv_title">Xác nhận trên TV</string>
     <string name="confirm_on_tv_message">Vui lòng chấp nhận yêu cầu kết nối trên màn hình TV của bạn.</string>
     <string name="pairing_rejected">Yêu cầu kết nối bị từ chối trên TV.</string>

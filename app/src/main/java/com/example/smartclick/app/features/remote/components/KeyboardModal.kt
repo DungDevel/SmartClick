@@ -16,19 +16,25 @@ import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 import com.example.smartclick.R
+import com.example.smartclick.app.domain.model.RemoteCommand
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KeyboardModal(
     onDismissRequest: () -> Unit,
-    onTextChange: (String) -> Unit,
-    onEnter: () -> Unit,
-    onBackspace: () -> Unit,
-    canDelete: Boolean = true
+    onSendText: (RemoteCommand) -> Unit,
+    dictatedText: String = "",
+    onDictate: () -> Unit = {}
 ) {
     val colors = SmartClickThemeTokens.colors
-    var text by remember { mutableStateOf("") }
+    var draft by remember { mutableStateOf(KeyboardTextDraft()) }
     val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(dictatedText) { if (dictatedText.isNotEmpty()) draft = draft.edit(dictatedText) }
+
+    fun submitDraft() {
+        draft.submit(onSendText)
+        draft = KeyboardTextDraft()
+    }
 
     LaunchedEffect(Unit) {
         delay(100) // allow bottom sheet to settle
@@ -46,23 +52,11 @@ fun KeyboardModal(
                 .padding(bottom = 32.dp)
         ) {
             Text(stringResource(R.string.send_text_to_tv), color = colors.tx1, style = MaterialTheme.typography.titleMedium)
+            TextButton(onClick = onDictate, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.dictate_text)) }
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
-                value = text,
-                onValueChange = { newValue ->
-                    if (newValue.length < text.length) {
-                        if (canDelete) {
-                            onBackspace()
-                            text = newValue
-                        }
-                    } else if (newValue.length > text.length) {
-                        val delta = newValue.substring(text.length)
-                        onTextChange(delta)
-                        text = newValue
-                    } else {
-                        text = newValue
-                    }
-                },
+                value = draft.text,
+                onValueChange = { newValue -> draft = draft.edit(newValue) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
@@ -78,13 +72,18 @@ fun KeyboardModal(
                     imeAction = ImeAction.Send
                 ),
                 keyboardActions = KeyboardActions(
-                    onSend = {
-                        onEnter()
-                        text = ""
-                    }
+                    onSend = { submitDraft() }
                 ),
                 singleLine = true
             )
+            Spacer(modifier = Modifier.height(12.dp))
+            TextButton(
+                onClick = { submitDraft() },
+                enabled = draft.text.isNotEmpty(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.submit))
+            }
         }
     }
 }

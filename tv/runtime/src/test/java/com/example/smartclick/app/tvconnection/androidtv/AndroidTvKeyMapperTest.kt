@@ -26,6 +26,7 @@ class AndroidTvKeyMapperTest {
         assertEquals(RemoteKeyCode.KEYCODE_DEL, AndroidTvKeyMapper.mapCommand(RemoteCommand.Backspace))
         assertEquals(RemoteKeyCode.KEYCODE_SEARCH, AndroidTvKeyMapper.mapCommand(RemoteCommand.OpenSearchUi))
         assertNull(AndroidTvKeyMapper.mapCommand(RemoteCommand.SearchContent("query"))) // SearchContent is intercepted
+        assertNull(AndroidTvKeyMapper.mapCommand(RemoteCommand.Text("hello")))
     }
 
     @Test

@@ -22,6 +22,7 @@ class AndroidSpeechToText @Inject constructor(
     private val mainHandler = Handler(Looper.getMainLooper())
     private val _state = MutableStateFlow<SpeechState>(SpeechState.Idle)
     override val state: StateFlow<SpeechState> = _state.asStateFlow()
+    override val isAvailable: Boolean get() = SpeechRecognizer.isRecognitionAvailable(context)
 
     private var recognizer: SpeechRecognizer? = null
     private var sessionId = 0L

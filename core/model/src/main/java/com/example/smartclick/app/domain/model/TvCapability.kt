@@ -20,5 +20,6 @@ enum class TvCapability {
     POWER_TOGGLE,
     POWER_ON,
     POWER_OFF,
-    MUTE_ON_OFF
+    MUTE_ON_OFF,
+    HEADPHONE_MODE
 }

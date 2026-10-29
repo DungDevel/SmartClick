@@ -57,6 +57,7 @@ class RemoteViewModelTest {
     private val connectionStateFlow = MutableStateFlow<TvConnectionState>(TvConnectionState.Idle)
     private val networkStateFlow = MutableStateFlow<NetworkState>(NetworkState.WifiConnected())
     private lateinit var settingsFlow: MutableStateFlow<AppSettings>
+    private lateinit var speechStateFlow: MutableStateFlow<SpeechState>
 
     @Before
     fun setup() {
@@ -83,7 +84,9 @@ class RemoteViewModelTest {
 
         sendCommandUseCase = mockk()
         speechToTextEngine = mockk(relaxed = true)
-        every { speechToTextEngine.state } returns MutableStateFlow(SpeechState.Idle)
+        speechStateFlow = MutableStateFlow(SpeechState.Idle)
+        every { speechToTextEngine.state } returns speechStateFlow
+        every { speechToTextEngine.isAvailable } returns true
         intentParser = mockk(relaxed = true)
         processVoiceCommandUseCase = mockk(relaxed = true)
         featureGate = mockk(relaxed = true)
@@ -113,6 +116,21 @@ class RemoteViewModelTest {
         val job = launch { viewModel.activeMode.collect() }
         advanceUntilIdle()
         assertEquals(RemoteMode.DPAD, viewModel.activeMode.value)
+        job.cancel()
+    }
+
+    @Test
+    fun `dictation result is emitted for editing without parsing or sending`() = runTest {
+        val result = mutableListOf<String>()
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.dictationResults.collect { result.add(it) } }
+        viewModel.prepareDictation(hasRecordAudioPermission = true)
+        speechStateFlow.value = SpeechState.Result("việt nam")
+        advanceUntilIdle()
+
+        assertEquals(listOf("việt nam"), result)
+        io.mockk.verify(exactly = 0) { intentParser.parse(any()) }
+        coVerify(exactly = 0) { processVoiceCommandUseCase(any()) }
+        coVerify(exactly = 0) { sendCommandUseCase(any()) }
         job.cancel()
     }
 
