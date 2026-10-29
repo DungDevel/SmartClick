@@ -50,7 +50,6 @@
     <string name="scanning_for_devices">Đang quét các thiết bị...</string>
     <string name="searching_nearby_tvs">Đang tìm kiếm TV lân cận...</string>
     <string name="make_sure_tv_on">Hãy chắc chắn TV đang bật và kết nối cùng mạng Wi-Fi.</string>
-    <string name="failed_to_connect">Lỗi kết nối: %1$s</string>
     <string name="connection_lost_reconnecting">Mất kết nối. Đang kết nối lại... (Lần thử %1$d)</string>
     <string name="select_device">Chọn thiết bị</string>
     <string name="connect_to_tv">Kết nối tới TV</string>
@@ -155,6 +154,14 @@
     <string name="pairing_timeout">Hết thời gian kết nối.</string>
     <string name="pairing_wrong_pin">Mã PIN không chính xác.</string>
     <string name="pairing_network_control_disabled">Điều khiển qua mạng đã bị vô hiệu hóa trên TV của bạn. Vui lòng bật nó trong cài đặt TV.</string>
+    <string name="connection_error_no_driver">Không tìm thấy trình điều khiển TV tương thích.</string>
+    <string name="connection_error_unsupported">TV hoặc tính năng này chưa được hỗ trợ.</string>
+    <string name="connection_error_pairing">Không thể ghép đôi với TV. Vui lòng ghép đôi lại.</string>
+    <string name="connection_error_network">Không thể kết nối với TV. Hãy kiểm tra mạng và thử lại.</string>
+    <string name="connection_error_certificate">Không thể xác minh chứng chỉ TV. Vui lòng ghép đôi lại.</string>
+    <string name="connection_error_generic">Đã xảy ra lỗi khi kết nối với TV.</string>
+    <string name="pairing_cancelled">Đã hủy ghép đôi.</string>
+    <string name="pairing_instruction_unavailable">Hướng dẫn hiện không khả dụng.</string>
 
     <!-- Unsupported Device Banner -->
     <string name="unsupported_device_count">Đã tìm thấy %1$d thiết bị không được hỗ trợ trên mạng.</string>
@@ -164,6 +171,10 @@
     <string name="ip_address_label">Địa chỉ IP</string>
     <string name="connect_ip">Kết nối IP</string>
     <string name="request_support">Yêu cầu hỗ trợ</string>
+    <string name="support_email_subject">Yêu cầu hỗ trợ TV SmartClick</string>
+    <string name="support_email_device_details">Hãng: %1$s; Giao thức: %2$s</string>
+    <string name="support_email_app_not_found">Không tìm thấy ứng dụng email</string>
+    <string name="support_channel_unavailable">Chưa có kênh hỗ trợ.</string>
 
     <string name="login_welcome_back">Chào mừng trở lại</string>
     <string name="login_forgot_password">Quên mật khẩu?</string>

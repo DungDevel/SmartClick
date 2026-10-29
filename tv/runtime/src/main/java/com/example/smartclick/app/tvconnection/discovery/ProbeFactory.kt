@@ -29,6 +29,9 @@ class ProbeFactory @Inject constructor(
             TvProtocol.FIRE_TV -> listOf(
                 MdnsProbe(protocol, context, "_amzn-wplay._tcp")
             )
+            TvProtocol.SONY_BRAVIA -> listOf(
+                PortProbe(protocol, context, listOf(80, 52323))
+            )
             TvProtocol.SAMSUNG_TIZEN -> listOf(
                 SsdpProbe(protocol, context, "urn:samsung.com:device:RemoteControlReceiver:1"),
                 PortProbe(protocol, context, listOf(8001, 8002))

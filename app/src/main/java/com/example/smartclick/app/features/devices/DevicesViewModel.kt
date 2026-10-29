@@ -267,11 +267,13 @@ class DevicesViewModel @Inject constructor(
         }
     }
 
-    fun logSupportRequest() {
-        val unknownList = _unknownDevices.value
-        unknownList.forEach { device ->
-            // Privacy-compliant support request logging: excludes IP and MAC addresses.
-            android.util.Log.i("SmartClickSupport", "User requested support for unknown device brand: ${device.brand} - protocol: ${device.protocol}")
+    fun supportRequestBody(deviceDetailsFormat: String): String =
+        _unknownDevices.value.joinToString(separator = "\n") { device ->
+            String.format(
+                java.util.Locale.ROOT,
+                deviceDetailsFormat,
+                device.brand.orEmpty(),
+                device.protocol.name
+            )
         }
-    }
 }

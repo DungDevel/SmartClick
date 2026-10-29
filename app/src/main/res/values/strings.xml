@@ -50,7 +50,6 @@
     <string name="scanning_for_devices">Scanning for devices...</string>
     <string name="searching_nearby_tvs">Searching for nearby TVs...</string>
     <string name="make_sure_tv_on">Make sure your TV is on and connected to the same Wi-Fi.</string>
-    <string name="failed_to_connect">Failed to connect: %1$s</string>
     <string name="connection_lost_reconnecting">Connection lost. Reconnecting... (Attempt %1$d)</string>
     <string name="select_device">Select Device</string>
     <string name="connect_to_tv">Connect to TV</string>
@@ -154,6 +153,14 @@
     <string name="pairing_timeout">Connection timed out.</string>
     <string name="pairing_wrong_pin">Incorrect PIN.</string>
     <string name="pairing_network_control_disabled">Network control is disabled on your TV. Please enable it in the TV settings.</string>
+    <string name="connection_error_no_driver">No compatible TV driver was found.</string>
+    <string name="connection_error_unsupported">This TV or feature is not supported.</string>
+    <string name="connection_error_pairing">Could not pair with this TV. Please pair it again.</string>
+    <string name="connection_error_network">Could not connect to the TV. Check your network and try again.</string>
+    <string name="connection_error_certificate">Could not verify the TV certificate. Pair the TV again.</string>
+    <string name="connection_error_generic">Something went wrong while connecting to the TV.</string>
+    <string name="pairing_cancelled">Pairing was cancelled.</string>
+    <string name="pairing_instruction_unavailable">Instructions are not available.</string>
 
 
     <!-- Unsupported Device Banner -->
@@ -164,6 +171,10 @@
     <string name="ip_address_label">IP Address</string>
     <string name="connect_ip">Connect IP</string>
     <string name="request_support">Request Support</string>
+    <string name="support_email_subject">SmartClick TV support request</string>
+    <string name="support_email_device_details">Brand: %1$s; Protocol: %2$s</string>
+    <string name="support_email_app_not_found">No email app found</string>
+    <string name="support_channel_unavailable">Support contact is not configured yet.</string>
 
     <string name="login_welcome_back">Welcome Back</string>
     <string name="login_forgot_password">Forgot password?</string>

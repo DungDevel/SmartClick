@@ -17,6 +17,8 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
 import javax.inject.Inject
 
 class SonyBraviaDriver @Inject constructor(
@@ -40,7 +42,7 @@ class SonyBraviaDriver @Inject constructor(
         }
 
         try {
-            val requestBody = "{\"method\":\"getSystemInformation\",\"params\":[],\"id\":1,\"version\":\"1.0\"}".toRequestBody("application/json; charset=utf-8".toMediaType())
+            val requestBody = "{\"method\":\"getInterfaceInformation\",\"id\":33,\"params\":[],\"version\":\"1.0\"}".toRequestBody("application/json; charset=utf-8".toMediaType())
             val request = Request.Builder()
                 .url("http://${candidate.ipAddress}/sony/system")
                 .header("Content-Type", "application/json")
@@ -48,26 +50,27 @@ class SonyBraviaDriver @Inject constructor(
                 .build()
 
             httpClient.newCall(request).execute().use { response ->
-                if (response.isSuccessful || candidate.openPorts.contains(52323) || candidate.openPorts.contains(80)) {
-                    return@withContext Fingerprint(
-                        protocol = TvProtocol.SONY_BRAVIA,
-                        stableId = "sony-${candidate.ipAddress}",
-                        displayName = candidate.serviceName ?: "Sony Bravia TV",
-                        confidence = Fingerprint.Confidence.HIGH,
-                        macAddress = candidate.attributes["mac"] ?: ""
-                    )
+                val json = JSONObject(response.body?.string() ?: return@withContext null)
+                if (json.opt("id") != 33) return@withContext null
+
+                val result = json.opt("result") as? JSONArray
+                val firstResult = result?.optJSONObject(0)
+                val confidence = when {
+                    firstResult?.has("interfaceVersion") == true -> Fingerprint.Confidence.HIGH
+                    json.opt("error") is JSONArray -> Fingerprint.Confidence.MEDIUM
+                    else -> return@withContext null
                 }
-            }
-        } catch (e: Exception) {
-            if (candidate.openPorts.contains(52323) || candidate.protocolHint == TvProtocol.SONY_BRAVIA) {
+
                 return@withContext Fingerprint(
                     protocol = TvProtocol.SONY_BRAVIA,
                     stableId = "sony-${candidate.ipAddress}",
-                    displayName = "Sony Bravia TV",
-                    confidence = Fingerprint.Confidence.LOW,
-                    macAddress = ""
+                    displayName = candidate.serviceName ?: "Sony Bravia TV",
+                    confidence = confidence,
+                    macAddress = candidate.attributes["mac"] ?: ""
                 )
             }
+        } catch (_: Exception) {
+            return@withContext null
         }
         null
     }

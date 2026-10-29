@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -6,6 +8,19 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.compose.compiler)
 }
+
+val supportEmailFromLocalProperties = rootProject.file("local.properties").let { file ->
+    if (file.isFile) {
+        val localProperties = Properties()
+        file.inputStream().use { localProperties.load(it) }
+        localProperties.getProperty("supportEmail").orEmpty()
+    } else {
+        ""
+    }
+}
+val supportEmail = providers.gradleProperty("supportEmail")
+    .orElse(supportEmailFromLocalProperties)
+    .get()
 
 android {
     namespace = "com.example.smartclick"
@@ -18,6 +33,7 @@ android {
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        resValue("string", "support_email_address", supportEmail)
     }
 
     lint {

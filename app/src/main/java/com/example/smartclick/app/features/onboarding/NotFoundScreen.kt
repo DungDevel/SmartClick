@@ -55,8 +55,11 @@ fun NotFoundScreen(
                     onNext()
                 }
                 is ConnectOutcome.Failed -> {
+                    android.util.Log.w("ConnectionUi", "Connection failed: ${result.reason}")
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar(context.getString(R.string.failed_to_connect, result.reason))
+                        snackbarHostState.showSnackbar(
+                            context.getString(ConnectionMessageMapper.connectionFailure(result.reason))
+                        )
                     }
                 }
                 else -> {}

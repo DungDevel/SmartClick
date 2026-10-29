@@ -26,6 +26,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 import java.util.UUID
@@ -91,6 +92,33 @@ class DevicesViewModelTest {
     }
 
     @Test
+    fun `support request body contains only selected brand and protocol`() = runTest {
+        val unknownTv = TvDevice(
+            id = "serial-should-not-be-in-email",
+            name = "Private model name",
+            ipAddress = "192.168.1.91",
+            macAddress = "AA:BB:CC:DD:EE:FF",
+            brand = "Sony",
+            protocol = TvProtocol.UNKNOWN
+        )
+        every { scanTvDevicesUseCase(any()) } returns flowOf(listOf(unknownTv))
+
+        viewModel.refreshScan()
+        testDispatcher.scheduler.runCurrent()
+
+        val body = viewModel.supportRequestBody("Brand: %1\$s; Protocol: %2\$s")
+
+        assertTrue(body.contains("Sony"))
+        assertTrue(body.contains("UNKNOWN"))
+        assertFalse(body.contains(unknownTv.id))
+        assertFalse(body.contains(unknownTv.name))
+        assertFalse(body.contains(unknownTv.ipAddress))
+        assertFalse(body.contains(unknownTv.macAddress))
+        assertFalse(body.contains("sent", ignoreCase = true))
+        assertFalse(body.contains("đã gửi", ignoreCase = true))
+    }
+
+    @Test
     fun `connectToDevice emits PaywallRequired for free user with already paired device`() = runTest {
         val pairedTv = TvDevice("oldId", "Old TV", "ip1", "mac1", isPaired = true, protocol = TvProtocol.ROKU_ECP)
         every { tvDeviceRepository.getPairedDevices() } returns flowOf(listOf(pairedTv))
@@ -123,8 +151,4 @@ class DevicesViewModelTest {
         coVerify { pairTvUseCase(newTv) }
     }
 
-    @Test
-    fun `logSupportRequest logs support without exposing ip or mac address`() = runTest {
-        viewModel.logSupportRequest()
-    }
 }

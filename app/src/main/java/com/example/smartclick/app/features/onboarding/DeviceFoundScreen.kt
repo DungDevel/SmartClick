@@ -14,6 +14,9 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import androidx.core.net.toUri
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -74,8 +77,11 @@ fun DeviceFoundScreen(
                     onLimitExceeded()
                 }
                 is ConnectOutcome.Failed -> {
+                    android.util.Log.w("ConnectionUi", "Connection failed: ${result.reason}")
                     coroutineScope.launch {
-                        snackbarHostState.showSnackbar(context.getString(R.string.failed_to_connect, result.reason))
+                        snackbarHostState.showSnackbar(
+                            context.getString(ConnectionMessageMapper.connectionFailure(result.reason))
+                        )
                     }
                 }
             }
@@ -94,17 +100,11 @@ fun DeviceFoundScreen(
         if (pairingStep is PairingStep.Failed) {
             val failed = pairingStep as PairingStep.Failed
             if (failed.reason !is PairingFailure.Cancelled) {
+                android.util.Log.w("ConnectionUi", "Pairing failed: ${failed.reason}")
                 coroutineScope.launch {
-                    val message = when (val reason = failed.reason) {
-                        is PairingFailure.RejectedOnTv -> context.getString(R.string.pairing_rejected)
-                        is PairingFailure.TimedOut -> context.getString(R.string.pairing_timeout)
-                        is PairingFailure.WrongPin -> context.getString(R.string.pairing_wrong_pin)
-                        is PairingFailure.NetworkControlDisabled -> context.getString(R.string.pairing_network_control_disabled)
-                        is PairingFailure.Network -> reason.message
-                        is PairingFailure.Unknown -> reason.message
-                        is PairingFailure.Cancelled -> "Cancelled"
-                    }
-                    snackbarHostState.showSnackbar("Pairing failed: $message")
+                    snackbarHostState.showSnackbar(
+                        context.getString(ConnectionMessageMapper.pairingFailure(failed.reason))
+                    )
                 }
             }
             viewModel.cancelPairing()
@@ -277,10 +277,32 @@ fun DeviceFoundScreen(
                                     viewModel.connectToManualIp(ip)
                                 },
                                 onRequestSupport = {
-                                    viewModel.logSupportRequest()
-                                    coroutineScope.launch {
-                                        snackbarHostState.showSnackbar("Support request logged. Thank you!")
-                                    }
+                                    SupportEmailRequest.dispatch(
+                                        supportEmail = context.getString(R.string.support_email_address),
+                                        unavailableMessageResourceId = R.string.support_channel_unavailable,
+                                        openMailto = { mailtoUri ->
+                                            val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                                                data = mailtoUri.toUri()
+                                                putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.support_email_subject))
+                                                putExtra(
+                                                    Intent.EXTRA_TEXT,
+                                                    viewModel.supportRequestBody(context.getString(R.string.support_email_device_details))
+                                                )
+                                            }
+                                            try {
+                                                context.startActivity(emailIntent)
+                                            } catch (_: ActivityNotFoundException) {
+                                                coroutineScope.launch {
+                                                    snackbarHostState.showSnackbar(context.getString(R.string.support_email_app_not_found))
+                                                }
+                                            }
+                                        },
+                                        showUnavailable = { messageResourceId ->
+                                            coroutineScope.launch {
+                                                snackbarHostState.showSnackbar(context.getString(messageResourceId))
+                                            }
+                                        }
+                                    )
                                 }
                             )
                         }
@@ -463,8 +485,13 @@ fun PairingDialogs(
         is PairingStep.Instruction -> {
             val context = androidx.compose.ui.platform.LocalContext.current
             val displayMessage = remember(pairingStep.key) {
-                val resId = context.resources.getIdentifier(pairingStep.key, "string", context.packageName)
-                if (resId != 0) context.getString(resId) else pairingStep.key
+                val resId = InstructionResourceResolver.resolve(
+                    key = pairingStep.key,
+                    fallbackResourceId = R.string.pairing_instruction_unavailable,
+                    findResourceId = { key -> context.resources.getIdentifier(key, "string", context.packageName) },
+                    warn = { warning -> android.util.Log.w("DeviceFoundScreen", warning) }
+                )
+                context.getString(resId)
             }
             AlertDialog(
                 onDismissRequest = onCancel,
