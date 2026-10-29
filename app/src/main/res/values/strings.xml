@@ -202,6 +202,9 @@ Effortlessly
     <string name="system_default">System Default</string>
     <string name="language_english">English</string>
     <string name="language_vietnamese">Tiếng Việt</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_portuguese_brazil">Português (Brasil)</string>
+    <string name="language_german">Deutsch</string>
     <string name="system">System</string>
     <string name="on_text">On</string>
     <string name="off_text">Off</string>

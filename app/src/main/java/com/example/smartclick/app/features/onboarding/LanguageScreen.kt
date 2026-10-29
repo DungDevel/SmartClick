@@ -43,7 +43,10 @@ data class LanguageItem(val code: String, val nameRes: Int, val flag: String)
 val LANGUAGES = listOf(
     LanguageItem("sys", R.string.system_default, "📱"),
     LanguageItem("en", R.string.language_english, "🇺🇸"),
-    LanguageItem("vi", R.string.language_vietnamese, "🇻🇳")
+    LanguageItem("vi", R.string.language_vietnamese, "🇻🇳"),
+    LanguageItem("es", R.string.language_spanish, "🇪🇸"),
+    LanguageItem("pt-BR", R.string.language_portuguese_brazil, "🇧🇷"),
+    LanguageItem("de", R.string.language_german, "🇩🇪")
 )
 
 @Composable
