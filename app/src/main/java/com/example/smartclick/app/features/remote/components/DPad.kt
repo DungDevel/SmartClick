@@ -32,6 +32,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import com.example.smartclick.R
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
+import com.example.smartclick.app.domain.model.RemoteCommand
+import com.example.smartclick.app.domain.usecase.SendCommandResult
+import com.example.smartclick.app.features.remote.launchHeldCommandRepeater
+import com.example.smartclick.app.features.remote.components.heldCommandInput
 
 @Composable
 fun DPad(
@@ -41,7 +45,9 @@ fun DPad(
     onLeft: () -> Unit = {},
     onRight: () -> Unit = {},
     onOk: () -> Unit = {},
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    onHoldCommand: (suspend (RemoteCommand) -> SendCommandResult)? = null,
+    onPressStart: () -> Unit = {}
 ) {
     val colors = SmartClickThemeTokens.colors
     val okDescription = stringResource(R.string.ok_btn)
@@ -70,8 +76,11 @@ fun DPad(
                 iconAlignment = Alignment.TopCenter,
                 rotation = 0f,
                 description = stringResource(R.string.dir_up),
+                command = RemoteCommand.DPadUp,
                 onClick = onUp,
                 enabled = enabled,
+                onHoldCommand = onHoldCommand,
+                onPressStart = onPressStart,
                 testTag = "navigation_pad_up"
             )
             DPadArm(
@@ -80,8 +89,11 @@ fun DPad(
                 iconAlignment = Alignment.BottomCenter,
                 rotation = 180f,
                 description = stringResource(R.string.dir_down),
+                command = RemoteCommand.DPadDown,
                 onClick = onDown,
                 enabled = enabled,
+                onHoldCommand = onHoldCommand,
+                onPressStart = onPressStart,
                 testTag = "navigation_pad_down"
             )
             DPadArm(
@@ -90,8 +102,11 @@ fun DPad(
                 iconAlignment = Alignment.CenterStart,
                 rotation = 270f,
                 description = stringResource(R.string.dir_left),
+                command = RemoteCommand.DPadLeft,
                 onClick = onLeft,
                 enabled = enabled,
+                onHoldCommand = onHoldCommand,
+                onPressStart = onPressStart,
                 testTag = "navigation_pad_left"
             )
             DPadArm(
@@ -100,8 +115,11 @@ fun DPad(
                 iconAlignment = Alignment.CenterEnd,
                 rotation = 90f,
                 description = stringResource(R.string.dir_right),
+                command = RemoteCommand.DPadRight,
                 onClick = onRight,
                 enabled = enabled,
+                onHoldCommand = onHoldCommand,
+                onPressStart = onPressStart,
                 testTag = "navigation_pad_right"
             )
 
@@ -136,8 +154,11 @@ private fun DPadArm(
     iconAlignment: Alignment,
     rotation: Float,
     description: String,
+    command: RemoteCommand,
     onClick: () -> Unit,
     enabled: Boolean,
+    onHoldCommand: (suspend (RemoteCommand) -> SendCommandResult)?,
+    onPressStart: () -> Unit,
     testTag: String
 ) {
     val colors = SmartClickThemeTokens.colors
@@ -148,7 +169,10 @@ private fun DPadArm(
             .border(1.dp, Color.White.copy(alpha = 0.12f), shape)
             .semantics { contentDescription = description }
             .testTag(testTag)
-            .clickable(enabled = enabled, onClick = onClick),
+            .then(
+                if (onHoldCommand == null) Modifier.clickable(enabled = enabled, onClick = onClick)
+                else Modifier.heldCommandInput(command, enabled, onPressStart, onHoldCommand)
+            ),
         contentAlignment = iconAlignment
     ) {
         Icon(

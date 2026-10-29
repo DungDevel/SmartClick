@@ -222,21 +222,26 @@ class RemoteViewModel @Inject constructor(
                 }
             }
 
-            val result = sendCommandUseCase(command)
-            if (result == SendCommandResult.SUCCESS) {
-                when (command) {
-                    RemoteCommand.MuteOn -> _muteState.value = 1
-                    RemoteCommand.MuteOff -> _muteState.value = 0
-                    RemoteCommand.Mute -> _muteState.value = if (_muteState.value == 1) 0 else 1
-                    else -> {}
-                }
-            }
-            when (result) {
-                SendCommandResult.NOT_SUPPORTED -> emitThrottledEvent(RemoteUiEvent.CommandNotSupported)
-                SendCommandResult.NOT_CONNECTED -> emitThrottledEvent(RemoteUiEvent.CommandNotConnected)
-                SendCommandResult.FAILED -> emitThrottledEvent(RemoteUiEvent.CommandFailed)
+            sendCommandForHold(command)
+        }
+    }
+
+    suspend fun sendCommandForHold(command: RemoteCommand): SendCommandResult {
+        val result = sendCommandUseCase(command)
+        if (result == SendCommandResult.SUCCESS) {
+            when (command) {
+                RemoteCommand.MuteOn -> _muteState.value = 1
+                RemoteCommand.MuteOff -> _muteState.value = 0
+                RemoteCommand.Mute -> _muteState.value = if (_muteState.value == 1) 0 else 1
                 else -> {}
             }
         }
+        when (result) {
+            SendCommandResult.NOT_SUPPORTED -> emitThrottledEvent(RemoteUiEvent.CommandNotSupported)
+            SendCommandResult.NOT_CONNECTED -> emitThrottledEvent(RemoteUiEvent.CommandNotConnected)
+            SendCommandResult.FAILED -> emitThrottledEvent(RemoteUiEvent.CommandFailed)
+            else -> {}
+        }
+        return result
     }
 }

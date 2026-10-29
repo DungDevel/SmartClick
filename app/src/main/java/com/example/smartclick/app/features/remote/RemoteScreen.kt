@@ -47,6 +47,7 @@ import com.example.smartclick.app.features.remote.components.DPad
 import com.example.smartclick.app.features.remote.components.KeyboardModal
 import com.example.smartclick.app.features.remote.components.NumPad
 import com.example.smartclick.app.features.remote.components.TouchPad
+import com.example.smartclick.app.domain.usecase.SendCommandResult
 
 @Composable
 fun RemoteScreen(
@@ -151,6 +152,16 @@ fun RemoteScreen(
         }
 
         viewModel.sendCommand(command)
+    }
+
+    suspend fun dispatchHeldCommand(command: RemoteCommand): SendCommandResult {
+        if (!isRepeatableHeldCommand(command)) return SendCommandResult.NOT_SUPPORTED
+        if (isLocked || !controlsEnabled) return SendCommandResult.NOT_CONNECTED
+        return viewModel.sendCommandForHold(command)
+    }
+
+    fun onHeldPressStart() {
+        if (isHapticEnabled) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
     }
 
     if (showPowerOffDialog) {
@@ -490,7 +501,9 @@ fun RemoteScreen(
                                     onDown = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.DOWN, navigationEnabled, ::dispatchCommand) },
                                     onLeft = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.LEFT, navigationEnabled, ::dispatchCommand) },
                                     onRight = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.RIGHT, navigationEnabled, ::dispatchCommand) },
-                                    onOk = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.OK, navigationEnabled, ::dispatchCommand) }
+                                    onOk = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.OK, navigationEnabled, ::dispatchCommand) },
+                                    onHoldCommand = ::dispatchHeldCommand,
+                                    onPressStart = ::onHeldPressStart
                                 )
                             }
                         }
@@ -530,7 +543,10 @@ fun RemoteScreen(
                             connected = controlsEnabled,
                             locked = isLocked,
                             capabilities = capabilities
-                        )
+                        ),
+                        onHoldCommand = ::dispatchHeldCommand,
+                        onPressStart = ::onHeldPressStart,
+                        controlsEnabled = controlsEnabled && !isLocked
                     )
                 }
 
