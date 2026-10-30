@@ -25,6 +25,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.*
@@ -33,6 +34,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CastViewModelTest {
@@ -45,6 +48,8 @@ class CastViewModelTest {
     private lateinit var controller: ICastController
     private lateinit var tvController: ITvController
     private lateinit var tv: TvDevice
+    private lateinit var activeControllerFlow: MutableStateFlow<ITvController?>
+    private lateinit var castControllerFlow: MutableStateFlow<ICastController?>
     private val media = MediaItem("1", "Video 1", "content://picker/video", "video/mp4")
 
     private lateinit var viewModel: CastViewModel
@@ -57,7 +62,8 @@ class CastViewModelTest {
         mediaRepository = mockk(relaxed = true)
         activeTvSession = mockk(relaxed = true)
         castMediaUseCase = mockk(relaxed = true)
-        every { castMediaUseCase.activeCastController } returns MutableStateFlow(null)
+        castControllerFlow = MutableStateFlow(null)
+        every { castMediaUseCase.activeCastController } returns castControllerFlow
         featureGate = mockk(relaxed = true)
         subscriptionRepository = mockk(relaxed = true)
         controller = mockk(relaxed = true)
@@ -66,7 +72,8 @@ class CastViewModelTest {
             capabilities = setOf(TvCapability.CAST_IMAGE, TvCapability.CAST_VIDEO))
         every { tvController.device } returns tv
         every { tvController.connectionState } returns MutableStateFlow(TvConnectionState.Connected(tv))
-        every { activeTvSession.currentController } returns MutableStateFlow(tvController)
+        activeControllerFlow = MutableStateFlow(tvController)
+        every { activeTvSession.currentController } returns activeControllerFlow
 
         every { mediaRepository.getLocalMedia() } returns MutableStateFlow(
             listOf(media)
@@ -129,11 +136,104 @@ class CastViewModelTest {
     }
 
     @Test
+    fun `cast state is Preparing while usecase is suspended`() = runTest {
+        val pendingCast = CompletableDeferred<Result<Unit>>()
+        coEvery { castMediaUseCase(any()) } coAnswers { pendingCast.await() }
+        viewModel.toggleSelection(media.id)
+
+        viewModel.startCasting()
+
+        assertEquals(CastRequestState.PREPARING, viewModel.uiState.value.requestState)
+        pendingCast.complete(Result.success(Unit))
+        runCurrent()
+        assertEquals(CastRequestState.SENT, viewModel.uiState.value.requestState)
+    }
+
+    @Test
+    fun `Sent becomes Playing only after cast controller emits PLAYING`() = runTest {
+        val playback = MutableStateFlow(CastPlaybackState.IDLE)
+        val session = MutableStateFlow(com.example.smartclick.app.domain.cast.CastSessionInfo())
+        val actualCastController = mockk<ICastController>(relaxed = true)
+        every { actualCastController.castPlaybackState } returns playback
+        every { actualCastController.castSessionInfo } returns session
+        castControllerFlow.value = actualCastController
+        coEvery { castMediaUseCase(any()) } coAnswers { Result.success(Unit) }
+        viewModel.toggleSelection(media.id)
+
+        viewModel.startCasting()
+
+        assertEquals(CastRequestState.SENT, viewModel.uiState.value.requestState)
+        assertEquals(CastPlaybackState.IDLE, viewModel.uiState.value.playbackState)
+        listOf(CastPlaybackState.BUFFERING, CastPlaybackState.PAUSED, CastPlaybackState.IDLE).forEach { state ->
+            playback.value = state
+            runCurrent()
+            assertTrue(viewModel.uiState.value.playbackState != CastPlaybackState.PLAYING)
+        }
+        playback.value = CastPlaybackState.PLAYING
+        runCurrent()
+        assertEquals(CastPlaybackState.PLAYING, viewModel.uiState.value.playbackState)
+    }
+
+    @Test
+    fun `free user request routes to Premium without opening picker or casting`() = runTest {
+        every { subscriptionRepository.currentPlan } returns MutableStateFlow(SubscriptionPlan.FREE)
+        every { featureGate.isFeatureAllowed(PremiumFeature.CAST, SubscriptionPlan.FREE) } returns false
+        val events = mutableListOf<CastUiEvent>()
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiEvents.collect(events::add) }
+
+        viewModel.requestMediaPicker()
+
+        assertEquals(listOf(CastUiEvent.PremiumRequired), events)
+        assertTrue(events.none { it == CastUiEvent.OpenPicker })
+        coVerify(exactly = 0) { mediaRepository.prepareMedia(any()) }
+        coVerify(exactly = 0) { castMediaUseCase(any()) }
+        job.cancel()
+    }
+
+    @Test
     fun `stop tears down cast controller and clears selected picker media`() = runTest {
         viewModel.stopCasting()
 
         coVerify { castMediaUseCase.teardown() }
         coVerify { mediaRepository.clearSelectedMedia() }
+    }
+
+    @Test
+    fun `onCleared stops cast and releases selected media`() = runTest {
+        val cleanup = CountDownLatch(2)
+        coEvery { castMediaUseCase.teardown() } coAnswers { cleanup.countDown(); Result.success(Unit) }
+        coEvery { mediaRepository.clearSelectedMedia() } coAnswers { cleanup.countDown(); Unit }
+
+        viewModel.javaClass.getDeclaredMethod("onCleared").apply { isAccessible = true }.invoke(viewModel)
+
+        assertTrue("ViewModel cleanup did not finish", cleanup.await(5, TimeUnit.SECONDS))
+        coVerify { castMediaUseCase.teardown() }
+        coVerify { mediaRepository.clearSelectedMedia() }
+    }
+
+    @Test
+    fun `changing active TV stops cast and releases selected media`() = runTest {
+        val replacement = mockk<ITvController>(relaxed = true)
+        activeControllerFlow.value = replacement
+
+        coVerify { castMediaUseCase.teardown() }
+        coVerify { mediaRepository.clearSelectedMedia() }
+    }
+
+    @Test
+    fun `network failure after sending maps to Error with retry action`() = runTest {
+        coEvery { castMediaUseCase(any()) } returns Result.failure(CastError.NetworkError(IllegalStateException("lost connection")))
+        viewModel.toggleSelection(media.id)
+        val events = mutableListOf<CastUiEvent>()
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiEvents.collect(events::add) }
+
+        viewModel.startCasting()
+
+        assertEquals(CastRequestState.ERROR, viewModel.uiState.value.requestState)
+        val failure = events.filterIsInstance<CastUiEvent.CastFailed>().single()
+        assertEquals(CastErrorMessage.NETWORK, failure.presentation.message)
+        assertEquals(CastErrorAction.RETRY, failure.presentation.action)
+        job.cancel()
     }
 
     @Test
@@ -168,6 +268,7 @@ class CastViewModelTest {
 
         assertEquals(listOf(CastUiEvent.PremiumRequired), events)
         assertTrue(viewModel.uiState.value.selectedMediaIds.isEmpty())
+        coVerify { mediaRepository.prepareMedia(any()) }
         coVerify(exactly = 0) { mediaRepository.selectMedia(any()) }
         coVerify(exactly = 0) { castMediaUseCase(any()) }
         job.cancel()
