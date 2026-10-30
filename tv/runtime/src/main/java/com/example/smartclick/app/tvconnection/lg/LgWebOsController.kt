@@ -326,9 +326,12 @@ class LgWebOsController(
 
             val payload = responseJson.optJSONObject("payload")
             val appsArray = payload?.optJSONArray("apps")
+            if (responseJson.optString("type") == "error" || appsArray == null) {
+                return Result.failure(Exception(responseJson.optString("error").ifBlank { "Invalid app list response" }))
+            }
             val resultList = mutableListOf<TvApp>()
 
-            if (appsArray != null) {
+            run {
                 for (i in 0 until appsArray.length()) {
                     val appObj = appsArray.optJSONObject(i) ?: continue
                     val appId = appObj.optString("id")
