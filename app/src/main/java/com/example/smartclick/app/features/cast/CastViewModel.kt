@@ -3,6 +3,8 @@ package com.example.smartclick.app.features.cast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartclick.app.domain.model.MediaItem
+import android.net.Uri
+import com.example.smartclick.app.domain.connection.CastError
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.repository.IMediaRepository
 import com.example.smartclick.app.domain.connection.IActiveTvSession
@@ -27,6 +29,11 @@ data class CastUiState(
     val sessionInfo: CastSessionInfo = CastSessionInfo()
 )
 
+sealed class CastUiEvent {
+    data object UnsupportedFormat : CastUiEvent()
+    data object MediaUnavailable : CastUiEvent()
+}
+
 @HiltViewModel
 class CastViewModel @Inject constructor(
     private val mediaRepository: IMediaRepository,
@@ -36,6 +43,8 @@ class CastViewModel @Inject constructor(
 
     private val _selectedMediaIds = MutableStateFlow<Set<String>>(emptySet())
     private val _isCasting = MutableStateFlow(false)
+    private val _uiEvents = MutableSharedFlow<CastUiEvent>(extraBufferCapacity = 8)
+    val uiEvents = _uiEvents.asSharedFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val connectionState: StateFlow<TvConnectionState> = activeTvSession.connectionState
@@ -111,6 +120,15 @@ class CastViewModel @Inject constructor(
         _selectedMediaIds.value = emptySet()
     }
 
+    fun onMediaPicked(uri: Uri) {
+        viewModelScope.launch {
+            mediaRepository.selectMedia(uri).fold(
+                onSuccess = { item -> _selectedMediaIds.value = setOf(item.id) },
+                onFailure = { error -> emitMediaError(error) }
+            )
+        }
+    }
+
     fun startCasting() {
         val selectedIds = _selectedMediaIds.value
         if (selectedIds.isNotEmpty()) {
@@ -118,6 +136,12 @@ class CastViewModel @Inject constructor(
                 val mediaList = mediaRepository.getLocalMedia().first()
                 val targetMedia = mediaList.firstOrNull { selectedIds.contains(it.id) }
                 if (targetMedia != null) {
+                    val readable = mediaRepository.verifyReadable(targetMedia)
+                    if (readable.isFailure) {
+                        emitMediaError(readable.exceptionOrNull())
+                        _selectedMediaIds.value = emptySet()
+                        return@launch
+                    }
                     _isCasting.value = true
                     val result = castMediaUseCase(targetMedia)
                     if (result.isFailure) {
@@ -127,6 +151,16 @@ class CastViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun emitMediaError(error: Throwable?) {
+        _uiEvents.tryEmit(
+            when (error) {
+                is CastError.UnsupportedMediaFormat -> CastUiEvent.UnsupportedFormat
+                is CastError.MediaSourceUnavailable -> CastUiEvent.MediaUnavailable
+                else -> CastUiEvent.MediaUnavailable
+            }
+        )
     }
 
     fun stopCasting() {

@@ -2,6 +2,8 @@ package com.example.smartclick.app.domain.usecase
 
 import com.example.smartclick.app.domain.model.MediaItem
 import com.example.smartclick.app.domain.model.CastMediaType
+import com.example.smartclick.app.domain.model.CastMediaMimeTypes
+import com.example.smartclick.app.domain.connection.CastError
 import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.DriverRegistry
 import com.example.smartclick.app.domain.connection.ITvCredentialStore
@@ -15,6 +17,15 @@ class CastMediaUseCase @Inject constructor(
     private val tvCredentialStore: ITvCredentialStore
 ) {
     suspend operator fun invoke(media: MediaItem): Result<Unit> {
+        val mimeType = media.mimeType.trim().lowercase()
+        if (mimeType !in CastMediaMimeTypes.ALLOWED) {
+            return Result.failure(CastError.UnsupportedMediaFormat(mimeType))
+        }
+        val mediaType = when {
+            mimeType.startsWith("video/") -> CastMediaType.VIDEO
+            mimeType.startsWith("image/") -> CastMediaType.PHOTO
+            else -> return Result.failure(CastError.UnsupportedMediaFormat(mimeType))
+        }
         val controller = activeTvSession.currentController.value
             ?: return Result.failure(Exception("No TV connected"))
 
@@ -41,15 +52,9 @@ class CastMediaUseCase @Inject constructor(
             return Result.failure(e)
         } ?: return Result.failure(Exception("Casting not supported by driver ${device.protocol}"))
 
-        val mediaType = when {
-            media.mimeType.startsWith("video", ignoreCase = true) -> CastMediaType.VIDEO
-            media.mimeType.startsWith("image", ignoreCase = true) -> CastMediaType.PHOTO
-            else -> CastMediaType.AUDIO
-        }
-
         return castController.castMedia(
             url = media.url,
-            mimeType = media.mimeType,
+            mimeType = mimeType,
             type = mediaType,
             title = media.title
         )

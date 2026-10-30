@@ -14,6 +14,8 @@ sealed class CastError(message: String? = null, cause: Throwable? = null) : Exce
     class InvalidCredentials(message: String) : CastError("Invalid Credentials: $message")
     class TlsAuthenticationFailed(cause: Throwable? = null) : CastError("Cast TLS identity verification failed", cause)
     class UnsupportedMediaSource(scheme: String) : CastError("Media source is not supported: $scheme")
+    class UnsupportedMediaFormat(val mimeType: String?) : CastError("Media format is not supported: ${mimeType ?: "unknown"}")
+    class MediaSourceUnavailable(cause: Throwable? = null) : CastError("Selected media is no longer readable", cause)
     class ProtocolCommandFailed(message: String) : CastError("Protocol Command Failed: $message")
 }
 

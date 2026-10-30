@@ -3,6 +3,7 @@ package com.example.smartclick.app.features.cast
 import com.example.smartclick.app.domain.cast.CastPlaybackState
 import com.example.smartclick.app.domain.cast.CastCommand
 import com.example.smartclick.app.domain.model.MediaItem
+import android.net.Uri
 import com.example.smartclick.app.domain.repository.IMediaRepository
 import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.ICastController
@@ -44,6 +45,7 @@ class CastViewModelTest {
         every { mediaRepository.getLocalMedia() } returns MutableStateFlow(
             listOf(MediaItem("1", "Video 1", "url1", "video/mp4"))
         )
+        coEvery { mediaRepository.verifyReadable(any()) } returns Result.success(Unit)
         every { activeTvSession.currentController } returns MutableStateFlow(null)
         every { activeTvSession.connectionState } returns MutableStateFlow(TvConnectionState.Idle)
 
@@ -70,6 +72,19 @@ class CastViewModelTest {
 
         viewModel.toggleSelection("1")
         assertTrue(viewModel.uiState.value.selectedMediaIds.isEmpty())
+    }
+
+    @Test
+    fun `Photo Picker result selects repository media into UI state`() = runTest {
+        val selected = MediaItem("picked", "photo.jpg", "content://picker/photo", "image/jpeg")
+        coEvery { mediaRepository.selectMedia(any()) } returns Result.success(selected)
+        coEvery { mediaRepository.verifyReadable(any()) } returns Result.success(Unit)
+        val uri = mockk<Uri>(relaxed = true)
+
+        viewModel.onMediaPicked(uri)
+
+        assertTrue(viewModel.uiState.value.selectedMediaIds.contains("picked"))
+        coVerify { mediaRepository.selectMedia(uri) }
     }
 
     @Test

@@ -2,7 +2,7 @@ package com.example.smartclick.app.di
 
 import com.example.smartclick.app.data.fake.FakeAuthRepository
 import com.example.smartclick.app.data.fake.FakeSubscriptionRepository
-import com.example.smartclick.app.data.fake.FakeMediaRepository
+import com.example.smartclick.app.data.repository.InMemoryMediaRepository
 import com.example.smartclick.app.domain.repository.IAuthRepository
 import com.example.smartclick.app.domain.repository.IMediaRepository
 import com.example.smartclick.app.domain.repository.ISubscriptionRepository
@@ -25,5 +25,9 @@ object FakeRepositoryModule {
 
     @Provides
     @Singleton
-    fun provideMediaRepository(): IMediaRepository = FakeMediaRepository()
+    fun provideMediaRepository(repository: InMemoryMediaRepository): IMediaRepository = repository
+
+    @Provides
+    @Singleton
+    fun provideMediaContentReader(reader: com.example.smartclick.app.data.repository.AndroidMediaContentReader): com.example.smartclick.app.data.repository.MediaContentReader = reader
 }

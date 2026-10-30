@@ -1,7 +1,8 @@
 package com.example.smartclick.app.data.noop
 
 import com.example.smartclick.app.domain.model.*
-import com.example.smartclick.app.domain.repository.*
+import com.example.smartclick.app.domain.repository.IAuthRepository
+import com.example.smartclick.app.domain.repository.ISubscriptionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
@@ -10,7 +11,6 @@ class NoOpAuthRepository : IAuthRepository {
     override suspend fun login(userId: String) {}
     override suspend fun logout() {}
 }
-
 class NoOpSubscriptionRepository : ISubscriptionRepository {
     override val isPremium: Flow<Boolean> = flowOf(false)
     override val currentPlan: Flow<SubscriptionPlan> = flowOf(SubscriptionPlan.FREE)
@@ -21,6 +21,3 @@ class NoOpSubscriptionRepository : ISubscriptionRepository {
     override fun restorePurchases() {}
 }
 
-class NoOpMediaRepository : IMediaRepository {
-    override fun getLocalMedia(): Flow<List<MediaItem>> = flowOf(emptyList())
-}

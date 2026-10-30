@@ -27,23 +27,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import com.example.smartclick.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
-
-// We use hardcoded colors for UI mock representation of different media,
-// mapped dynamically from the domain's MediaItem ID or type in a real app.
-// For now, generate a placeholder color based on ID to maintain visual flair:
-private fun getColorForMediaId(id: String): Color {
-    val colors = listOf(
-        Color(0xFFF44336), Color(0xFF9C27B0), Color(0xFF3F51B5),
-        Color(0xFF009688), Color(0xFFFF9800), Color(0xFF795548),
-        Color(0xFF607D8B), Color(0xFFE91E63), Color(0xFFCDDC39),
-        Color(0xFF00BCD4), Color(0xFFFFEB3B), Color(0xFF4CAF50)
-    )
-    val index = (id.toIntOrNull() ?: 0) % colors.size
-    return colors[index]
-}
 
 @Composable
 fun CastScreen(
@@ -56,6 +46,20 @@ fun CastScreen(
 
     val uiState by viewModel.uiState.collectAsState()
     val connectionState by viewModel.connectionState.collectAsState()
+    val context = LocalContext.current
+    val pickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri -> uri?.let(viewModel::onMediaPicked) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.uiEvents.collect { event ->
+            val message = when (event) {
+                CastUiEvent.UnsupportedFormat -> context.getString(R.string.cast_unsupported_format)
+                CastUiEvent.MediaUnavailable -> context.getString(R.string.cast_media_unavailable)
+            }
+            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
 
     // Pulsing animation for the casting indicator
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -93,6 +97,13 @@ fun CastScreen(
                 color = colors.tx2,
                 fontSize = 12.sp
             )
+            Button(onClick = {
+                pickerLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                )
+            }) {
+                Text(stringResource(R.string.cast_pick_media))
+            }
         }
 
         HorizontalDivider(color = colors.bord)
@@ -198,14 +209,13 @@ fun CastScreen(
                 ) {
                     rowMedia.forEach { media ->
                         val isSelected = uiState.selectedMediaIds.contains(media.id)
-                        val mediaColor = getColorForMediaId(media.id)
 
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .aspectRatio(1f)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(mediaColor) // Use dynamic color
+                                .background(colors.surf)
                                 .then(
                                     if (isSelected) Modifier.border(2.5.dp, colors.acc, RoundedCornerShape(12.dp))
                                     else Modifier
@@ -214,6 +224,12 @@ fun CastScreen(
                                     viewModel.toggleSelection(media.id)
                                 }
                         ) {
+                            Text(
+                                text = media.title,
+                                color = colors.tx1,
+                                modifier = Modifier.align(Alignment.Center).padding(8.dp),
+                                fontWeight = FontWeight.SemiBold
+                            )
                             if (media.mimeType.startsWith("video")) {
                                 // Video badge
                                 Row(
@@ -226,7 +242,6 @@ fun CastScreen(
                                     horizontalArrangement = Arrangement.spacedBy(3.dp)
                                 ) {
                                     Text("▶", color = Color.White, fontSize = 8.sp)
-                                    Text("0:30", color = Color.White, fontSize = 9.sp)
                                 }
                             }
 

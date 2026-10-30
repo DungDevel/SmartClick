@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils
+import com.example.smartclick.app.domain.model.CastMediaMimeTypes
 import java.io.Closeable
 import java.io.FilterInputStream
 import java.io.InputStream
@@ -52,10 +53,7 @@ class LocalMediaServer @Inject constructor(
         private const val TAG = "LocalMediaServer"
         const val SHUTDOWN_DELAY_MS = 10 * 60 * 1000L
         private const val TOKEN_BYTES = 32 // 256 bits of entropy
-        private val ALLOWED_MIME_TYPES = setOf(
-            "image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp",
-            "video/mp4", "video/webm", "video/x-matroska", "video/quicktime"
-        )
+        private val ALLOWED_MIME_TYPES = CastMediaMimeTypes.ALLOWED
     }
 
     suspend fun start(): Result<Int> = lifecycleMutex.withLock { startLocked() }

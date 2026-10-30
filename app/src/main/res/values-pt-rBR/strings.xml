@@ -84,6 +84,9 @@
     <string name="recommended">Recomendados</string>
     <string name="cast_title">Transmitir mídia</string>
     <string name="cast_desc">Compartilhe sua tela ou mídia</string>
+    <string name="cast_pick_media">Escolha uma foto ou vídeo</string>
+    <string name="cast_unsupported_format">Selecione um formato de foto ou vídeo compatível.</string>
+    <string name="cast_media_unavailable">Não foi possível acessar a mídia selecionada. Escolha-a novamente.</string>
     <string name="casting_to_tv">Transmitindo para %1$s</string>
     <string name="account_information">Informações da conta</string>
     <string name="language">Idioma</string>
