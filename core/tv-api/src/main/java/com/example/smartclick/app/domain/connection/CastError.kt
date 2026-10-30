@@ -12,6 +12,8 @@ sealed class CastError(message: String? = null, cause: Throwable? = null) : Exce
     class SoapFault(val faultCode: String, val faultString: String) : CastError("SOAP Fault: $faultCode - $faultString")
     class DeviceRejectedRequest(val reason: String) : CastError("Device rejected request: $reason")
     class InvalidCredentials(message: String) : CastError("Invalid Credentials: $message")
+    class TlsAuthenticationFailed(cause: Throwable? = null) : CastError("Cast TLS identity verification failed", cause)
+    class UnsupportedMediaSource(scheme: String) : CastError("Media source is not supported: $scheme")
     class ProtocolCommandFailed(message: String) : CastError("Protocol Command Failed: $message")
 }
 

@@ -39,6 +39,13 @@ class LgWebOsCastController(
         type: CastMediaType,
         title: String
     ): Result<Unit> {
+        if (url.startsWith("file://", ignoreCase = true)) return Result.failure(CastError.UnsupportedMediaSource("file"))
+        if (!url.startsWith("content://", ignoreCase = true) &&
+            !url.startsWith("http://", ignoreCase = true) && !url.startsWith("https://", ignoreCase = true)) {
+            return Result.failure(CastError.UnsupportedMediaSource(android.net.Uri.parse(url).scheme ?: "unknown"))
+        }
+        var registeringLocalMedia = false
+        return try {
         // Connect if needed
         if (!transport.isConnected) {
             val connectResult = transport.connect(ipAddress, clientKey)
@@ -57,8 +64,10 @@ class LgWebOsCastController(
 
         _castPlaybackState.value = CastPlaybackState.BUFFERING
 
-        val externalUrl = if (url.startsWith("content://") || url.startsWith("file://")) {
+        val externalUrl = if (url.startsWith("content://")) {
+            registeringLocalMedia = true
             val session = localMediaServer.registerMedia(android.net.Uri.parse(url), mimeType)
+            registeringLocalMedia = false
             session.mediaUrl
         } else {
             url
@@ -93,6 +102,11 @@ class LgWebOsCastController(
                 Result.failure(error)
             }
         )
+        } catch (e: Exception) {
+            _castPlaybackState.value = CastPlaybackState.IDLE
+            _castSessionInfo.value = CastSessionInfo()
+            Result.failure(if (registeringLocalMedia) CastError.MediaRegistrationFailed(e) else CastError.NetworkError(e))
+        }
     }
 
     override suspend fun controlCast(command: CastCommand): Result<Unit> {

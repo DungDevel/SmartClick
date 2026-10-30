@@ -77,6 +77,21 @@ class LgWebOsCastControllerTest {
         assertEquals(CastPlaybackState.BUFFERING, controller.castPlaybackState.value)
     }
 
+    @Test fun `content registration failure is classified and clears buffering state`() = runTest {
+        coEvery { mockLocalMediaServer.registerMedia(any(), any(), any()) } throws IllegalArgumentException("unsupported mime")
+        val result = controller.castMedia("content://media/1", "application/octet-stream", CastMediaType.VIDEO, "bad")
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is CastError.MediaRegistrationFailed)
+        assertEquals(CastPlaybackState.IDLE, controller.castPlaybackState.value)
+    }
+
+    @Test fun `file URI is explicitly unsupported`() = runTest {
+        val result = controller.castMedia("file:///private/video.mp4", "video/mp4", CastMediaType.VIDEO, "local")
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is CastError.UnsupportedMediaSource)
+        assertEquals(CastPlaybackState.IDLE, controller.castPlaybackState.value)
+    }
+
     @Test
     fun `castMedia fails if missing sessionId in response`() = runTest {
         fakeTransport.overrideResponse = JSONObject().apply { put("returnValue", true) } // No sessionId

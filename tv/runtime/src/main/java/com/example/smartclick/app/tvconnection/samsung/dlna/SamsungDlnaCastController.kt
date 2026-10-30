@@ -43,6 +43,11 @@ class SamsungDlnaCastController(
         title: String
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
+            if (url.startsWith("file://", ignoreCase = true)) return@withContext Result.failure(CastError.UnsupportedMediaSource("file"))
+            if (url.startsWith("content://", ignoreCase = true).not() &&
+                !url.startsWith("http://", ignoreCase = true) && !url.startsWith("https://", ignoreCase = true)) {
+                return@withContext Result.failure(CastError.UnsupportedMediaSource(Uri.parse(url).scheme ?: "unknown"))
+            }
             // Re-discover Control URL if not present. In MVP, we might just discover it on the fly.
             val controlUrl = discoverAndResolveControlUrl()
                 ?: return@withContext Result.failure(CastError.DeviceNotFound())
@@ -54,10 +59,11 @@ class SamsungDlnaCastController(
                 localMediaServer.unregisterMedia(it.sessionId)
             }
 
-            val uri = Uri.parse(url)
-            // Use existing LocalMediaServer API
-            val mediaSession = localMediaServer.registerMedia(uri, mimeType, title)
-            currentMediaSession = mediaSession
+            val mediaUrl = if (url.startsWith("content://", ignoreCase = true)) {
+                val mediaSession = localMediaServer.registerMedia(Uri.parse(url), mimeType, title)
+                currentMediaSession = mediaSession
+                mediaSession.mediaUrl
+            } else url
 
             val objectClass = when (type) {
                 CastMediaType.VIDEO -> "object.item.videoItem"
@@ -65,8 +71,8 @@ class SamsungDlnaCastController(
                 CastMediaType.PHOTO -> "object.item.imageItem"
             }
 
-            val didlLiteXml = UpnpSoapModels.createDidlLite(title, mediaSession.mediaUrl, mimeType, objectClass)
-            val soapRequest = UpnpSoapModels.createSetAVTransportURIRequest(mediaSession.mediaUrl, didlLiteXml)
+            val didlLiteXml = UpnpSoapModels.createDidlLite(title, mediaUrl, mimeType, objectClass)
+            val soapRequest = UpnpSoapModels.createSetAVTransportURIRequest(mediaUrl, didlLiteXml)
 
             try {
                 transport.sendSoapAction(controlUrl, "SetAVTransportURI", soapRequest)
@@ -74,7 +80,7 @@ class SamsungDlnaCastController(
                 return@withContext mapSoapException(e)
             }
 
-            _castSessionInfo.value = CastSessionInfo(currentUrl = mediaSession.mediaUrl)
+            _castSessionInfo.value = CastSessionInfo(currentUrl = mediaUrl)
             _castPlaybackState.value = CastPlaybackState.BUFFERING
 
             // Auto play

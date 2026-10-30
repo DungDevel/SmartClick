@@ -3,6 +3,7 @@ package com.example.smartclick.app.tvconnection.androidtv
 import com.example.smartclick.app.domain.connection.Credentials
 import com.example.smartclick.app.domain.connection.Fingerprint
 import com.example.smartclick.app.domain.connection.ICastController
+import com.example.smartclick.app.domain.connection.ITvCredentialStore
 import com.example.smartclick.app.domain.connection.IProtocolDriver
 import com.example.smartclick.app.domain.connection.ITvController
 import com.example.smartclick.app.domain.connection.PairingStep
@@ -24,10 +25,12 @@ import javax.net.ssl.SSLContext
 
 class AndroidTvDriver : IProtocolDriver {
     private val localMediaServer: LocalMediaServer?
+    private val credentialStore: ITvCredentialStore?
 
     @Inject
-    constructor(localMediaServer: LocalMediaServer?) {
+    constructor(localMediaServer: LocalMediaServer?, credentialStore: ITvCredentialStore? = null) {
         this.localMediaServer = localMediaServer
+        this.credentialStore = credentialStore
     }
 
     constructor() : this(null)
@@ -81,16 +84,13 @@ class AndroidTvDriver : IProtocolDriver {
     override fun createCastController(device: TvDevice, credentials: Credentials?): ICastController? {
         val mediaServer = localMediaServer ?: return null
 
-        // 1. TLS Trust Manager (for transport-level security on port 8009)
-        // Production implementation should pin the Cast device's TLS certificate.
-        // Currently using TOFU approach for the TLS layer.
-        val tlsTrustManager = object : javax.net.ssl.X509TrustManager {
-            override fun checkClientTrusted(chain: Array<out java.security.cert.X509Certificate>?, authType: String?) {}
-            override fun checkServerTrusted(chain: Array<out java.security.cert.X509Certificate>?, authType: String?) {
-                // TODO: Implement actual pinning or CA validation for TLS transport
-            }
-            override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = emptyArray()
-        }
+        val values = credentials?.protocolValues.orEmpty()
+        val expectedPin = values[CAST_TLS_SHA256]
+        val pinWasEstablished = values[CAST_TLS_PIN_ESTABLISHED] == "true"
+        val tlsTrustManager = com.example.smartclick.app.tvconnection.security.GoogleCastTlsTrustManager(
+            expectedSha256 = expectedPin,
+            firstUseAllowed = !pinWasEstablished && expectedPin.isNullOrBlank()
+        )
 
         // 2. Cast DeviceAuth Trust Manager (for AuthResponse chain validation)
         val castTrustManager = GoogleCastTrustManager(GoogleCastRootCertificates.getDefaultRoots())
@@ -100,15 +100,29 @@ class AndroidTvDriver : IProtocolDriver {
         }
         val authManager = GoogleCastAuthManager(castTrustManager)
 
-        return GoogleCastController(
+        val controller = GoogleCastController(
             ipAddress = device.ipAddress,
             localMediaServer = mediaServer,
             sslSocketFactory = sslContext.socketFactory,
-            authManager = authManager
+            authManager = authManager,
+            onDeviceAuthenticated = { leafSha256 ->
+                val ref = device.credentialsRef ?: throw IllegalStateException("Cast TLS pin cannot be saved without credential reference")
+                val store = credentialStore ?: throw IllegalStateException("Credential store unavailable for Cast TLS pin")
+                val updated = values.toMutableMap().apply {
+                    put(CAST_TLS_SHA256, leafSha256)
+                    put(CAST_TLS_PIN_ESTABLISHED, "true")
+                }
+                if (!store.updateCredentials(device.id, ref, Credentials(updated))) {
+                    throw IllegalStateException("Cast TLS credential record no longer exists")
+                }
+            }
         )
+        return controller
     }
 
     companion object {
+        const val CAST_TLS_SHA256 = "cast_tls_sha256"
+        const val CAST_TLS_PIN_ESTABLISHED = "cast_tls_pin_established"
         val ANDROID_TV_CAPABILITIES = setOf(
             TvCapability.VOLUME,
             TvCapability.CHANNEL_CONTROL,

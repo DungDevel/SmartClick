@@ -1,4 +1,10 @@
-# Google Cast V2 Integration & Authentication Audit (D-CAST-1)
+# Google Cast V2 Integration & Authentication Audit (D-CAST-1 / D2-A)
+
+## Cast TLS transport pinning (D2-A)
+
+Android TV Cast port 8009 now uses a dedicated `cast_tls_sha256` leaf-certificate pin stored in the device's encrypted credential record. This key is separate from Android TV Remote's `cert_sha256`, which belongs to the Remote endpoint. On first Cast use, TLS provisionally accepts the peer leaf so Cast DeviceAuth can run; the pin and an established marker are written only after DeviceAuth validates its PKIX chain and verifies the signature bound to the TLS peer certificate. Later connections require an exact leaf SHA-256 match. A mismatched pin, or an established marker with no pin, fails closed. Removing the device clears its credential record; pairing again creates a new record and starts a new first-use flow.
+
+The first TLS handshake remains a TOFU window: a local active attacker could present the first certificate, but cannot establish the session without a valid Cast DeviceAuth chain and signature bound to that same TLS certificate. Certificate rotation changes the pin and requires device removal and pairing again; there is no silent rotation or fallback. No physical TV has been tested.
 
 ## Local media server threat model (Cast D1)
 
@@ -26,7 +32,7 @@ This audit evaluates SmartClick's Google Cast authentication and cryptographic v
 | **TLS Peer Binding** | Binds challenge response signature to the exact live TLS peer certificate DER representation (`nonce || tls_peer_cert_der`). | Concatenates `sender_nonce` and `tls_peer_cert_der` as signed data input for signature verification. | **Conformant** |
 | **Challenge-Response** | Generates cryptographically secure random nonce (`sender_nonce`), challenges device, and verifies asymmetric signature (`SHA256withRSA` / `RSASSA-PSS`). | Implements strict nonce matching, cryptographic signature verification, and algorithm restriction (rejecting SHA1/insecure hashes). | **Conformant** |
 | **Revocation / CRL** | Online Certificate Status Protocol (OCSP) / CRL checking is deliberately deferred in standalone environments. | PKIX revocation is explicitly disabled (`isRevocationEnabled = false`) under the current assumption that Cast devices are on the local network. CRL/OCSP status is not checked. | **Disabled; not verified** |
-| **Fingerprint / TOFU** | Relies on dynamic certificate chains and cryptographic challenge-response rather than static TOFU pinning. | Does not use static TOFU/fingerprint pinning; relies on cryptographic challenge-response and chain validation. | **Conformant** |
+| **TLS fingerprint / TOFU** | DeviceAuth binds the challenge signature to the live TLS peer certificate; it does not prescribe a persistent local leaf pin. | In addition, the first successfully authenticated leaf SHA-256 is persisted under `cast_tls_sha256`; later TLS sessions require an exact match. | **Implemented; unit-tested** |
 
 ## 3. Automated Test Evidence
 Automated unit tests using generated/fake certificates verify challenge-response behavior, trust-chain validation, and failure handling. These results do not establish behavior with certificates presented by a physical Cast device:

@@ -128,6 +128,20 @@ class GoogleCastSessionTest {
     }
 
     @Test
+    fun `failed DeviceAuth does not publish fingerprint for persistence`() = runBlocking {
+        val session = GoogleCastSession("127.0.0.1", serverPort, mockSslSocketFactory, currentAuthManager)
+        var persistedFingerprint: String? = null
+        session.onDeviceAuthenticated = { persistedFingerprint = it }
+        launch(Dispatchers.IO) { serverAcceptedSocket = mockServer.accept() }
+
+        assertTrue(session.connect().isSuccess)
+        val authResult = session.authenticate()
+        assertTrue(authResult.isFailure)
+        assertEquals(null, persistedFingerprint)
+        session.disconnect()
+    }
+
+    @Test
     fun `send message writes framed protobuf to output stream`() = runBlocking {
         val session = GoogleCastSession("127.0.0.1", serverPort, mockSslSocketFactory, currentAuthManager)
 

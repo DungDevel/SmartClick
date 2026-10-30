@@ -65,6 +65,15 @@ class TvCredentialStore @Inject constructor(
         Credentials(map)
     }
 
+    override suspend fun updateCredentials(deviceId: String, credentialsRef: String, credentials: Credentials): Boolean = withContext(Dispatchers.IO) {
+        val key = "cred_${deviceId}_$credentialsRef"
+        if (!sharedPreferences.contains(key)) return@withContext false
+        val json = JSONObject()
+        credentials.protocolValues.forEach { (name, value) -> json.put(name, value) }
+        sharedPreferences.edit { putString(key, json.toString()) }
+        true
+    }
+
     override suspend fun clearCredentials(deviceId: String, credentialsRef: String) = withContext(Dispatchers.IO) {
         sharedPreferences.edit {
             remove("cred_${deviceId}_$credentialsRef")

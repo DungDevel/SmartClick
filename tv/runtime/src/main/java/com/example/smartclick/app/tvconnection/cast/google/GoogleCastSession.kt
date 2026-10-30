@@ -26,6 +26,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.InetSocketAddress
 import java.security.SecureRandom
+import java.security.MessageDigest
 import javax.net.SocketFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocket
@@ -55,6 +56,7 @@ class GoogleCastSession(
     private var inputStream: InputStream? = null
     private var outputStream: OutputStream? = null
     private var tlsPeerCertificateDer: ByteArray? = null
+    private var tlsPeerCertificateSha256: String? = null
 
     private val writeMutex = Mutex()
 
@@ -96,6 +98,8 @@ class GoogleCastSession(
                 }
 
                 tlsPeerCertificateDer = peerCert.encoded
+                tlsPeerCertificateSha256 = MessageDigest.getInstance("SHA-256").digest(peerCert.encoded)
+                    .joinToString("") { "%02x".format(it) }
 
                 socket = newSocket
                 inputStream = newSocket.inputStream
@@ -163,6 +167,7 @@ class GoogleCastSession(
 
             // 4. Verify Response using the captured TLS peer certificate
             authManager.verifyResponse(challenge, response, peerCert).onSuccess { audioOnly ->
+                onDeviceAuthenticated?.invoke(tlsPeerCertificateSha256 ?: throw IOException("TLS peer fingerprint missing"))
                 isAudioOnly = audioOnly
                 _connectionState.value = State.AUTHENTICATED
             }.onFailure {
@@ -267,10 +272,14 @@ class GoogleCastSession(
         inputStream = null
         outputStream = null
         tlsPeerCertificateDer = null
-        _incomingMessages.resetReplayCache()
+        tlsPeerCertificateSha256 = null
+        // Keep the last received frame available to protocol collectors: EOF can arrive
+        // immediately after a valid response and cleanup must not erase that response.
     }
 
     // Internal Exception for TLS issues
     private class SSLPeerUnverifiedException(message: String) : IOException(message)
+
+    internal var onDeviceAuthenticated: (suspend (String) -> Unit)? = null
 }
 
