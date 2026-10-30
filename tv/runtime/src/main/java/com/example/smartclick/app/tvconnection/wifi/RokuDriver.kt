@@ -13,11 +13,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.StringReader
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Provider
 
@@ -28,6 +30,12 @@ class RokuDriver @Inject constructor(
     private val rokuControllerProvider: Provider<RokuController>,
     private val httpClient: OkHttpClient
 ) : IProtocolDriver {
+    private val rokuHttpClient = httpClient.newBuilder()
+        .connectTimeout(1000, TimeUnit.MILLISECONDS)
+        .readTimeout(1000, TimeUnit.MILLISECONDS)
+        .callTimeout(1500, TimeUnit.MILLISECONDS)
+        .build()
+
     override val protocol: TvProtocol = TvProtocol.ROKU_ECP
 
     override val capabilities: Set<TvCapability> = ROKU_CAPABILITIES
@@ -36,13 +44,14 @@ class RokuDriver @Inject constructor(
         if (candidate.protocolHint != TvProtocol.UNKNOWN && candidate.protocolHint != TvProtocol.ROKU_ECP) {
             return@withContext null
         }
+        if (!NetworkSecurityUtils.isPrivateLanAddress(candidate.ipAddress)) return@withContext null
 
         try {
             val request = Request.Builder()
                 .url("http://${candidate.ipAddress}:8060/query/device-info")
                 .build()
 
-            httpClient.newCall(request).execute().use { response ->
+            rokuHttpClient.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     return@withContext null
                 }
