@@ -12,6 +12,9 @@ interface ITvCredentialStore {
      */
     suspend fun getCredentials(deviceId: String, credentialsRef: String): Credentials?
 
+    /** Updates a credential record without changing the reference stored on the device. */
+    suspend fun updateCredentials(deviceId: String, credentialsRef: String, credentials: Credentials): Boolean
+
     /**
      * Removes credentials for a given device.
      */

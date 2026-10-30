@@ -42,7 +42,8 @@ class GoogleCastController(
     private val port: Int = 8009,
     private val localMediaServer: LocalMediaServer,
     private val sslSocketFactory: SSLSocketFactory,
-    private val authManager: GoogleCastAuthManager
+    private val authManager: GoogleCastAuthManager,
+    private val onDeviceAuthenticated: (suspend (String) -> Unit)? = null
 ) : ICastController {
 
     private val controllerScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -50,6 +51,8 @@ class GoogleCastController(
     private var castSession: GoogleCastSession? = null
     private var protocolClient: GoogleCastProtocolClient? = null
     private var mediaController: GoogleCastMediaController? = null
+    private var sessionFailure: Throwable? = null
+    private var deviceAuthFailed = false
 
     private val _castPlaybackState = MutableStateFlow(CastPlaybackState.IDLE)
     override val castPlaybackState: StateFlow<CastPlaybackState> = _castPlaybackState.asStateFlow()
@@ -66,6 +69,9 @@ class GoogleCastController(
         type: CastMediaType,
         title: String
     ): Result<Unit> {
+        if (url.startsWith("file://", ignoreCase = true)) {
+            return Result.failure(CastError.UnsupportedMediaSource("file"))
+        }
         if (type == CastMediaType.VIDEO && castSession?.isAudioOnly == true) {
             return Result.failure(CastError.ProtocolCommandFailed("Audio-Only receiver rejects video casting"))
         }
@@ -73,13 +79,16 @@ class GoogleCastController(
         return try {
             // 1. Ensure session is established
             val mc = ensureMediaController()
-                ?: return Result.failure(CastError.NetworkError(Exception("Failed to establish Cast session")))
+                ?: return Result.failure(sessionFailure?.takeIf { deviceAuthFailed || isTlsIdentityFailure(it) }?.let { CastError.TlsAuthenticationFailed(it) }
+                    ?: CastError.NetworkError(Exception("Failed to establish Cast session")))
 
             // 2. Resolve URL: local URIs go through LocalMediaServer
-            val resolvedUrl = if (url.startsWith("content://") || url.startsWith("file://")) {
-                val mediaSession = localMediaServer.registerMedia(
-                    android.net.Uri.parse(url), mimeType, title
-                )
+            val resolvedUrl = if (url.startsWith("content://")) {
+                val mediaSession = try {
+                    localMediaServer.registerMedia(android.net.Uri.parse(url), mimeType, title)
+                } catch (e: Exception) {
+                    return Result.failure(CastError.MediaRegistrationFailed(e))
+                }
                 mediaSession.mediaUrl
             } else {
                 url
@@ -167,6 +176,8 @@ class GoogleCastController(
      * the media controller ready for commands.
      */
     private suspend fun ensureMediaController(): GoogleCastMediaController? {
+        sessionFailure = null
+        deviceAuthFailed = false
         // Return existing if still valid
         mediaController?.let { mc ->
             val state = castSession?.connectionState?.value
@@ -184,9 +195,11 @@ class GoogleCastController(
 
         // Step 1: Create TLS session
         val session = GoogleCastSession(ipAddress, port, sslSocketFactory, authManager)
+        session.onDeviceAuthenticated = onDeviceAuthenticated
         val connectResult = session.connect()
         if (connectResult.isFailure) {
             Log.e(TAG, "TLS connection failed: ${connectResult.exceptionOrNull()?.message}")
+            sessionFailure = connectResult.exceptionOrNull()
             return null
         }
         castSession = session
@@ -196,6 +209,8 @@ class GoogleCastController(
         if (authResult.isFailure) {
             Log.e(TAG, "Device authentication failed: ${authResult.exceptionOrNull()?.message}")
             session.disconnect()
+            sessionFailure = authResult.exceptionOrNull()
+            deviceAuthFailed = true
             castSession = null
             return null
         }
@@ -267,6 +282,15 @@ class GoogleCastController(
             }
         }
         return null
+    }
+
+    private fun isTlsIdentityFailure(error: Throwable): Boolean {
+        var current: Throwable? = error
+        while (current != null) {
+            if (current is java.security.cert.CertificateException || current is javax.net.ssl.SSLHandshakeException) return true
+            current = current.cause
+        }
+        return false
     }
 
     companion object {

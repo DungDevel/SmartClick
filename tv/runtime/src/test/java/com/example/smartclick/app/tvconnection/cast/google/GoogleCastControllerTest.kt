@@ -480,6 +480,20 @@ class GoogleCastControllerTest {
         assertTrue(result.exceptionOrNull() is CastError.NetworkError)
     }
 
+    @Test
+    fun `file URI is explicitly unsupported without opening Cast session`() = runBlocking {
+        val controller = GoogleCastController(
+            ipAddress = "127.0.0.1", port = serverPort,
+            localMediaServer = mockLocalMediaServer,
+            sslSocketFactory = mockSslSocketFactory,
+            authManager = authManager
+        )
+        val result = controller.castMedia("file:///private/video.mp4", "video/mp4", CastMediaType.VIDEO, "V")
+        assertTrue(result.isFailure)
+        assertTrue(result.exceptionOrNull() is CastError.UnsupportedMediaSource)
+        assertEquals(CastPlaybackState.IDLE, controller.castPlaybackState.value)
+    }
+
     @Test(timeout = 10000)
     fun `teardown closes session and resets states`() = runBlocking {
         val transportId = "test-transport-teardown"

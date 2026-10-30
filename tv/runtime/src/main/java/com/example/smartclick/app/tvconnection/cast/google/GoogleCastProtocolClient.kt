@@ -38,7 +38,12 @@ class GoogleCastProtocolClient(
         clientScope.launch {
             session.connectionState.collect { state ->
                 if (state == GoogleCastSession.State.DISCONNECTED || state == GoogleCastSession.State.FAILED) {
-                    cleanup()
+                    // The read loop emits its last frame before publishing DISCONNECTED. Keep the
+                    // incoming-message collector alive so a final RECEIVER_STATUS is not dropped
+                    // while pending requests are being completed. The controller closes us when
+                    // replacing or tearing down this session.
+                    heartbeatJob?.cancel()
+                    heartbeatJob = null
                 }
             }
         }
@@ -249,10 +254,12 @@ class GoogleCastProtocolClient(
         return try {
             withTimeout(15000) {
                 select<JSONObject?> {
+                    // Prefer a valid receiver status if the socket disconnects just after
+                    // broadcasting it: cleanup cancels the competing error deferred.
+                    appConfirmationDeferred.onAwait { it }
                     errorDeferred.onAwait {
                         throw java.io.IOException("Launch error: ${it.optString("reason")}")
                     }
-                    appConfirmationDeferred.onAwait { it }
                 }
             }
         } catch (e: TimeoutCancellationException) {
