@@ -68,6 +68,15 @@
     <string name="send_text_to_tv">Text an TV senden</string>
     <string name="apps_desc">Deine TV-Apps</string>
     <string name="your_tv_apps">Deine TV-Apps</string>
+    <string name="channels_apps_loading">Apps werden geladen…</string>
+    <string name="channels_apps_empty">Auf diesem TV ist keine App aus dem Katalog installiert.</string>
+    <string name="channels_apps_no_device">Verbinde einen TV, um installierte Apps zu sehen.</string>
+    <string name="channels_apps_not_supported">Dieser TV unterstützt keine Liste installierter Apps.</string>
+    <string name="channels_apps_error_connection">Verbindung zum TV fehlgeschlagen.</string>
+    <string name="channels_apps_error_timeout">Der TV hat zu langsam geantwortet.</string>
+    <string name="channels_apps_error_parse">Der TV hat eine ungültige App-Liste zurückgegeben.</string>
+    <string name="channels_apps_error_unknown">Installierte Apps konnten nicht geladen werden.</string>
+    <string name="channels_apps_retry">Erneut versuchen</string>
     <string name="channels">Sender</string>
     <string name="popular">Beliebt</string>
     <string name="recommended">Empfohlen</string>

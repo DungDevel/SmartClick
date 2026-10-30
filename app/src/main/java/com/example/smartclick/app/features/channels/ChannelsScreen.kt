@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +33,8 @@ import com.example.smartclick.app.domain.model.ChannelCategory
 import com.example.smartclick.app.domain.model.TvChannel
 import androidx.compose.ui.res.stringResource
 import com.example.smartclick.R
+import com.example.smartclick.app.domain.usecase.ErrorReason
+import com.example.smartclick.app.domain.usecase.InstalledChannelsState
 
 // UI helper to generate placeholder colors/labels for apps
 private fun getAppIconStyle(appId: String): Pair<Color, Color> {
@@ -96,21 +99,6 @@ fun ChannelsScreen(
                     fontSize = 22.sp
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                // PRO Badge
-                Box(
-                    modifier = Modifier
-                        .background(colors.orange, RoundedCornerShape(99.dp))
-                        .padding(horizontal = 7.dp, vertical = 2.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.pro),
-                        color = Color.White,
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 0.8.sp
-                    )
-                }
             }
             Text(
                 text = stringResource(R.string.apps_desc),
@@ -126,9 +114,6 @@ fun ChannelsScreen(
 
         ReconnectBanner(isVisible = isReconnecting, attempt = reconnectAttempt)
 
-        if (uiState.activeTvName == null && !isReconnecting) {
-            NoActiveDeviceState(onNavigateToDevices = onNavigateToDevices)
-        } else {
             // Scrollable Body
             Column(
                 modifier = Modifier
@@ -147,60 +132,45 @@ fun ChannelsScreen(
                     modifier = Modifier.padding(bottom = 14.dp)
                 )
 
-                // 3x3 Grid (using rows/columns manually to avoid LazyGrid inside scroll)
-                val chunkedApps = uiState.apps.chunked(3)
-                chunkedApps.forEach { rowApps ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        rowApps.forEach { app ->
-                            val (bg, fg) = getAppIconStyle(app.appId)
-                            val label = getAppLabel(app.appName)
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .shadow(6.dp, RoundedCornerShape(18.dp))
-                                    .background(colors.surf, RoundedCornerShape(18.dp))
-                                    .border(1.dp, colors.bord, RoundedCornerShape(18.dp))
-                                    .clickable { viewModel.launchApp(app.appId) }
-                                    .padding(top = 14.dp, bottom = 12.dp, start = 8.dp, end = 8.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                // App Icon
-                                Box(
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .shadow(8.dp, RoundedCornerShape(14.dp))
-                                        .background(bg, RoundedCornerShape(14.dp)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = label,
-                                        color = fg,
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = if (label.length > 3) 10.sp else 16.sp,
-                                        textAlign = TextAlign.Center
-                                    )
+                when (val appsState = uiState.appsState) {
+                    InstalledChannelsState.Loading -> Text(stringResource(R.string.channels_apps_loading), color = colors.tx2)
+                    is InstalledChannelsState.Success -> {
+                        appsState.apps.chunked(3).forEach { rowApps ->
+                            Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                rowApps.forEach { app ->
+                                    val (bg, fg) = getAppIconStyle(app.appId)
+                                    val label = getAppLabel(app.appName)
+                                    Column(
+                                        modifier = Modifier.weight(1f).shadow(6.dp, RoundedCornerShape(18.dp))
+                                            .background(colors.surf, RoundedCornerShape(18.dp))
+                                            .border(1.dp, colors.bord, RoundedCornerShape(18.dp))
+                                            .clickable { viewModel.launchApp(app.packageName ?: app.appId) }
+                                            .padding(top = 14.dp, bottom = 12.dp, start = 8.dp, end = 8.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Box(Modifier.size(56.dp).shadow(8.dp, RoundedCornerShape(14.dp)).background(bg, RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                                            Text(label, color = fg, fontWeight = FontWeight.Black, fontSize = if (label.length > 3) 10.sp else 16.sp, textAlign = TextAlign.Center)
+                                        }
+                                        Spacer(Modifier.height(8.dp))
+                                        Text(app.appName, color = colors.tx1, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                                    }
                                 }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = app.appName,
-                                    color = colors.tx1,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                if (rowApps.size < 3) repeat(3 - rowApps.size) { Spacer(Modifier.weight(1f)) }
                             }
                         }
-
-                        // Fill empty spaces if a row has less than 3 items
-                        if (rowApps.size < 3) {
-                            repeat(3 - rowApps.size) {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
+                    }
+                    InstalledChannelsState.Empty -> Text(stringResource(R.string.channels_apps_empty), color = colors.tx2)
+                    InstalledChannelsState.NoActiveDevice -> Text(stringResource(R.string.channels_apps_no_device), color = colors.tx2)
+                    InstalledChannelsState.NotSupported -> Text(stringResource(R.string.channels_apps_not_supported), color = colors.tx2)
+                    is InstalledChannelsState.Error -> Column {
+                        val message = when (appsState.reason) {
+                            ErrorReason.LOST_CONNECTION -> R.string.channels_apps_error_connection
+                            ErrorReason.TIMEOUT -> R.string.channels_apps_error_timeout
+                            ErrorReason.PARSE -> R.string.channels_apps_error_parse
+                            ErrorReason.UNKNOWN -> R.string.channels_apps_error_unknown
                         }
+                        Text(stringResource(message), color = colors.tx2)
+                        Button(onClick = viewModel::retryApps) { Text(stringResource(R.string.channels_apps_retry)) }
                     }
                 }
             }
@@ -222,20 +192,6 @@ fun ChannelsScreen(
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )
-                    // PRO Badge
-                    Box(
-                        modifier = Modifier
-                            .background(colors.orange, RoundedCornerShape(99.dp))
-                            .padding(horizontal = 7.dp, vertical = 2.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.pro),
-                            color = Color.White,
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                    }
                 }
 
                 // Tabs Pills
@@ -336,7 +292,6 @@ fun ChannelsScreen(
                     }
                 }
             }
-        } // end of else block
     }
 }
 }

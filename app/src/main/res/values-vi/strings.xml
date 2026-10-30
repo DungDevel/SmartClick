@@ -88,6 +88,15 @@
     <!-- Channels & Cast -->
     <string name="apps_desc">Ứng dụng TV của bạn</string>
     <string name="your_tv_apps">Ứng dụng TV của bạn</string>
+    <string name="channels_apps_loading">Đang tải ứng dụng…</string>
+    <string name="channels_apps_empty">TV này chưa cài ứng dụng nào trong danh mục.</string>
+    <string name="channels_apps_no_device">Kết nối TV để xem ứng dụng đã cài.</string>
+    <string name="channels_apps_not_supported">TV này không hỗ trợ liệt kê ứng dụng đã cài.</string>
+    <string name="channels_apps_error_connection">Không thể kết nối với TV.</string>
+    <string name="channels_apps_error_timeout">TV phản hồi quá lâu.</string>
+    <string name="channels_apps_error_parse">Danh sách ứng dụng TV trả về không hợp lệ.</string>
+    <string name="channels_apps_error_unknown">Không thể tải ứng dụng đã cài.</string>
+    <string name="channels_apps_retry">Thử lại</string>
     <string name="channels">Kênh</string>
     <string name="popular">Phổ biến</string>
     <string name="recommended">Đề xuất</string>
