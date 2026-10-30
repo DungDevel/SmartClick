@@ -23,6 +23,7 @@ class LgWebOsCastControllerTest {
     private lateinit var fakeTransport: FakeLgWebOsCastTransport
     private lateinit var mockLocalMediaServer: LocalMediaServer
     private lateinit var controller: LgWebOsCastController
+    private var registeredSessionCount = 0
 
     @Before
     fun setup() {
@@ -31,10 +32,13 @@ class LgWebOsCastControllerTest {
 
         fakeTransport = FakeLgWebOsCastTransport()
         mockLocalMediaServer = mockk()
+        registeredSessionCount = 0
+        coEvery { mockLocalMediaServer.unregisterMedia(any()) } returns Unit
 
         coEvery { mockLocalMediaServer.registerMedia(any(), any(), any()) } answers {
+            registeredSessionCount += 1
             com.example.smartclick.app.tvconnection.cast.CastMediaSession(
-                sessionId = "mock-id",
+                sessionId = "mock-id-$registeredSessionCount",
                 token = "mock-token",
                 mediaUrl = "http://192.168.1.100:8080/mock-video.mp4",
                 uri = firstArg<Uri>(),
@@ -133,6 +137,55 @@ class LgWebOsCastControllerTest {
 
         val lastReq = fakeTransport.recordedRequests.last()
         assertEquals("ssap://media.controls/stop", lastReq.optString("uri"))
+    }
+
+    @Test
+    fun `local media session is unregistered after successful stop`() = runTest {
+        controller.castMedia("content://media/1", "video/mp4", CastMediaType.VIDEO, "Video")
+
+        val result = controller.controlCast(CastCommand.Stop)
+
+        assertTrue(result.isSuccess)
+        io.mockk.coVerify(exactly = 1) { mockLocalMediaServer.unregisterMedia("mock-id-1") }
+    }
+
+    @Test
+    fun `local media session is unregistered when stop request fails`() = runTest {
+        controller.castMedia("content://media/1", "video/mp4", CastMediaType.VIDEO, "Video")
+        fakeTransport.shouldSendFail = true
+
+        val result = controller.controlCast(CastCommand.Stop)
+
+        assertTrue(result.isFailure)
+        io.mockk.coVerify(exactly = 1) { mockLocalMediaServer.unregisterMedia("mock-id-1") }
+    }
+
+    @Test
+    fun `teardown unregisters session once and can be called twice`() = runTest {
+        controller.castMedia("content://media/1", "video/mp4", CastMediaType.VIDEO, "Video")
+
+        assertTrue(controller.teardown().isSuccess)
+        assertTrue(controller.teardown().isSuccess)
+
+        io.mockk.coVerify(exactly = 1) { mockLocalMediaServer.unregisterMedia("mock-id-1") }
+    }
+
+    @Test
+    fun `second local cast unregisters first media session`() = runTest {
+        controller.castMedia("content://media/1", "video/mp4", CastMediaType.VIDEO, "First")
+        controller.castMedia("content://media/2", "video/mp4", CastMediaType.VIDEO, "Second")
+
+        io.mockk.coVerify(exactly = 1) { mockLocalMediaServer.unregisterMedia("mock-id-1") }
+    }
+
+    @Test
+    fun `failed viewer open unregisters newly registered local media`() = runTest {
+        fakeTransport.overrideResponse = JSONObject().apply { put("returnValue", true) }
+
+        val result = controller.castMedia("content://media/1", "video/mp4", CastMediaType.VIDEO, "Video")
+
+        assertTrue(result.isFailure)
+        io.mockk.coVerify(exactly = 1) { mockLocalMediaServer.unregisterMedia("mock-id-1") }
     }
 
     @Test
