@@ -33,7 +33,7 @@ sealed class AppTab(val titleResId: Int, val icon: Int) {
 }
 
 @Composable
-fun MainAppScreen() {
+fun MainAppScreen(onNavigateToPremium: () -> Unit = {}) {
     var currentTabName by rememberSaveable { mutableStateOf(AppTab.Remote.javaClass.simpleName) }
     var showDeviceFound by remember { mutableStateOf(false) }
     val colors = SmartClickThemeTokens.colors
@@ -63,7 +63,7 @@ fun MainAppScreen() {
                 when (currentTab) {
                     AppTab.Remote -> RemoteScreen(onNavigateToDevices = { showDeviceFound = true })
                     AppTab.Channels -> com.example.smartclick.app.features.channels.ChannelsScreen(onNavigateToDevices = { showDeviceFound = true })
-                    AppTab.Cast -> com.example.smartclick.app.features.cast.CastScreen(onNavigateToDevices = { showDeviceFound = true })
+                    AppTab.Cast -> com.example.smartclick.app.features.cast.CastScreen(onNavigateToDevices = { showDeviceFound = true }, onNavigateToPremium = onNavigateToPremium)
                     AppTab.Settings -> com.example.smartclick.app.features.settings.SettingsScreen()
                 }
             }

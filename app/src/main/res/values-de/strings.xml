@@ -87,6 +87,9 @@
     <string name="cast_pick_media">Foto oder Video auswählen</string>
     <string name="cast_unsupported_format">Wähle ein unterstütztes Foto- oder Videoformat.</string>
     <string name="cast_media_unavailable">Auf dieses Medium kann nicht zugegriffen werden. Bitte erneut auswählen.</string>
+    <string name="cast_not_connected">Verbinde dich vor dem Streamen mit dem ausgewählten Fernseher.</string>
+    <string name="cast_no_visual_capability">Der ausgewählte Fernseher unterstützt keine Fotos oder Videos.</string>
+    <string name="cast_capability_missing">Der ausgewählte Fernseher unterstützt diesen Medientyp nicht.</string>
     <string name="casting_to_tv">Wird an %1$s übertragen</string>
     <string name="account_information">Kontoinformationen</string>
     <string name="language">Sprache</string>

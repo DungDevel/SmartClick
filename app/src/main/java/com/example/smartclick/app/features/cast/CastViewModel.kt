@@ -5,6 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.smartclick.app.domain.model.MediaItem
 import android.net.Uri
 import com.example.smartclick.app.domain.connection.CastError
+import com.example.smartclick.app.domain.model.CastMediaType
+import com.example.smartclick.app.domain.model.TvCapability
+import com.example.smartclick.app.domain.model.SubscriptionPlan
+import com.example.smartclick.app.domain.policy.FeatureGate
+import com.example.smartclick.app.domain.policy.PremiumFeature
+import com.example.smartclick.app.domain.repository.ISubscriptionRepository
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.repository.IMediaRepository
 import com.example.smartclick.app.domain.connection.IActiveTvSession
@@ -30,6 +36,12 @@ data class CastUiState(
 )
 
 sealed class CastUiEvent {
+    data object OpenPicker : CastUiEvent()
+    data object PremiumRequired : CastUiEvent()
+    data object NoActiveDevice : CastUiEvent()
+    data object NotConnected : CastUiEvent()
+    data object NoVisualCapability : CastUiEvent()
+    data object CapabilityMissing : CastUiEvent()
     data object UnsupportedFormat : CastUiEvent()
     data object MediaUnavailable : CastUiEvent()
 }
@@ -38,7 +50,9 @@ sealed class CastUiEvent {
 class CastViewModel @Inject constructor(
     private val mediaRepository: IMediaRepository,
     private val activeTvSession: IActiveTvSession,
-    private val castMediaUseCase: CastMediaUseCase
+    private val castMediaUseCase: CastMediaUseCase,
+    private val featureGate: FeatureGate,
+    private val subscriptionRepository: ISubscriptionRepository
 ) : ViewModel() {
 
     private val _selectedMediaIds = MutableStateFlow<Set<String>>(emptySet())
@@ -120,12 +134,32 @@ class CastViewModel @Inject constructor(
         _selectedMediaIds.value = emptySet()
     }
 
+    fun requestMediaPicker() {
+        viewModelScope.launch {
+            val gate = checkAccess(mediaType = null)
+            _uiEvents.emit(gate ?: CastUiEvent.OpenPicker)
+        }
+    }
+
     fun onMediaPicked(uri: Uri) {
         viewModelScope.launch {
-            mediaRepository.selectMedia(uri).fold(
-                onSuccess = { item -> _selectedMediaIds.value = setOf(item.id) },
-                onFailure = { error -> emitMediaError(error) }
-            )
+            val prepared = mediaRepository.prepareMedia(uri)
+            val item = prepared.getOrElse { error ->
+                emitMediaError(error)
+                return@launch
+            }
+            val mediaType = item.toCastMediaTypeOrNull()
+            if (mediaType == null) {
+                _uiEvents.emit(CastUiEvent.UnsupportedFormat)
+                return@launch
+            }
+            val gate = checkAccess(mediaType)
+            if (gate != null) {
+                _uiEvents.emit(gate)
+                return@launch
+            }
+            mediaRepository.selectMedia(item)
+            _selectedMediaIds.value = setOf(item.id)
         }
     }
 
@@ -136,6 +170,17 @@ class CastViewModel @Inject constructor(
                 val mediaList = mediaRepository.getLocalMedia().first()
                 val targetMedia = mediaList.firstOrNull { selectedIds.contains(it.id) }
                 if (targetMedia != null) {
+                    val mediaType = targetMedia.toCastMediaTypeOrNull()
+                    if (mediaType == null) {
+                        _uiEvents.emit(CastUiEvent.UnsupportedFormat)
+                        _selectedMediaIds.value = emptySet()
+                        return@launch
+                    }
+                    val gate = checkAccess(mediaType)
+                    if (gate != null) {
+                        _uiEvents.emit(gate)
+                        return@launch
+                    }
                     val readable = mediaRepository.verifyReadable(targetMedia)
                     if (readable.isFailure) {
                         emitMediaError(readable.exceptionOrNull())
@@ -151,6 +196,31 @@ class CastViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    /** Gate order is intentionally active TV, connection, capability, then Premium. */
+    private suspend fun checkAccess(mediaType: CastMediaType?): CastUiEvent? {
+        val controller = activeTvSession.currentController.value ?: return CastUiEvent.NoActiveDevice
+        val device = controller.device ?: return CastUiEvent.NoActiveDevice
+        if (controller.connectionState.value !is TvConnectionState.Connected) return CastUiEvent.NotConnected
+        val hasCapability = when (mediaType) {
+            CastMediaType.PHOTO -> TvCapability.CAST_IMAGE in device.capabilities
+            CastMediaType.VIDEO -> TvCapability.CAST_VIDEO in device.capabilities
+            CastMediaType.AUDIO -> false
+            null -> TvCapability.CAST_IMAGE in device.capabilities || TvCapability.CAST_VIDEO in device.capabilities
+        }
+        if (!hasCapability) {
+            return if (mediaType == null) CastUiEvent.NoVisualCapability else CastUiEvent.CapabilityMissing
+        }
+        val plan = subscriptionRepository.currentPlan.first()
+        if (!featureGate.isFeatureAllowed(PremiumFeature.CAST, plan)) return CastUiEvent.PremiumRequired
+        return null
+    }
+
+    private fun MediaItem.toCastMediaTypeOrNull(): CastMediaType? = when {
+        mimeType.startsWith("image/") -> CastMediaType.PHOTO
+        mimeType.startsWith("video/") -> CastMediaType.VIDEO
+        else -> null
     }
 
     private fun emitMediaError(error: Throwable?) {

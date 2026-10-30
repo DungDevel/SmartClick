@@ -21,7 +21,7 @@ class InMemoryMediaRepository @Inject constructor(
 
     override fun getLocalMedia(): Flow<List<MediaItem>> = selectedMedia.asStateFlow()
 
-    override suspend fun selectMedia(uri: Uri): Result<MediaItem> {
+    override suspend fun prepareMedia(uri: Uri): Result<MediaItem> {
         if (!uri.scheme.equals("content", ignoreCase = true)) {
             return Result.failure(CastError.UnsupportedMediaSource(uri.scheme ?: "unknown"))
         }
@@ -38,13 +38,16 @@ class InMemoryMediaRepository @Inject constructor(
                 mimeType = mimeType,
                 sizeBytes = metadata.sizeBytes
             )
-            selectedMedia.value = listOf(item)
             Result.success(item)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
             Result.failure(CastError.MediaSourceUnavailable(error))
         }
+    }
+
+    override suspend fun selectMedia(media: MediaItem) {
+        selectedMedia.value = listOf(media)
     }
 
     override suspend fun verifyReadable(media: MediaItem): Result<Unit> = try {

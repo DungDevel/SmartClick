@@ -8,8 +8,11 @@ interface IMediaRepository {
     /** Observe the visual media item currently selected in the Photo Picker. */
     fun getLocalMedia(): Flow<List<MediaItem>>
 
-    /** Validate and retain one Photo Picker URI in memory. */
-    suspend fun selectMedia(uri: Uri): Result<MediaItem>
+    /** Inspect and validate a picker URI without adding it to the selected-media state. */
+    suspend fun prepareMedia(uri: Uri): Result<MediaItem>
+
+    /** Retain an already validated item in memory after TV, capability, and Premium gates pass. */
+    suspend fun selectMedia(media: MediaItem)
 
     /** Re-check the temporary picker grant immediately before casting. */
     suspend fun verifyReadable(media: MediaItem): Result<Unit>

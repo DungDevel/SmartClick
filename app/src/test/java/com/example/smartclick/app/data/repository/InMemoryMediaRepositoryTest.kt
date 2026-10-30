@@ -17,7 +17,7 @@ class InMemoryMediaRepositoryTest {
         val uri = contentUri()
         val repository = InMemoryMediaRepository(FakeReader(MediaContentMetadata("image/webp", "photo.webp", 123L)))
 
-        val result = repository.selectMedia(uri)
+        val result = repository.prepareMedia(uri)
 
         assertTrue(result.isSuccess)
         val item = result.getOrThrow()
@@ -25,6 +25,8 @@ class InMemoryMediaRepositoryTest {
         assertEquals("image/webp", item.mimeType)
         assertEquals("photo.webp", item.title)
         assertEquals(123L, item.sizeBytes)
+        assertTrue(repository.getLocalMedia().first().isEmpty())
+        repository.selectMedia(item)
         assertEquals(listOf(item), repository.getLocalMedia().first())
     }
 
@@ -32,7 +34,7 @@ class InMemoryMediaRepositoryTest {
     fun `audio MIME is rejected as unsupported format`() = runTest {
         val repository = InMemoryMediaRepository(FakeReader(MediaContentMetadata("audio/mpeg", "song.mp3", 10L)))
 
-        val result = repository.selectMedia(contentUri())
+        val result = repository.prepareMedia(contentUri())
 
         assertTrue(result.exceptionOrNull() is CastError.UnsupportedMediaFormat)
         assertTrue(repository.getLocalMedia().first().isEmpty())
@@ -42,7 +44,7 @@ class InMemoryMediaRepositoryTest {
     fun `null MIME is rejected as unsupported format`() = runTest {
         val repository = InMemoryMediaRepository(FakeReader(MediaContentMetadata(null, "unknown", null)))
 
-        val result = repository.selectMedia(contentUri())
+        val result = repository.prepareMedia(contentUri())
 
         assertTrue(result.exceptionOrNull() is CastError.UnsupportedMediaFormat)
     }
@@ -51,7 +53,7 @@ class InMemoryMediaRepositoryTest {
     fun `URI read failure is classified instead of thrown`() = runTest {
         val repository = InMemoryMediaRepository(FakeReader(failure = SecurityException("picker grant expired")))
 
-        val result = repository.selectMedia(contentUri())
+        val result = repository.prepareMedia(contentUri())
 
         assertTrue(result.exceptionOrNull() is CastError.MediaSourceUnavailable)
     }

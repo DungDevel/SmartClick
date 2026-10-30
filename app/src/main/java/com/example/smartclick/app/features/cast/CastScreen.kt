@@ -38,6 +38,7 @@ import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 @Composable
 fun CastScreen(
     onNavigateToDevices: () -> Unit = {},
+    onNavigateToPremium: () -> Unit = {},
 
     viewModel: CastViewModel = hiltViewModel()
 ) {
@@ -54,10 +55,21 @@ fun CastScreen(
     LaunchedEffect(viewModel) {
         viewModel.uiEvents.collect { event ->
             val message = when (event) {
+                CastUiEvent.OpenPicker -> null
+                CastUiEvent.PremiumRequired -> null
+                CastUiEvent.NoActiveDevice -> null
+                CastUiEvent.NotConnected -> context.getString(R.string.cast_not_connected)
+                CastUiEvent.NoVisualCapability -> context.getString(R.string.cast_no_visual_capability)
+                CastUiEvent.CapabilityMissing -> context.getString(R.string.cast_capability_missing)
                 CastUiEvent.UnsupportedFormat -> context.getString(R.string.cast_unsupported_format)
                 CastUiEvent.MediaUnavailable -> context.getString(R.string.cast_media_unavailable)
             }
-            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
+            when (event) {
+                CastUiEvent.OpenPicker -> pickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
+                CastUiEvent.PremiumRequired -> onNavigateToPremium()
+                CastUiEvent.NoActiveDevice -> onNavigateToDevices()
+                else -> message?.let { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show() }
+            }
         }
     }
 
@@ -97,11 +109,7 @@ fun CastScreen(
                 color = colors.tx2,
                 fontSize = 12.sp
             )
-            Button(onClick = {
-                pickerLauncher.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
-                )
-            }) {
+            Button(onClick = viewModel::requestMediaPicker) {
                 Text(stringResource(R.string.cast_pick_media))
             }
         }

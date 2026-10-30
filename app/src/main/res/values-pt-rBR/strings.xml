@@ -87,6 +87,9 @@
     <string name="cast_pick_media">Escolha uma foto ou vídeo</string>
     <string name="cast_unsupported_format">Selecione um formato de foto ou vídeo compatível.</string>
     <string name="cast_media_unavailable">Não foi possível acessar a mídia selecionada. Escolha-a novamente.</string>
+    <string name="cast_not_connected">Conecte-se à TV selecionada antes de transmitir.</string>
+    <string name="cast_no_visual_capability">A TV selecionada não aceita fotos ou vídeos.</string>
+    <string name="cast_capability_missing">A TV selecionada não aceita este tipo de mídia.</string>
     <string name="casting_to_tv">Transmitindo para %1$s</string>
     <string name="account_information">Informações da conta</string>
     <string name="language">Idioma</string>

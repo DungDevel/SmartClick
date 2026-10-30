@@ -107,6 +107,9 @@
     <string name="cast_pick_media">Chọn ảnh hoặc video</string>
     <string name="cast_unsupported_format">Chỉ hỗ trợ định dạng ảnh hoặc video phù hợp.</string>
     <string name="cast_media_unavailable">Không thể truy cập nội dung đã chọn. Hãy chọn lại.</string>
+    <string name="cast_not_connected">Hãy kết nối với TV đã chọn trước khi truyền.</string>
+    <string name="cast_no_visual_capability">TV đã chọn không hỗ trợ nhận ảnh hoặc video.</string>
+    <string name="cast_capability_missing">TV đã chọn không hỗ trợ loại nội dung này.</string>
     <string name="casting_to_tv">Đang truyền tới %1$s</string>
 
     <!-- Settings & Auth -->
