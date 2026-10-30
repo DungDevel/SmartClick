@@ -77,6 +77,8 @@
     <string name="channels_apps_error_parse">El TV devolvió una lista de aplicaciones no válida.</string>
     <string name="channels_apps_error_unknown">No se pudieron cargar las aplicaciones instaladas.</string>
     <string name="channels_apps_retry">Reintentar</string>
+    <string name="channels_app_launch_success">Se envió la solicitud para abrir la aplicación.</string>
+    <string name="channels_app_launch_failed">El TV no pudo abrir esta aplicación.</string>
     <string name="channels">Canales</string>
     <string name="popular">Populares</string>
     <string name="recommended">Recomendados</string>

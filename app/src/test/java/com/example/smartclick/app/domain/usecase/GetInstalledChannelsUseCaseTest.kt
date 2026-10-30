@@ -56,6 +56,13 @@ class GetInstalledChannelsUseCaseTest {
         assertEquals(InstalledChannelsState.NotSupported, GetInstalledChannelsUseCase(catalog, session(controller(emptySet())))())
     }
 
+    @Test fun `controller throwing unsupported is not supported`() = runTest {
+        every { catalog.load() } returns Result.success(entries())
+        val controller = controller()
+        coEvery { controller.getApps() } throws UnsupportedOperationException("not supported")
+        assertEquals(InstalledChannelsState.NotSupported, GetInstalledChannelsUseCase(catalog, session(controller))())
+    }
+
     @Test fun `getApps failure becomes classified error`() = runTest {
         every { catalog.load() } returns Result.success(entries())
         val controller = controller()

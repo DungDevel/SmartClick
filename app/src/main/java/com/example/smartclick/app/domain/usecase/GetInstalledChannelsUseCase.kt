@@ -60,6 +60,7 @@ class GetInstalledChannelsUseCase @Inject constructor(
         } catch (error: Throwable) {
             if (error is TimeoutCancellationException) return InstalledChannelsState.Error(ErrorReason.TIMEOUT)
             if (error is kotlinx.coroutines.CancellationException) throw error
+            if (error is UnsupportedOperationException) return InstalledChannelsState.NotSupported
             InstalledChannelsState.Error(classify(error))
         }
     }

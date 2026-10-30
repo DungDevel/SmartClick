@@ -21,11 +21,6 @@ class NoOpSubscriptionRepository : ISubscriptionRepository {
     override fun restorePurchases() {}
 }
 
-class NoOpChannelRegistryRepository : IChannelRegistryRepository {
-    override fun getSupportedChannels(): Flow<List<AppLaunchConfig>> = flowOf(emptyList())
-    override fun getTvChannels(category: ChannelCategory): Flow<List<TvChannel>> = flowOf(emptyList())
-}
-
 class NoOpMediaRepository : IMediaRepository {
     override fun getLocalMedia(): Flow<List<MediaItem>> = flowOf(emptyList())
 }

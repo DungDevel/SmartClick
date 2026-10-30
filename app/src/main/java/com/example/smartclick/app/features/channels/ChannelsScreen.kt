@@ -173,6 +173,15 @@ fun ChannelsScreen(
                         Button(onClick = viewModel::retryApps) { Text(stringResource(R.string.channels_apps_retry)) }
                     }
                 }
+                uiState.launchSucceeded?.let { succeeded ->
+                    Text(
+                        text = stringResource(
+                            if (succeeded) R.string.channels_app_launch_success
+                            else R.string.channels_app_launch_failed
+                        ),
+                        color = colors.tx2
+                    )
+                }
             }
 
             // Channels Section

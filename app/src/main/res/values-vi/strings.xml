@@ -97,6 +97,8 @@
     <string name="channels_apps_error_parse">Danh sách ứng dụng TV trả về không hợp lệ.</string>
     <string name="channels_apps_error_unknown">Không thể tải ứng dụng đã cài.</string>
     <string name="channels_apps_retry">Thử lại</string>
+    <string name="channels_app_launch_success">Đã gửi yêu cầu mở ứng dụng.</string>
+    <string name="channels_app_launch_failed">TV không thể mở ứng dụng này.</string>
     <string name="channels">Kênh</string>
     <string name="popular">Phổ biến</string>
     <string name="recommended">Đề xuất</string>

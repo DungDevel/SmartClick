@@ -77,6 +77,8 @@
     <string name="channels_apps_error_parse">Der TV hat eine ungültige App-Liste zurückgegeben.</string>
     <string name="channels_apps_error_unknown">Installierte Apps konnten nicht geladen werden.</string>
     <string name="channels_apps_retry">Erneut versuchen</string>
+    <string name="channels_app_launch_success">Startanfrage für die App gesendet.</string>
+    <string name="channels_app_launch_failed">Der TV konnte diese App nicht starten.</string>
     <string name="channels">Sender</string>
     <string name="popular">Beliebt</string>
     <string name="recommended">Empfohlen</string>

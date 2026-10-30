@@ -77,6 +77,8 @@
     <string name="channels_apps_error_parse">A TV retornou uma lista de apps inválida.</string>
     <string name="channels_apps_error_unknown">Não foi possível carregar os apps instalados.</string>
     <string name="channels_apps_retry">Tentar novamente</string>
+    <string name="channels_app_launch_success">Solicitação para abrir o app enviada.</string>
+    <string name="channels_app_launch_failed">A TV não conseguiu abrir este app.</string>
     <string name="channels">Canais</string>
     <string name="popular">Populares</string>
     <string name="recommended">Recomendados</string>

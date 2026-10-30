@@ -7,13 +7,13 @@ import com.example.smartclick.app.domain.model.ChannelCategory
 import com.example.smartclick.app.domain.model.TvChannel
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.repository.IChannelRegistryRepository
-import com.example.smartclick.app.domain.usecase.GetInstalledChannelsUseCase
 import com.example.smartclick.app.domain.usecase.InstalledChannelsState
 import com.example.smartclick.app.domain.usecase.LaunchAppOnTvUseCase
 import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.TvConnectionState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -22,19 +22,21 @@ data class ChannelsUiState(
     val selectedTab: ChannelCategory = ChannelCategory.POPULAR,
     val appsState: InstalledChannelsState = InstalledChannelsState.Loading,
     val channels: List<TvChannel> = emptyList(),
-    val activeTvName: String? = null
+    val activeTvName: String? = null,
+    val launchSucceeded: Boolean? = null
 )
 
 @HiltViewModel
 class ChannelsViewModel @Inject constructor(
     private val channelRepository: IChannelRegistryRepository,
     private val activeTvSession: IActiveTvSession,
-    private val launchAppOnTvUseCase: LaunchAppOnTvUseCase,
-    private val getInstalledChannelsUseCase: GetInstalledChannelsUseCase
+    private val launchAppOnTvUseCase: LaunchAppOnTvUseCase
 ) : ViewModel() {
 
     private val _selectedTab = MutableStateFlow(ChannelCategory.POPULAR)
     private val _appsState = MutableStateFlow<InstalledChannelsState>(InstalledChannelsState.Loading)
+    private val _launchSucceeded = MutableStateFlow<Boolean?>(null)
+    private var appsJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -58,13 +60,15 @@ class ChannelsViewModel @Inject constructor(
         _selectedTab,
         _selectedTab.flatMapLatest { tab -> channelRepository.getTvChannels(tab) },
         activeDevice,
-        _appsState
-    ) { tab, channels, device, appsState ->
+        _appsState,
+        _launchSucceeded
+    ) { tab, channels, device, appsState, launchSucceeded ->
         ChannelsUiState(
             selectedTab = tab,
             appsState = appsState,
             channels = channels,
-            activeTvName = device?.name
+            activeTvName = device?.name,
+            launchSucceeded = launchSucceeded
         )
     }.stateIn(
         scope = viewModelScope,
@@ -78,16 +82,19 @@ class ChannelsViewModel @Inject constructor(
 
     fun launchApp(appId: String) {
         viewModelScope.launch {
-            launchAppOnTvUseCase(appId)
+            _launchSucceeded.value = null
+            _launchSucceeded.value = launchAppOnTvUseCase(appId).isSuccess
         }
     }
 
     fun retryApps() = refreshApps()
 
     private fun refreshApps() {
-        viewModelScope.launch {
-            _appsState.value = InstalledChannelsState.Loading
-            _appsState.value = getInstalledChannelsUseCase()
+        appsJob?.cancel()
+        appsJob = viewModelScope.launch {
+            channelRepository.getSupportedChannels().collect { state ->
+                _appsState.value = state
+            }
         }
     }
 

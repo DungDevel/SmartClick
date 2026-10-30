@@ -93,6 +93,8 @@
     <string name="channels_apps_error_parse">The TV returned an invalid app list.</string>
     <string name="channels_apps_error_unknown">Could not load installed apps.</string>
     <string name="channels_apps_retry">Retry</string>
+    <string name="channels_app_launch_success">App launch request sent.</string>
+    <string name="channels_app_launch_failed">The TV could not launch this app.</string>
     <string name="channels">Channels</string>
     <string name="popular">Popular</string>
     <string name="recommended">Recommended</string>
