@@ -52,6 +52,7 @@ class GoogleCastController(
     private var castSession: GoogleCastSession? = null
     private var protocolClient: GoogleCastProtocolClient? = null
     private var mediaController: GoogleCastMediaController? = null
+    private var registeredMediaSessionId: String? = null
     private var sessionFailure: Throwable? = null
     private var deviceAuthFailed = false
 
@@ -83,6 +84,8 @@ class GoogleCastController(
                 ?: return Result.failure(sessionFailure?.takeIf { deviceAuthFailed || isTlsIdentityFailure(it) }?.let { CastError.TlsAuthenticationFailed(it) }
                     ?: CastError.NetworkError(Exception("Failed to establish Cast session")))
 
+            releaseRegisteredMedia()
+
             // 2. Resolve URL: local URIs go through LocalMediaServer
             val resolvedUrl = if (url.startsWith("content://")) {
                 val mediaSession = try {
@@ -90,6 +93,7 @@ class GoogleCastController(
                 } catch (e: Exception) {
                     return Result.failure(if (e is NoLanAddressException) CastError.NoLanAddress(e) else CastError.MediaRegistrationFailed(e))
                 }
+                registeredMediaSessionId = mediaSession.sessionId
                 mediaSession.mediaUrl
             } else {
                 url
@@ -98,8 +102,11 @@ class GoogleCastController(
             _castSessionInfo.value = _castSessionInfo.value.copy(currentUrl = resolvedUrl)
 
             // 3. Send LOAD command
-            mc.load(resolvedUrl, mimeType, title)
+            val loadResult = mc.load(resolvedUrl, mimeType, title)
+            if (loadResult.isFailure) releaseRegisteredMedia()
+            loadResult
         } catch (e: Exception) {
+            releaseRegisteredMedia()
             Result.failure(CastError.NetworkError(e))
         }
     }
@@ -111,7 +118,11 @@ class GoogleCastController(
         return when (command) {
             CastCommand.Play -> mc?.play() ?: Result.failure(CastError.ProtocolCommandFailed("No active media session"))
             CastCommand.Pause -> mc?.pause() ?: Result.failure(CastError.ProtocolCommandFailed("No active media session"))
-            CastCommand.Stop -> mc?.stop() ?: Result.failure(CastError.ProtocolCommandFailed("No active media session"))
+            CastCommand.Stop -> try {
+                mc?.stop() ?: Result.failure(CastError.ProtocolCommandFailed("No active media session"))
+            } finally {
+                releaseRegisteredMedia()
+            }
             is CastCommand.SeekTo -> {
                 val positionSeconds = command.positionMs / 1000.0
                 mc?.seek(positionSeconds) ?: Result.failure(CastError.ProtocolCommandFailed("No active media session"))
@@ -169,6 +180,17 @@ class GoogleCastController(
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
+        } finally {
+            releaseRegisteredMedia()
+        }
+    }
+
+    private suspend fun releaseRegisteredMedia() {
+        val sessionId = registeredMediaSessionId ?: return
+        try {
+            localMediaServer.unregisterMedia(sessionId)
+        } finally {
+            registeredMediaSessionId = null
         }
     }
 
