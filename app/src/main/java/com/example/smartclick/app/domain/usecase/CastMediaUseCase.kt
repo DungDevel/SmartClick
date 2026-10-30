@@ -8,6 +8,11 @@ import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.DriverRegistry
 import com.example.smartclick.app.domain.connection.ITvCredentialStore
 import com.example.smartclick.app.domain.connection.TvConnectionState
+import com.example.smartclick.app.domain.connection.ICastController
+import com.example.smartclick.app.domain.cast.CastPlaybackState
+import com.example.smartclick.app.domain.cast.CastSessionInfo
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
@@ -16,6 +21,9 @@ class CastMediaUseCase @Inject constructor(
     private val driverRegistry: DriverRegistry,
     private val tvCredentialStore: ITvCredentialStore
 ) {
+    private val _activeCastController = MutableStateFlow<ICastController?>(null)
+    val activeCastController: StateFlow<ICastController?> = _activeCastController
+
     suspend operator fun invoke(media: MediaItem): Result<Unit> {
         val mimeType = media.mimeType.trim().lowercase()
         if (mimeType !in CastMediaMimeTypes.ALLOWED) {
@@ -52,11 +60,20 @@ class CastMediaUseCase @Inject constructor(
             return Result.failure(e)
         } ?: return Result.failure(Exception("Casting not supported by driver ${device.protocol}"))
 
-        return castController.castMedia(
+        val result = castController.castMedia(
             url = media.url,
             mimeType = mimeType,
             type = mediaType,
             title = media.title
         )
+        if (result.isSuccess) _activeCastController.value = castController
+        else castController.teardown()
+        return result
+    }
+
+    suspend fun teardown(): Result<Unit> {
+        val controller = _activeCastController.value
+        _activeCastController.value = null
+        return controller?.teardown() ?: Result.success(Unit)
     }
 }

@@ -90,6 +90,10 @@
     <string name="cast_not_connected">Conecte-se à TV selecionada antes de transmitir.</string>
     <string name="cast_no_visual_capability">A TV selecionada não aceita fotos ou vídeos.</string>
     <string name="cast_capability_missing">A TV selecionada não aceita este tipo de mídia.</string>
+    <string name="cast_state_idle">Pronto</string><string name="cast_state_preparing">Preparando</string><string name="cast_state_sent">Enviado para a TV</string><string name="cast_state_playing">Reproduzindo</string><string name="cast_state_error">Erro</string>
+    <string name="cast_error_no_lan">Não há um endereço Wi-Fi privado disponível para compartilhar esta mídia.</string>
+    <string name="cast_action_retry">Tentar novamente</string><string name="cast_action_repair">Remover a TV e parear novamente</string><string name="cast_action_choose">Escolher mídia</string>
+    <string name="cast_error_device_not_found">TV não encontrada. Verifique a conexão e tente novamente.</string><string name="cast_error_invalid_source">Esta origem não é compatível. Escolha uma foto ou vídeo.</string><string name="cast_error_network">Erro de rede. Verifique o Wi-Fi e tente novamente.</string><string name="cast_error_discovery">A TV atingiu o tempo limite. Tente transmitir novamente.</string><string name="cast_error_unsupported_device">Esta TV não aceita este tipo de mídia.</string><string name="cast_error_unsupported_command">A TV recusou este comando.</string><string name="cast_error_media_registration">Não foi possível registrar a mídia. Tente novamente.</string><string name="cast_error_device_rejected">A TV recusou a solicitação de mídia.</string><string name="cast_error_invalid_credentials">Credenciais inválidas. Remova a TV e pareie novamente.</string><string name="cast_error_certificate_changed">O certificado mudou. Remova a TV e pareie novamente.</string><string name="cast_error_protocol">Falha na solicitação do protocolo. Tente novamente.</string>
     <string name="casting_to_tv">Transmitindo para %1$s</string>
     <string name="account_information">Informações da conta</string>
     <string name="language">Idioma</string>

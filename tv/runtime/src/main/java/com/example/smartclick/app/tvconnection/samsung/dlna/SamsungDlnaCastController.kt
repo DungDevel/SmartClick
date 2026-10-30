@@ -88,7 +88,7 @@ class SamsungDlnaCastController(
 
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(CastError.MediaRegistrationFailed(e))
+            Result.failure(if (e is com.example.smartclick.app.tvconnection.cast.NoLanAddressException) CastError.NoLanAddress(e) else CastError.MediaRegistrationFailed(e))
         }
     }
 

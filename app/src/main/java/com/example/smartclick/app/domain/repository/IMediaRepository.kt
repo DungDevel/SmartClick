@@ -14,6 +14,8 @@ interface IMediaRepository {
     /** Retain an already validated item in memory after TV, capability, and Premium gates pass. */
     suspend fun selectMedia(media: MediaItem)
 
+    suspend fun clearSelectedMedia()
+
     /** Re-check the temporary picker grant immediately before casting. */
     suspend fun verifyReadable(media: MediaItem): Result<Unit>
 }

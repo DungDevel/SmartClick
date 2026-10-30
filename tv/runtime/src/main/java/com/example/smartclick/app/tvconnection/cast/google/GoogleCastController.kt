@@ -8,6 +8,7 @@ import com.example.smartclick.app.domain.connection.CastError
 import com.example.smartclick.app.domain.connection.ICastController
 import com.example.smartclick.app.domain.model.CastMediaType
 import com.example.smartclick.app.tvconnection.cast.LocalMediaServer
+import com.example.smartclick.app.tvconnection.cast.NoLanAddressException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -87,7 +88,7 @@ class GoogleCastController(
                 val mediaSession = try {
                     localMediaServer.registerMedia(android.net.Uri.parse(url), mimeType, title)
                 } catch (e: Exception) {
-                    return Result.failure(CastError.MediaRegistrationFailed(e))
+                    return Result.failure(if (e is NoLanAddressException) CastError.NoLanAddress(e) else CastError.MediaRegistrationFailed(e))
                 }
                 mediaSession.mediaUrl
             } else {

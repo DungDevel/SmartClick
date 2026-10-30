@@ -50,6 +50,10 @@ class InMemoryMediaRepository @Inject constructor(
         selectedMedia.value = listOf(media)
     }
 
+    override suspend fun clearSelectedMedia() {
+        selectedMedia.value = emptyList()
+    }
+
     override suspend fun verifyReadable(media: MediaItem): Result<Unit> = try {
         contentReader.verifyReadable(Uri.parse(media.url))
         Result.success(Unit)

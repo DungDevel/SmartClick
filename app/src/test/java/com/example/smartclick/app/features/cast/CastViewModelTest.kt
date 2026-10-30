@@ -16,6 +16,7 @@ import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.ICastController
 import com.example.smartclick.app.domain.connection.ITvController
 import com.example.smartclick.app.domain.connection.TvConnectionState
+import com.example.smartclick.app.domain.connection.CastError
 import com.example.smartclick.app.domain.usecase.CastMediaUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -56,6 +57,7 @@ class CastViewModelTest {
         mediaRepository = mockk(relaxed = true)
         activeTvSession = mockk(relaxed = true)
         castMediaUseCase = mockk(relaxed = true)
+        every { castMediaUseCase.activeCastController } returns MutableStateFlow(null)
         featureGate = mockk(relaxed = true)
         subscriptionRepository = mockk(relaxed = true)
         controller = mockk(relaxed = true)
@@ -121,7 +123,37 @@ class CastViewModelTest {
         viewModel.startCasting()
 
         assertTrue(viewModel.uiState.value.isCasting)
+        assertEquals(CastRequestState.SENT, viewModel.uiState.value.requestState)
+        assertEquals(CastPlaybackState.IDLE, viewModel.uiState.value.playbackState)
         coVerify { castMediaUseCase(any()) }
+    }
+
+    @Test
+    fun `stop tears down cast controller and clears selected picker media`() = runTest {
+        viewModel.stopCasting()
+
+        coVerify { castMediaUseCase.teardown() }
+        coVerify { mediaRepository.clearSelectedMedia() }
+    }
+
+    @Test
+    fun `each CastError has a message and an explicit action`() {
+        val errors = listOf(
+            CastError.DeviceNotFound(), CastError.InvalidLocationUri("file://x"),
+            CastError.DiscoveryFailed(), CastError.MissingAVTransport(),
+            CastError.UnsupportedCommand("play"), CastError.SeekNotSupported(),
+            CastError.MediaRegistrationFailed(), CastError.NoLanAddress(), CastError.NetworkError(IllegalStateException()),
+            CastError.SoapFault("1", "fault"), CastError.DeviceRejectedRequest("no"),
+            CastError.InvalidCredentials("bad"), CastError.TlsAuthenticationFailed(),
+            CastError.UnsupportedMediaSource("file"), CastError.UnsupportedMediaFormat(null),
+            CastError.MediaSourceUnavailable(), CastError.ProtocolCommandFailed("failed")
+        )
+
+        assertEquals(17, errors.map { it.toPresentation() }.size)
+        assertTrue(errors.all { it.toPresentation().message.name.isNotBlank() })
+        assertEquals(CastErrorAction.REPAIR_DEVICE, CastError.TlsAuthenticationFailed().toPresentation().action)
+        assertEquals(CastErrorMessage.CERTIFICATE_CHANGED, CastError.TlsAuthenticationFailed().toPresentation().message)
+        assertEquals(CastErrorAction.RETRY, CastError.NetworkError(IllegalStateException()).toPresentation().action)
     }
 
     @Test

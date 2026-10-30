@@ -105,7 +105,10 @@ class LgWebOsCastController(
         } catch (e: Exception) {
             _castPlaybackState.value = CastPlaybackState.IDLE
             _castSessionInfo.value = CastSessionInfo()
-            Result.failure(if (registeringLocalMedia) CastError.MediaRegistrationFailed(e) else CastError.NetworkError(e))
+            Result.failure(if (registeringLocalMedia) {
+                if (e is com.example.smartclick.app.tvconnection.cast.NoLanAddressException) CastError.NoLanAddress(e)
+                else CastError.MediaRegistrationFailed(e)
+            } else CastError.NetworkError(e))
         }
     }
 

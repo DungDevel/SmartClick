@@ -48,9 +48,14 @@ fun CastScreen(
     val uiState by viewModel.uiState.collectAsState()
     val connectionState by viewModel.connectionState.collectAsState()
     val context = LocalContext.current
+    var errorAction by remember { mutableStateOf<CastErrorAction?>(null) }
     val pickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri -> uri?.let(viewModel::onMediaPicked) }
+
+    DisposableEffect(viewModel) {
+        onDispose { viewModel.stopCasting() }
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.uiEvents.collect { event ->
@@ -63,11 +68,16 @@ fun CastScreen(
                 CastUiEvent.CapabilityMissing -> context.getString(R.string.cast_capability_missing)
                 CastUiEvent.UnsupportedFormat -> context.getString(R.string.cast_unsupported_format)
                 CastUiEvent.MediaUnavailable -> context.getString(R.string.cast_media_unavailable)
+                is CastUiEvent.CastFailed -> {
+                    errorAction = event.presentation.action
+                    context.getString(event.presentation.message.stringRes())
+                }
             }
             when (event) {
                 CastUiEvent.OpenPicker -> pickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
                 CastUiEvent.PremiumRequired -> onNavigateToPremium()
                 CastUiEvent.NoActiveDevice -> onNavigateToDevices()
+                is CastUiEvent.CastFailed -> message?.let { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show() }
                 else -> message?.let { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show() }
             }
         }
@@ -125,7 +135,7 @@ fun CastScreen(
             NoActiveDeviceState(onNavigateToDevices = onNavigateToDevices)
         } else {
             // Casting Banner & Playback Controls
-            if (uiState.isCasting || uiState.playbackState != com.example.smartclick.app.domain.cast.CastPlaybackState.IDLE) {
+            if (uiState.isCasting || uiState.requestState == CastRequestState.ERROR || uiState.playbackState != com.example.smartclick.app.domain.cast.CastPlaybackState.IDLE) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -153,7 +163,15 @@ fun CastScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = stringResource(R.string.casting_to_tv, uiState.activeTvName ?: "TV") + " • ${uiState.playbackState.name}",
+                            text = stringResource(R.string.casting_to_tv, uiState.activeTvName ?: "TV") + " • " + stringResource(
+                                when {
+                                    uiState.playbackState == com.example.smartclick.app.domain.cast.CastPlaybackState.PLAYING -> R.string.cast_state_playing
+                                    uiState.requestState == CastRequestState.PREPARING -> R.string.cast_state_preparing
+                                    uiState.requestState == CastRequestState.SENT -> R.string.cast_state_sent
+                                    uiState.requestState == CastRequestState.ERROR -> R.string.cast_state_error
+                                    else -> R.string.cast_state_idle
+                                }
+                            ),
                             color = colors.tx1,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 13.sp,
@@ -168,6 +186,24 @@ fun CastScreen(
                     }
 
                     // Transport Controls Row
+                    if (errorAction != null && errorAction != CastErrorAction.NONE) {
+                        Button(onClick = {
+                            when (errorAction) {
+                                CastErrorAction.RETRY -> viewModel.startCasting()
+                                CastErrorAction.REPAIR_DEVICE -> onNavigateToDevices()
+                                CastErrorAction.CHOOSE_MEDIA -> viewModel.requestMediaPicker()
+                                else -> Unit
+                            }
+                            errorAction = null
+                        }) {
+                            Text(stringResource(when (errorAction) {
+                                CastErrorAction.RETRY -> R.string.cast_action_retry
+                                CastErrorAction.REPAIR_DEVICE -> R.string.cast_action_repair
+                                CastErrorAction.CHOOSE_MEDIA -> R.string.cast_action_choose
+                                else -> R.string.cast_action_retry
+                            }))
+                        }
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
