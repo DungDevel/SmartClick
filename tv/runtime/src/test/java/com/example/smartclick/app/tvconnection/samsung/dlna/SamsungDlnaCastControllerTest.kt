@@ -95,6 +95,14 @@ class SamsungDlnaCastControllerTest {
     }
 
     @Test
+    fun `remote HTTP media is sent directly without local registration`() = runBlocking {
+        val result = controller.castMedia("https://cdn.example/video.mp4", "video/mp4", CastMediaType.VIDEO, "Remote")
+        assertTrue(result.isSuccess)
+        assertTrue(transport.soapActionsCalled.first().second.contains("https://cdn.example/video.mp4"))
+        io.mockk.coVerify(exactly = 0) { localMediaServer.registerMedia(any(), any(), any()) }
+    }
+
+    @Test
     fun `controlCast Pause does not falsely jump state to PAUSED`() = runBlocking {
         // Assume already casting
         val testUri = mockk<Uri>(relaxed = true)
