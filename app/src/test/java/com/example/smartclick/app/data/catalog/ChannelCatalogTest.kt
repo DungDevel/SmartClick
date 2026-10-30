@@ -9,7 +9,7 @@ import org.json.JSONArray
 
 class ChannelCatalogTest {
     @Test fun `catalog preserves every legacy app protocol id`() {
-        val legacy = JSONArray(File("src/main/assets/apps.json").readText())
+        val legacy = JSONArray(File("src/test/resources/apps-legacy-fixture.json").readText())
         val catalog = ChannelCatalog.parse(File("src/main/assets/channels.json").readText()).getOrThrow()
         val keyMap = mapOf("lg_app_id" to "lgwebos", "samsung_app_id" to "samsung", "roku_app_id" to "roku", "android_tv_app_id" to "androidtv")
         val missing = mutableListOf<String>()
