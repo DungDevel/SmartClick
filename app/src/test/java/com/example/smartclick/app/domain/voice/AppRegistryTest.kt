@@ -2,6 +2,10 @@ package com.example.smartclick.app.domain.voice
 
 import com.example.smartclick.app.domain.model.TvProtocol
 import com.example.smartclick.app.domain.model.voice.AppSymbol
+import com.example.smartclick.app.data.catalog.CatalogEntry
+import com.example.smartclick.app.data.catalog.ChannelCatalog
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -13,7 +17,15 @@ class AppRegistryTest {
 
     @Before
     fun setup() {
-        registry = AppRegistry()
+        val catalog = mockk<ChannelCatalog>()
+        every { catalog.load() } returns Result.success(listOf(
+            CatalogEntry("app:youtube", "YouTube", "apps", mapOf(
+                "lgwebos" to "youtube.logan", "samsung" to "111299001912", "roku" to "837",
+                "androidtv" to "com.google.android.youtube.tv"
+            ), emptyList(), "app"),
+            CatalogEntry("app:browser", "Browser", "apps", mapOf("samsung" to "org.tizen.browser"), emptyList(), "app")
+        ))
+        registry = AppRegistry(catalog)
     }
 
     @Test

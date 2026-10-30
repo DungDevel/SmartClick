@@ -23,8 +23,9 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.kxml2.io.KXmlParser
 import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserFactory
+import org.xmlpull.v1.XmlPullParserException
 import java.io.IOException
 import java.io.StringReader
 import java.net.InetAddress
@@ -38,6 +39,10 @@ class RokuController @Inject constructor(
     client: OkHttpClient
 ) : ITvController, ICastController {
 
+    internal constructor(client: OkHttpClient, endpointOverride: String) : this(client) {
+        this.endpointOverride = endpointOverride.trimEnd('/')
+    }
+
     private val tvClient = client.newBuilder()
         .connectTimeout(1000, TimeUnit.MILLISECONDS)
         .readTimeout(1000, TimeUnit.MILLISECONDS)
@@ -48,6 +53,7 @@ class RokuController @Inject constructor(
     override val connectionState: StateFlow<TvConnectionState> = _connectionState.asStateFlow()
 
     private var currentDevice: TvDevice? = null
+    private var endpointOverride: String? = null
     override val device: TvDevice? get() = currentDevice
 
     private val _castPlaybackState = MutableStateFlow(CastPlaybackState.IDLE)
@@ -69,7 +75,7 @@ class RokuController @Inject constructor(
         if (!NetworkSecurityUtils.isPrivateLanAddress(device.ipAddress)) {
             val err = "Invalid address: not a private LAN IP"
             _connectionState.value = TvConnectionState.Failed(err)
-            Log.w(TAG, "Rejected non-LAN address: ${device.ipAddress}")
+            Log.w(TAG, "Rejected non-LAN Roku address")
             return Result.failure(Exception(err))
         }
 
@@ -78,13 +84,13 @@ class RokuController @Inject constructor(
 
         return withContext(Dispatchers.IO) {
             try {
-                val url = "http://${device.ipAddress}:8060/query/device-info"
+                val url = endpoint(device, "/query/device-info")
                 val request = Request.Builder().url(url).build()
 
                 tvClient.newCall(request).execute().use { response ->
                     if (response.isSuccessful) {
                         _connectionState.value = TvConnectionState.Connected(device)
-                        Log.d(TAG, "Successfully connected to Roku at ${device.ipAddress}")
+                        Log.d(TAG, "Successfully connected to Roku")
                         Result.success(Unit)
                     } else {
                         val msg = if (response.code == 403) "Mở cấu hình TV: Settings > System > Advanced system settings > Control by mobile apps > Bật 'Default' hoặc 'Permissive'" else "Roku HTTP Error: ${response.code}"
@@ -93,7 +99,7 @@ class RokuController @Inject constructor(
                     }
                 }
             } catch (e: IOException) {
-                Log.e(TAG, "Connection failed", e)
+                Log.e(TAG, "Roku connection failed (${e::class.simpleName})")
                 val msg = "Connection failed: ${e.message}"
                 _connectionState.value = TvConnectionState.Failed(msg)
                 Result.failure(Exception(msg))
@@ -181,7 +187,7 @@ class RokuController @Inject constructor(
                         }
                     }
                 } catch (e: IOException) {
-                    Log.e(TAG, "Failed to send command to Roku", e)
+                    Log.e(TAG, "Roku command request failed (${e::class.simpleName})")
                     Result.failure(e)
                 }
             }
@@ -195,7 +201,7 @@ class RokuController @Inject constructor(
             .build()
         tvClient.newCall(request).execute().use { response ->
             return if (!response.isSuccessful) {
-                Log.w(TAG, "Command failed: ${response.code} at $url")
+                Log.w(TAG, "Roku command failed with HTTP ${response.code}")
                 Result.failure(Exception("HTTP Error: ${response.code}"))
             } else {
                 Result.success(Unit)
@@ -209,7 +215,7 @@ class RokuController @Inject constructor(
 
         return withContext(Dispatchers.IO) {
             try {
-                val url = "http://${dev.ipAddress}:8060/query/apps"
+                val url = endpoint(dev, "/query/apps")
                 val request = Request.Builder().url(url).build()
 
                 tvClient.newCall(request).execute().use { response ->
@@ -217,22 +223,26 @@ class RokuController @Inject constructor(
                         return@withContext Result.failure(Exception("HTTP Error: ${response.code}"))
                     }
 
-                    val xmlData = response.body?.string() ?: return@withContext Result.defaultSuccess()
+                    val xmlData = response.body?.string()
+                        ?: return@withContext Result.failure(IOException("Roku app response had no body"))
 
                     val appList = mutableListOf<TvApp>()
-                    val factory = XmlPullParserFactory.newInstance()
-                    factory.isNamespaceAware = true
-                    val parser = factory.newPullParser()
+                    val parser = KXmlParser().apply {
+                        setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, true)
+                    }
                     parser.setInput(StringReader(xmlData))
 
                     var eventType = parser.eventType
                     var currentAppId: String? = null
                     var currentAppName: String? = null
+                    var appsRootSeen = false
+                    var appsRootClosed = false
 
                     while (eventType != XmlPullParser.END_DOCUMENT) {
                         val tag = parser.name
                         when (eventType) {
                             XmlPullParser.START_TAG -> {
+                                if (parser.depth == 1 && tag == "apps") appsRootSeen = true
                                 if (tag == "app") {
                                     currentAppId = parser.getAttributeValue(null, "id")
                                 }
@@ -243,10 +253,16 @@ class RokuController @Inject constructor(
                                 }
                             }
                             XmlPullParser.END_TAG -> {
+                                if (parser.depth == 1 && tag == "apps") appsRootClosed = true
                                 if (tag == "app") {
-                                    if (currentAppId != null && currentAppName != null) {
-                                        val iconUrl = "http://${dev.ipAddress}:8060/query/icon/$currentAppId"
-                                        appList.add(TvApp(currentAppId, currentAppName, iconUrl))
+                                    val appId = currentAppId?.takeIf { it.isNotBlank() }
+                                    val appName = currentAppName?.trim()?.takeIf { it.isNotEmpty() }
+                                    if (appId != null && appName != null) {
+                                        if (!appId.all(Char::isDigit)) {
+                                            return@withContext Result.failure(XmlPullParserException("Roku app id is not numeric"))
+                                        }
+                                        val iconUrl = endpoint(dev, "/query/icon/$appId")
+                                        appList.add(TvApp(appId, appName, iconUrl))
                                     }
                                     currentAppId = null
                                     currentAppName = null
@@ -255,10 +271,13 @@ class RokuController @Inject constructor(
                         }
                         eventType = parser.next()
                     }
+                    if (!appsRootSeen || !appsRootClosed || currentAppId != null) {
+                        return@withContext Result.failure(XmlPullParserException("Roku app list XML is incomplete"))
+                    }
                     Result.success(appList)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to get apps", e)
+                Log.w(TAG, "Failed to retrieve Roku app list (${e::class.simpleName})")
                 Result.failure(e)
             }
         }
@@ -270,7 +289,10 @@ class RokuController @Inject constructor(
 
         return withContext(Dispatchers.IO) {
             try {
-                val url = "http://${dev.ipAddress}:8060/launch/$appId"
+                if (appId.isBlank() || !appId.all(Char::isDigit)) {
+                    return@withContext Result.failure(IllegalArgumentException("Roku app id must be numeric"))
+                }
+                val url = endpoint(dev, "/launch/$appId")
                 val request = Request.Builder()
                     .url(url)
                     .post(emptyBody)
@@ -284,11 +306,14 @@ class RokuController @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to launch app $appId", e)
+                Log.w(TAG, "Failed to launch Roku app (${e::class.simpleName})")
                 Result.failure(e)
             }
         }
     }
+
+    private fun endpoint(device: TvDevice, path: String): String =
+        "${endpointOverride ?: "http://${device.ipAddress}:8060"}$path"
 
 
     override suspend fun castMedia(url: String, mimeType: String, type: CastMediaType, title: String): Result<Unit> {
@@ -321,7 +346,7 @@ class RokuController @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to cast media to Roku", e)
+                Log.e(TAG, "Roku cast request failed (${e::class.simpleName})")
                 _castPlaybackState.value = CastPlaybackState.ERROR
                 Result.failure(e)
             }

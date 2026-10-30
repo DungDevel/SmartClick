@@ -40,6 +40,7 @@ dependencies {
     implementation(libs.protobuf.lite)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.nanohttpd)
+    implementation("net.sf.kxml:kxml2:2.3.0")
 
     // Security
     implementation("androidx.security:security-crypto:1.1.0")

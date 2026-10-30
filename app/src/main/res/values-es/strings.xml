@@ -68,6 +68,17 @@
     <string name="send_text_to_tv">Enviar texto a la TV</string>
     <string name="apps_desc">Apps de tu TV</string>
     <string name="your_tv_apps">Apps de tu TV</string>
+    <string name="channels_apps_loading">Cargando aplicaciones…</string>
+    <string name="channels_apps_empty">No hay aplicaciones del catálogo instaladas en este TV.</string>
+    <string name="channels_apps_no_device">Conecta un TV para ver sus aplicaciones instaladas.</string>
+    <string name="channels_apps_not_supported">Este TV no permite consultar las aplicaciones instaladas.</string>
+    <string name="channels_apps_error_connection">No se pudo conectar con el TV.</string>
+    <string name="channels_apps_error_timeout">El TV tardó demasiado en responder.</string>
+    <string name="channels_apps_error_parse">El TV devolvió una lista de aplicaciones no válida.</string>
+    <string name="channels_apps_error_unknown">No se pudieron cargar las aplicaciones instaladas.</string>
+    <string name="channels_apps_retry">Reintentar</string>
+    <string name="channels_app_launch_success">Se envió la solicitud para abrir la aplicación.</string>
+    <string name="channels_app_launch_failed">El TV no pudo abrir esta aplicación.</string>
     <string name="channels">Canales</string>
     <string name="popular">Populares</string>
     <string name="recommended">Recomendados</string>

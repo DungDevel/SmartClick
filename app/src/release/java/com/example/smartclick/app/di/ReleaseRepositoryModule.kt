@@ -22,9 +22,5 @@ object ReleaseRepositoryModule {
 
     @Provides
     @Singleton
-    fun provideChannelRegistryRepository(): IChannelRegistryRepository = NoOpChannelRegistryRepository()
-
-    @Provides
-    @Singleton
     fun provideMediaRepository(): IMediaRepository = NoOpMediaRepository()
 }

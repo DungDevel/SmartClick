@@ -84,6 +84,17 @@
     <!-- Channels & Cast -->
     <string name="apps_desc">Your TV apps</string>
     <string name="your_tv_apps">Your TV Apps</string>
+    <string name="channels_apps_loading">Loading apps…</string>
+    <string name="channels_apps_empty">No catalog apps are installed on this TV.</string>
+    <string name="channels_apps_no_device">Connect a TV to see its installed apps.</string>
+    <string name="channels_apps_not_supported">This TV does not support listing installed apps.</string>
+    <string name="channels_apps_error_connection">Could not connect to the TV.</string>
+    <string name="channels_apps_error_timeout">The TV took too long to respond.</string>
+    <string name="channels_apps_error_parse">The TV returned an invalid app list.</string>
+    <string name="channels_apps_error_unknown">Could not load installed apps.</string>
+    <string name="channels_apps_retry">Retry</string>
+    <string name="channels_app_launch_success">App launch request sent.</string>
+    <string name="channels_app_launch_failed">The TV could not launch this app.</string>
     <string name="channels">Channels</string>
     <string name="popular">Popular</string>
     <string name="recommended">Recommended</string>

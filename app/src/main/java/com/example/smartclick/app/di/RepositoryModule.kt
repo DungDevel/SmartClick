@@ -2,6 +2,8 @@ package com.example.smartclick.app.di
 
 import com.example.smartclick.app.data.local.DataStoreSettingsRepository
 import com.example.smartclick.app.data.local.RoomTvDeviceRepository
+import com.example.smartclick.app.data.repository.ChannelRegistryRepository
+import com.example.smartclick.app.domain.repository.IChannelRegistryRepository
 import com.example.smartclick.app.domain.repository.ISettingsRepository
 import com.example.smartclick.app.domain.repository.ITvDeviceRepository
 import dagger.Binds
@@ -32,6 +34,11 @@ abstract class RepositoryModule {
     abstract fun bindSettingsRepository(
         impl: DataStoreSettingsRepository
     ): ISettingsRepository
+
+    @Binds
+    abstract fun bindChannelRegistryRepository(
+        impl: ChannelRegistryRepository
+    ): IChannelRegistryRepository
 
     @Binds
     abstract fun bindBrandProfileRepository(
