@@ -29,7 +29,8 @@ import kotlin.coroutines.cancellation.CancellationException
 class GoogleCastMediaController(
     private val session: GoogleCastSession,
     private val transportId: String,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val onPlaybackStateChanged: (CastPlaybackState) -> Unit = {}
 ) {
     private val requestIdCounter = AtomicInteger(100) // start at 100 to avoid collision with protocol client
     private val pendingMediaRequests = ConcurrentHashMap<Int, CompletableDeferred<JSONObject>>()
@@ -85,7 +86,7 @@ class GoogleCastMediaController(
             "LOAD_CANCELLED",
             "INVALID_REQUEST" -> {
                 Log.w(TAG, "Cast media error: $type (requestId=$requestId)")
-                _playbackState.value = CastPlaybackState.ERROR
+                updatePlaybackState(CastPlaybackState.ERROR)
 
                 if (requestId > 0) {
                     val reason = json.optString("reason", type)
@@ -113,7 +114,7 @@ class GoogleCastMediaController(
         val playerState = status.optString("playerState", "")
         val idleReason = status.optString("idleReason", "")
         val newPlaybackState = mapPlayerState(playerState, idleReason)
-        _playbackState.value = newPlaybackState
+        updatePlaybackState(newPlaybackState)
 
         // Update session info with partial update support
         val currentTime = status.optDouble("currentTime", Double.NaN)
@@ -184,7 +185,7 @@ class GoogleCastMediaController(
             })
         }
 
-        _playbackState.value = CastPlaybackState.BUFFERING
+        updatePlaybackState(CastPlaybackState.BUFFERING)
         return sendMediaCommand(reqId, payload)
     }
 
@@ -355,6 +356,11 @@ class GoogleCastMediaController(
     private fun isSessionReady(): Boolean {
         val state = session.connectionState.value
         return state == GoogleCastSession.State.CONNECTED || state == GoogleCastSession.State.AUTHENTICATED
+    }
+
+    private fun updatePlaybackState(state: CastPlaybackState) {
+        _playbackState.value = state
+        onPlaybackStateChanged(state)
     }
 
     fun close() {

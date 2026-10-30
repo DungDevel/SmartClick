@@ -228,17 +228,14 @@ class GoogleCastController(
         protocol.connectToApp(transportId)
 
         // Step 8: Create media controller
-        val mc = GoogleCastMediaController(session, transportId, controllerScope)
+        val mc = GoogleCastMediaController(session, transportId, controllerScope) { state ->
+            _castPlaybackState.value = state
+        }
         mediaController = mc
 
         // Forward media controller state to ICastController flows
         stateCollectionJob?.cancel()
         stateCollectionJob = controllerScope.launch {
-            launch {
-                mc.playbackState.collect { state ->
-                    _castPlaybackState.value = state
-                }
-            }
             launch {
                 mc.sessionInfo.collect { info ->
                     // Merge, keeping currentUrl from our level if media controller doesn't set it
