@@ -1,5 +1,13 @@
 # Google Cast V2 Integration & Authentication Audit (D-CAST-1)
 
+## Local media server threat model (Cast D1)
+
+`LocalMediaServer` serves one registered `content://` URI at a time over HTTP on the current private IPv4 LAN address and an OS-assigned port. Each registration receives a fresh 256-bit `SecureRandom` token encoded as a 43-character URL-safe Base64 path (`/<token>`). A new registration invalidates the previous token; `unregisterMedia`, `stop`, and the idle shutdown invalidate it as well. Requests require the exact token path and a private/LAN peer address. Unknown paths, absent tokens, stale tokens, and incorrect tokens all receive the same 404 response. No filesystem path is derived from an HTTP request and directory listing is not implemented.
+
+Only `content://` inputs and the server's explicit image/video MIME allowlist are accepted. Content is opened through Android `ContentResolver`. Single byte ranges and suffix ranges are supported; malformed, unsatisfiable, out-of-file, and multiple ranges receive 416 with `Content-Range: bytes */<length>` (or `*` when length cannot be determined). HEAD preserves response headers and length without sending a body. Responses set `Accept-Ranges: bytes`, `X-Content-Type-Options: nosniff`, and `Cache-Control: no-store`. The server closes active content streams on stop, periodically stops after ten minutes without traffic or registration, uses an ephemeral port, and does not serve requests from peers outside private LAN ranges.
+
+**Limit:** the URL carries its bearer token over plain HTTP. Anyone on the reachable LAN who learns the URL can download the currently selected media until it is replaced, unregistered, or the server stops. No HTTPS is used because TVs generally do not trust a self-signed certificate. These checks are unit-tested; playback and downloads have not been verified on a physical TV. Supported video formats can still vary by receiver model and firmware.
+
 ## 1. Upstream Conformance & Reference Anchors
 This audit evaluates SmartClick's Google Cast authentication and cryptographic verification against authoritative upstream Chromium and Open Screen implementations. The implementation snapshot covered here is branch `fix/cast-trust-hardening`, source revision `02af5f1` (the documentation update is committed after that source revision):
 - **Upstream Project:** Chromium (`components/cast_certificate`) & Open Screen (`cast/`)

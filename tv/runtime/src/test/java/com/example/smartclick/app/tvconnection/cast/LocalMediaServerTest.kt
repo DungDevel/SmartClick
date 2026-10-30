@@ -23,6 +23,8 @@ import java.net.Inet4Address
 import java.net.InetAddress
 import java.net.URL
 import java.net.HttpURLConnection
+import java.net.Socket
+import java.io.Closeable
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LocalMediaServerTest {
@@ -36,6 +38,23 @@ class LocalMediaServerTest {
 
     private lateinit var server: LocalMediaServer
     private val testDispatcher = StandardTestDispatcher()
+
+    private fun contentUri(id: String = "123"): Uri {
+        val uri = mockk<Uri>(relaxed = true)
+        every { uri.scheme } returns "content"
+        every { uri.toString() } returns "content://media/external/video/$id"
+        return uri
+    }
+
+    private suspend fun registered(mime: String = "video/mp4", id: String = "123") =
+        server.registerMedia(contentUri(id), mime)
+
+    private fun statusForRawPath(path: String): Int = Socket("127.0.0.1", server.port).use { socket ->
+        socket.soTimeout = 2_000
+        socket.getOutputStream().write("GET $path HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n".toByteArray())
+        val statusLine = socket.getInputStream().bufferedReader().readLine()
+        statusLine.substringAfter(' ').substringBefore(' ').toInt()
+    }
 
     @Before
     fun setup() {
@@ -84,9 +103,7 @@ class LocalMediaServerTest {
 
     @Test
     fun `test registerMedia starts server and generates token`() = runTest {
-        val uri = mockk<Uri>(relaxed = true)
-        every { uri.scheme } returns "content"
-        every { uri.toString() } returns "content://media/external/video/123"
+        val uri = contentUri()
         val session = server.registerMedia(uri, "video/mp4", "Test Video")
         
         assertTrue(server.isRunning)
@@ -95,9 +112,150 @@ class LocalMediaServerTest {
         assertTrue(session.token.isNotEmpty())
         assertEquals(uri, session.uri)
         assertTrue(session.mediaUrl.contains("127.0.0.1"))
-        assertTrue(session.mediaUrl.contains(session.sessionId))
+        assertFalse(session.mediaUrl.contains(session.sessionId))
         assertTrue(session.mediaUrl.contains(session.token))
+        assertEquals(43, session.token.length)
+        assertTrue(session.token.matches(Regex("[A-Za-z0-9_-]{43}")))
+        assertEquals("/${session.token}", URL(session.mediaUrl).path)
+        assertEquals(null, URL(session.mediaUrl).query)
         server.stop()
+    }
+
+    @Test
+    fun `each registration gets a fresh token and invalidates previous selection`() = runTest {
+        val first = registered(id = "first")
+        val second = registered(id = "second")
+        assertNotEquals(first.token, second.token)
+        assertEquals(404, (URL(first.mediaUrl).openConnection() as HttpURLConnection).responseCode)
+        server.stop()
+    }
+
+    @Test
+    fun `stop invalidates prior token and wrong or missing token is indistinguishable`() = runTest {
+        val media = registered()
+        val missing = URL("${server.baseUrl}/").openConnection() as HttpURLConnection
+        assertEquals(404, missing.responseCode)
+        val wrong = URL("${server.baseUrl}/not-a-real-token").openConnection() as HttpURLConnection
+        assertEquals(404, wrong.responseCode)
+        server.stop()
+        server.start().getOrThrow()
+        assertEquals(404, (URL("${server.baseUrl}/${media.token}").openConnection() as HttpURLConnection).responseCode)
+        server.stop()
+    }
+
+    @Test
+    fun `only a single token path is served and traversal variants return 404`() = runTest {
+        val media = registered()
+        val paths = listOf("/media/${media.sessionId}?token=${media.token}", "/${media.token}/extra", "/../${media.token}", "/%2e%2e/${media.token}", "//${media.token}", "/${media.token}%00", "/${media.token}\\extra")
+        paths.forEach { path ->
+            assertEquals("path=$path", 404, statusForRawPath(path))
+        }
+        server.stop()
+    }
+
+    @Test
+    fun `stop closes an active media stream`() = runTest {
+        registered()
+        var closed = false
+        val stream = Closeable { closed = true }
+        val field = LocalMediaServer::class.java.getDeclaredField("activeStreams").apply { isAccessible = true }
+        @Suppress("UNCHECKED_CAST")
+        (field.get(server) as MutableSet<Closeable>).add(stream)
+        server.stop()
+        assertTrue(closed)
+    }
+
+    @Test
+    fun `only private LAN peers are allowed`() {
+        assertTrue(server.isAllowedPeerAddress("192.168.1.20"))
+        assertTrue(server.isAllowedPeerAddress("10.0.0.8"))
+        assertFalse(server.isAllowedPeerAddress("8.8.8.8"))
+        assertFalse(server.isAllowedPeerAddress(null))
+    }
+
+    @Test
+    fun `content resolver URIs are required and repeated start reuses one listener`() = runTest {
+        val fileUri = mockk<Uri>(relaxed = true)
+        every { fileUri.scheme } returns "file"
+        try {
+            server.registerMedia(fileUri, "video/mp4")
+            fail("file URI must not expose arbitrary filesystem paths")
+        } catch (_: IllegalArgumentException) { }
+
+        val firstPort = server.start().getOrThrow()
+        val secondPort = server.start().getOrThrow()
+        assertEquals(firstPort, secondPort)
+        assertTrue(server.isRunning)
+        server.stop()
+    }
+
+    @Test
+    fun `range supports suffix and open ended requests and rejects malformed and multiple ranges`() = runTest {
+        val media = registered()
+        val data = "HelloWorld".toByteArray()
+        every { contentResolver.openInputStream(any()) } answers { ByteArrayInputStream(data) }
+        val afd = mockk<AssetFileDescriptor>(relaxed = true)
+        every { afd.length } returns data.size.toLong()
+        every { contentResolver.openAssetFileDescriptor(any(), "r") } returns afd
+
+        fun request(range: String): HttpURLConnection = (URL(media.mediaUrl).openConnection() as HttpURLConnection).also {
+            it.setRequestProperty("Range", range)
+        }
+        val suffix = request("bytes=-5")
+        assertEquals(206, suffix.responseCode)
+        assertEquals("bytes 5-9/10", suffix.getHeaderField("Content-Range"))
+        assertArrayEquals("World".toByteArray(), suffix.inputStream.readBytes())
+        val open = request("bytes=5-")
+        assertEquals(206, open.responseCode)
+        assertEquals(5, open.inputStream.readBytes().size)
+        listOf("bytes=abc", "bytes=0-1,4-5", "bytes=8-12", "bytes=-0").forEach { range ->
+            val invalid = request(range)
+            assertEquals("range=$range", 416, invalid.responseCode)
+            assertEquals("bytes */10", invalid.getHeaderField("Content-Range"))
+        }
+        server.stop()
+    }
+
+    @Test
+    fun `HEAD returns headers without body and all responses have safe headers`() = runTest {
+        val media = registered()
+        val data = "video".toByteArray()
+        every { contentResolver.openInputStream(any()) } answers { ByteArrayInputStream(data) }
+        val afd = mockk<AssetFileDescriptor>(relaxed = true)
+        every { afd.length } returns data.size.toLong()
+        every { contentResolver.openAssetFileDescriptor(any(), "r") } returns afd
+        val conn = (URL(media.mediaUrl).openConnection() as HttpURLConnection).apply { requestMethod = "HEAD" }
+        assertEquals(200, conn.responseCode)
+        assertEquals(data.size.toLong(), conn.contentLengthLong)
+        assertTrue(conn.inputStream.readBytes().isEmpty())
+        assertEquals("nosniff", conn.getHeaderField("X-Content-Type-Options"))
+        assertEquals("no-store", conn.getHeaderField("Cache-Control"))
+        server.stop()
+    }
+
+    @Test
+    fun `only whitelisted image and video MIME types can be registered`() = runTest {
+        listOf("image/jpeg", "image/png", "image/webp", "image/gif", "video/mp4", "video/webm", "video/x-matroska").forEach { mime ->
+            assertEquals(mime, server.registerMedia(contentUri(mime.hashCode().toString()), mime).mimeType)
+        }
+        listOf("audio/mpeg", "text/html", "application/octet-stream", "image/svg+xml", "video/unknown").forEach { mime ->
+            try {
+                server.registerMedia(contentUri("bad-${mime.hashCode()}"), mime)
+                fail("accepted MIME $mime")
+            } catch (_: IllegalArgumentException) { }
+        }
+        server.stop()
+    }
+
+    @Test
+    fun `registration fails when no LAN IPv4 is available`() = runTest {
+        every { linkProperties.linkAddresses } returns emptyList()
+        assertTrue(server.start().isFailure)
+        try {
+            server.registerMedia(contentUri(), "video/mp4")
+            fail("registration must not return a dead URL")
+        } catch (_: IllegalStateException) { }
+        assertFalse(server.isRunning)
     }
 
     @Test
@@ -184,7 +342,7 @@ class LocalMediaServerTest {
     }
 
     @Test
-    fun `test HTTP no token 403 Forbidden`() = runTest {
+    fun `test HTTP missing token is hidden as 404`() = runTest {
         val uri = mockk<Uri>(relaxed = true)
         every { uri.scheme } returns "content"
         every { uri.toString() } returns "content://media/external/video/123"
@@ -193,7 +351,7 @@ class LocalMediaServerTest {
         val badUrl = "${server.baseUrl}/media/${session.sessionId}"
         val url = URL(badUrl)
         val conn = url.openConnection() as HttpURLConnection
-        assertEquals(403, conn.responseCode)
+        assertEquals(404, conn.responseCode)
         server.stop()
     }
 
@@ -228,5 +386,16 @@ class LocalMediaServerTest {
 
         advanceTimeBy(LocalMediaServer.SHUTDOWN_DELAY_MS)
         assertFalse(server.isRunning) // Should be stopped now
+    }
+
+    @Test
+    fun `server stops after inactivity even if a media session was not explicitly removed`() = runTest {
+        registered()
+        advanceTimeBy(LocalMediaServer.SHUTDOWN_DELAY_MS - 1)
+        assertTrue(server.isRunning)
+        advanceTimeBy(1)
+        runCurrent()
+        assertFalse(server.isRunning)
+        assertNull(server.baseUrl)
     }
 }
