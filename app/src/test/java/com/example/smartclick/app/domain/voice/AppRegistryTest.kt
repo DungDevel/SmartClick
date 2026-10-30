@@ -10,8 +10,36 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import org.json.JSONArray
+import java.io.File
 
 class AppRegistryTest {
+
+    @Test
+    fun `all legacy voice symbols retain IDs through catalog for four protocols`() {
+        val entries = ChannelCatalog.parse(File("src/main/assets/channels.json").readText()).getOrThrow()
+        val actualRegistry = AppRegistry(mockk<ChannelCatalog>().also { catalog ->
+            every { catalog.load() } returns Result.success(entries)
+        })
+        val legacyApps = JSONArray(File("src/test/resources/apps-legacy-fixture.json").readText())
+        val protocols = listOf(
+            TvProtocol.LG_WEBOS to "lg_app_id",
+            TvProtocol.SAMSUNG_TIZEN to "samsung_app_id",
+            TvProtocol.ROKU_ECP to "roku_app_id",
+            TvProtocol.ANDROID_TV_V2 to "android_tv_app_id"
+        )
+        for (i in 0 until legacyApps.length()) {
+            val app = legacyApps.getJSONObject(i)
+            val symbol = AppSymbol.valueOf(app.getString("symbol"))
+            for ((protocol, legacyKey) in protocols) {
+                val expected = app.optString(legacyKey).takeIf(String::isNotBlank)
+                assertEquals("${symbol.name} / $protocol", expected, actualRegistry.getAppId(symbol, protocol))
+            }
+        }
+        for (protocol in protocols.map { it.first }) {
+            assertNull(actualRegistry.getAppId(AppSymbol.UNKNOWN, protocol))
+        }
+    }
 
     private lateinit var registry: AppRegistry
 

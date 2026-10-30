@@ -340,4 +340,40 @@ class LgWebOsControllerTest {
         assertEquals(1, result.getOrNull()?.size)
         assertEquals("Netflix", result.getOrNull()?.first()?.name)
     }
+
+    @Test
+    fun `getApps returns empty list for explicit empty response`() = runTest {
+        val listener = establishConnection()
+        every { mockWebSocket.send(any<String>()) } returns true
+        val deferred = async { controller.getApps() }
+        delay(50)
+        listener.onMessage(mockWebSocket, """{"type":"response","id":"1","payload":{"apps":[]}}""")
+        assertTrue(deferred.await().isSuccess)
+        assertTrue(deferred.await().getOrThrow().isEmpty())
+    }
+
+    @Test
+    fun `getApps fails for server error or missing apps body`() = runTest {
+        val listener = establishConnection()
+        every { mockWebSocket.send(any<String>()) } returns true
+        val errored = async { controller.getApps() }
+        delay(50)
+        listener.onMessage(mockWebSocket, """{"type":"error","id":"1","error":"denied"}""")
+        assertTrue(errored.await().isFailure)
+
+        val missing = async { controller.getApps() }
+        delay(50)
+        listener.onMessage(mockWebSocket, """{"type":"response","id":"2","payload":{}}""")
+        assertTrue(missing.await().isFailure)
+    }
+
+    @Test
+    fun `launchApp sends launch URI and app id and reports send failure`() = runTest {
+        establishConnection()
+        every { mockWebSocket.send(any<String>()) } returns true
+        assertTrue(controller.launchApp("youtube.logan").isSuccess)
+        verify { mockWebSocket.send(match<String> { it.contains("ssap://system.launcher/launch") && it.contains("youtube.logan") }) }
+        every { mockWebSocket.send(any<String>()) } returns false
+        assertTrue(controller.launchApp("bad-id").isFailure)
+    }
 }

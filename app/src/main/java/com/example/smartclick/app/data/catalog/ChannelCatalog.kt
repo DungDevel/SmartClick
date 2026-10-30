@@ -68,7 +68,7 @@ class ChannelCatalog @Inject constructor(
                     if (value.isNotEmpty()) ids[protocol] = value
                 }
             }
-            // Accept the original apps.json schema during migration and old catalog entries.
+            // Accept legacy per-protocol fields alongside protocol_ids during migration.
             val legacyProtocolKeys = mapOf(
                 "roku_app_id" to "roku",
                 "lg_app_id" to "lgwebos",

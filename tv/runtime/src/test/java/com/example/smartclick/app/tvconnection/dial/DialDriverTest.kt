@@ -20,7 +20,7 @@ class DialDriverTest : AbstractDriverContractTest() {
 
     override fun createDriver(): IProtocolDriver {
         return DialDriver(
-            dialControllerProvider = { mockk<DialController>(relaxed = true) },
+            dialControllerProvider = { DialController() },
             httpClient = mockk<OkHttpClient>(relaxed = true)
         )
     }
@@ -36,9 +36,9 @@ class DialDriverTest : AbstractDriverContractTest() {
     )
 
     @Test
-    fun `capabilities include INSTALLED_APPS`() {
+    fun `capabilities do not claim installed app listing`() {
         val driver = createDriver()
-        assertTrue(driver.capabilities.contains(TvCapability.INSTALLED_APPS))
+        assertTrue(TvCapability.INSTALLED_APPS !in driver.capabilities)
     }
 
     @Test

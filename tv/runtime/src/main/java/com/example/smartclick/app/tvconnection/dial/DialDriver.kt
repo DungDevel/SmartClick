@@ -29,9 +29,7 @@ class DialDriver @Inject constructor(
 
     override val protocol: TvProtocol = TvProtocol.DIAL_ONLY
 
-    override val capabilities: Set<TvCapability> = setOf(
-        TvCapability.INSTALLED_APPS
-    )
+    override val capabilities: Set<TvCapability> = emptySet()
 
     private val redirectDisabledClient = httpClient.newBuilder()
         .followRedirects(false)

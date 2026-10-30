@@ -4,8 +4,25 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
+import org.json.JSONArray
 
 class ChannelCatalogTest {
+    @Test fun `catalog preserves every legacy app protocol id`() {
+        val legacy = JSONArray(File("src/test/resources/apps-legacy-fixture.json").readText())
+        val catalog = ChannelCatalog.parse(File("src/main/assets/channels.json").readText()).getOrThrow()
+        val keyMap = mapOf("lg_app_id" to "lgwebos", "samsung_app_id" to "samsung", "roku_app_id" to "roku", "android_tv_app_id" to "androidtv")
+        val missing = mutableListOf<String>()
+        for (i in 0 until legacy.length()) {
+            val item = legacy.getJSONObject(i)
+            val entry = catalog.firstOrNull { it.id == "app:${item.getString("symbol").lowercase()}" }
+            keyMap.forEach { (legacyKey, protocol) ->
+                val id = item.optString(legacyKey)
+                if (id.isNotBlank() && entry?.protocolIds?.get(protocol) != id) missing += "${item.getString("symbol")} $protocol=$id"
+            }
+        }
+        assertTrue("Missing legacy IDs: $missing", missing.isEmpty())
+    }
     @Test fun `parses valid legacy and protocol mapped entries`() {
         val result = ChannelCatalog.parse("""[
             {"id":"channel-1","name":"Channel 1","channel_number":"1","keywords":["one"]},
