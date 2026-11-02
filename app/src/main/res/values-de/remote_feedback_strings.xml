@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="command_failed">Befehl fehlgeschlagen</string>
+    <string name="wol_unavailable">Keine gültige MAC-Adresse; möglicherweise unterstützt der Fernseher kein Einschalten aus der Ferne.</string>
+    <string name="wol_failed_retry">Wake-on-LAN konnte nicht gesendet werden. Netzwerk prüfen und erneut versuchen.</string>
 </resources>

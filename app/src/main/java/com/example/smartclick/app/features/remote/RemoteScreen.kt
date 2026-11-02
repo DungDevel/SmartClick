@@ -106,6 +106,12 @@ fun RemoteScreen(
                 RemoteUiEvent.WolSent -> {
                     android.widget.Toast.makeText(context, context.getString(R.string.wol_sent), android.widget.Toast.LENGTH_SHORT).show()
                 }
+                RemoteUiEvent.WakeOnLanUnavailable -> {
+                    android.widget.Toast.makeText(context, context.getString(R.string.wol_unavailable), android.widget.Toast.LENGTH_SHORT).show()
+                }
+                RemoteUiEvent.WakeOnLanFailed -> {
+                    android.widget.Toast.makeText(context, context.getString(R.string.wol_failed_retry), android.widget.Toast.LENGTH_LONG).show()
+                }
                 RemoteUiEvent.VoicePremiumRequired -> {
                     android.widget.Toast.makeText(context, context.getString(R.string.voice_premium_required), android.widget.Toast.LENGTH_SHORT).show()
                 }
@@ -143,14 +149,8 @@ fun RemoteScreen(
         }
 
         if (command == RemoteCommand.Power && !controlsEnabled) {
-            val mac = activeDevice?.macAddress
-            if (!mac.isNullOrBlank()) {
-                viewModel.sendCommand(RemoteCommand.Power)
-                return
-            } else {
-                android.widget.Toast.makeText(context, context.getString(R.string.no_tv_connected), android.widget.Toast.LENGTH_SHORT).show()
-                return
-            }
+            viewModel.sendCommand(RemoteCommand.Power)
+            return
         }
 
         if (!controlsEnabled) {

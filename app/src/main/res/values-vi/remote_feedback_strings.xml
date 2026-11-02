@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="command_failed">Lệnh thực thi thất bại</string>
+    <string name="wol_unavailable">Chưa có địa chỉ MAC hợp lệ; TV có thể không hỗ trợ bật từ xa.</string>
+    <string name="wol_failed_retry">Không gửi được Wake-on-LAN. Hãy kiểm tra mạng và thử lại.</string>
 </resources>

@@ -42,6 +42,8 @@ sealed class RemoteUiEvent {
     object CommandNotConnected : RemoteUiEvent()
     object CommandFailed : RemoteUiEvent()
     object WolSent : RemoteUiEvent()
+    object WakeOnLanUnavailable : RemoteUiEvent()
+    object WakeOnLanFailed : RemoteUiEvent()
     object VoiceNotSupportedError : RemoteUiEvent()
     object VoiceUnrecognizedError : RemoteUiEvent()
     data class VoiceError(val message: String) : RemoteUiEvent()
@@ -273,16 +275,23 @@ class RemoteViewModel @Inject constructor(
     fun sendCommand(command: RemoteCommand) {
         viewModelScope.launch {
             if (command == RemoteCommand.Power && connectionState.value !is TvConnectionState.Connected) {
-                // Trigger Wake-on-LAN if device not connected but we have a MAC
-                activeDevice.value?.macAddress?.let { mac ->
+                val mac = activeTvSession.currentController.value?.device?.macAddress
+                if (mac.isNullOrBlank() || runCatching {
+                        com.example.smartclick.app.domain.connection.WakeOnLan.getMacBytes(mac)
+                    }.isFailure
+                ) {
+                    emitThrottledEvent(RemoteUiEvent.WakeOnLanUnavailable)
+                    return@launch
+                }
+                run {
                     val success = com.example.smartclick.app.domain.connection.WakeOnLan.wake(mac)
                     if (success) {
                         emitThrottledEvent(RemoteUiEvent.WolSent)
                     } else {
-                        emitThrottledEvent(RemoteUiEvent.CommandFailed)
+                        emitThrottledEvent(RemoteUiEvent.WakeOnLanFailed)
                     }
-                    return@launch
                 }
+                return@launch
             }
 
             sendCommandForHold(command)
