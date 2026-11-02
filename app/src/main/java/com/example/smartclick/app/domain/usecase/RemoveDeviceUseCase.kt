@@ -4,8 +4,7 @@ import com.example.smartclick.app.domain.repository.ITvDeviceRepository
 import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.ITvCredentialStore
 import com.example.smartclick.app.domain.connection.ReconnectWatcher
-import com.example.smartclick.app.domain.connection.TvConnectionState
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 class RemoveDeviceUseCase @Inject constructor(
@@ -25,10 +24,15 @@ class RemoveDeviceUseCase @Inject constructor(
         }
 
         if (isActiveDevice) {
-            if (currentController?.connectionState?.value is TvConnectionState.Connected) {
-                currentController.disconnect()
+            try {
+                currentController?.disconnect()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Removal must continue even if transport teardown fails.
+            } finally {
+                activeTvSession.setActiveController(null)
             }
-            activeTvSession.setActiveController(null)
         }
 
         val device = tvDeviceRepository.getDeviceById(deviceId)

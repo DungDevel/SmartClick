@@ -10,7 +10,11 @@ import com.example.smartclick.app.domain.connection.ITvCredentialStore
 import com.example.smartclick.app.domain.connection.ConnectOutcome
 import com.example.smartclick.app.domain.connection.DriverRegistry
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class ConnectToTvUseCase @Inject constructor(
@@ -45,7 +49,23 @@ class ConnectToTvUseCase @Inject constructor(
         }
         activeTvSession.setActiveController(controller)
 
-        val result = controller.connect(device)
+        val result = try {
+            val connectResult = controller.connect(device)
+            currentCoroutineContext().ensureActive()
+            connectResult
+        } catch (cancellation: CancellationException) {
+            withContext(NonCancellable) {
+                try {
+                    controller.disconnect()
+                } catch (cleanupFailure: Exception) {
+                    cancellation.addSuppressed(cleanupFailure)
+                }
+                if (activeTvSession.currentController.value === controller) {
+                    activeTvSession.setActiveController(null)
+                }
+            }
+            throw cancellation
+        }
 
         return if (result.isSuccess) {
             val connectedDevice = device.copy(
@@ -55,7 +75,9 @@ class ConnectToTvUseCase @Inject constructor(
             tvDeviceRepository.saveDevice(connectedDevice)
             ConnectOutcome.Connected
         } else {
-            activeTvSession.setActiveController(null)
+            if (activeTvSession.currentController.value === controller) {
+                activeTvSession.setActiveController(null)
+            }
             val errorMessage = result.exceptionOrNull()?.message ?: "Unknown Connection Error"
             ConnectOutcome.Failed(errorMessage)
         }
