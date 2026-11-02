@@ -2,6 +2,7 @@ package com.example.smartclick.app.features.remote
 
 import androidx.lifecycle.SavedStateHandle
 import com.example.smartclick.app.domain.connection.IActiveTvSession
+import com.example.smartclick.app.domain.connection.ITvController
 import com.example.smartclick.app.domain.connection.IWifiNetworkProvider
 import com.example.smartclick.app.domain.connection.NetworkState
 import com.example.smartclick.app.domain.connection.TvConnectionState
@@ -54,6 +55,7 @@ class RemoteViewModelTest {
 
     private lateinit var viewModel: RemoteViewModel
 
+    private val currentControllerFlow = MutableStateFlow<ITvController?>(null)
     private val connectionStateFlow = MutableStateFlow<TvConnectionState>(TvConnectionState.Idle)
     private val networkStateFlow = MutableStateFlow<NetworkState>(NetworkState.WifiConnected())
     private lateinit var settingsFlow: MutableStateFlow<AppSettings>
@@ -65,6 +67,7 @@ class RemoteViewModelTest {
 
         activeTvSession = mockk(relaxed = true)
         every { activeTvSession.connectionState } returns connectionStateFlow
+        every { activeTvSession.currentController } returns currentControllerFlow
 
         wifiNetworkProvider = mockk(relaxed = true)
         every { wifiNetworkProvider.networkState } returns networkStateFlow
