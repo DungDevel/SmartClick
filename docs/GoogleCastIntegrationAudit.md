@@ -15,7 +15,7 @@ Only `content://` inputs and the server's explicit image/video MIME allowlist ar
 **Limit:** the URL carries its bearer token over plain HTTP. Anyone on the reachable LAN who learns the URL can download the currently selected media until it is replaced, unregistered, or the server stops. No HTTPS is used because TVs generally do not trust a self-signed certificate. These checks are unit-tested; playback and downloads have not been verified on a physical TV. Supported video formats can still vary by receiver model and firmware.
 
 ## 1. Upstream Conformance & Reference Anchors
-This audit evaluates SmartClick's Google Cast authentication and cryptographic verification against authoritative upstream Chromium and Open Screen implementations. The implementation snapshot covered here is branch `fix/cast-trust-hardening`, source revision `02af5f1` (the documentation update is committed after that source revision):
+This audit evaluates SmartClick's Google Cast authentication and cryptographic verification against authoritative upstream Chromium and Open Screen implementations. The implementation snapshot covered here is branch `main`, source revision `835bcc1` (the current `main` commit at the time this D2-B audit was prepared):
 - **Upstream Project:** Chromium (`components/cast_certificate`) & Open Screen (`cast/`)
 - **Pinned Upstream Commit:** `e537d88599f578d055452f1b402802f5a043dc3d`
 - **Reference Source Paths:**

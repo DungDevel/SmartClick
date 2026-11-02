@@ -100,6 +100,16 @@
     <string name="recommended">Recommended</string>
     <string name="cast_title">Cast Media</string>
     <string name="cast_desc">Share your screen or media</string>
+    <string name="cast_pick_media">Pick a photo or video</string>
+    <string name="cast_unsupported_format">Select a supported photo or video format.</string>
+    <string name="cast_media_unavailable">Unable to access this media. Choose it again.</string>
+    <string name="cast_not_connected">Connect to the selected TV before casting.</string>
+    <string name="cast_no_visual_capability">The selected TV cannot receive photos or videos.</string>
+    <string name="cast_capability_missing">The selected TV cannot receive this media type.</string>
+    <string name="cast_state_idle">Ready</string><string name="cast_state_preparing">Preparing</string><string name="cast_state_sent">Sent to TV</string><string name="cast_state_playing">Playing</string><string name="cast_state_error">Error</string>
+    <string name="cast_error_no_lan">No private Wi-Fi address is available to share this media.</string>
+    <string name="cast_action_retry">Retry</string><string name="cast_action_repair">Remove TV and pair again</string><string name="cast_action_choose">Choose media</string>
+    <string name="cast_error_device_not_found">TV was not found. Check the connection and retry.</string><string name="cast_error_invalid_source">This media source is unsupported. Choose it from Photos or Videos.</string><string name="cast_error_network">Network error. Check your Wi-Fi and retry.</string><string name="cast_error_discovery">The TV timed out. Retry the cast.</string><string name="cast_error_unsupported_device">This TV does not support receiving this media.</string><string name="cast_error_unsupported_command">The TV rejected this cast command.</string><string name="cast_error_media_registration">Could not register the media with the TV. Retry.</string><string name="cast_error_device_rejected">The TV rejected the media request.</string><string name="cast_error_invalid_credentials">TV credentials are invalid. Remove the TV and pair again.</string><string name="cast_error_certificate_changed">The TV certificate changed. Remove the TV and pair again.</string><string name="cast_error_protocol">The TV protocol request failed. Retry.</string>
     <string name="casting_to_tv">Casting to %1$s</string>
 
     <!-- Settings & Auth -->

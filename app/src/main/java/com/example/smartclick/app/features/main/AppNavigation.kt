@@ -147,7 +147,7 @@ fun AppNavigation(
             )
         }
         composable(NavRoutes.MAIN) {
-            MainAppScreen()
+            MainAppScreen(onNavigateToPremium = { navController.navigate(NavRoutes.PREMIUM) })
         }
     }
 }

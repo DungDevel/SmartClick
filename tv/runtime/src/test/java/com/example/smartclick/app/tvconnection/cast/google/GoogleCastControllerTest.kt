@@ -338,6 +338,108 @@ class GoogleCastControllerTest {
         }
     }
 
+    @Test(timeout = 15000)
+    fun `local media is unregistered after successful stop`() = runBlocking {
+        withLocalMediaCast { controller, _ ->
+            assertTrue(controller.controlCast(CastCommand.Stop).isSuccess)
+            coVerify(exactly = 1) { mockLocalMediaServer.unregisterMedia("google-session-1") }
+        }
+    }
+
+    @Test(timeout = 15000)
+    fun `local media is unregistered when stop request fails`() = runBlocking {
+        withLocalMediaCast(stopFailure = true) { controller, _ ->
+            assertTrue(controller.controlCast(CastCommand.Stop).isFailure)
+            coVerify(exactly = 1) { mockLocalMediaServer.unregisterMedia("google-session-1") }
+        }
+    }
+
+    @Test(timeout = 15000)
+    fun `teardown called twice unregisters local media once`() = runBlocking {
+        withLocalMediaCast { controller, _ ->
+            assertTrue(controller.teardown().isSuccess)
+            assertTrue(controller.teardown().isSuccess)
+            coVerify(exactly = 1) { mockLocalMediaServer.unregisterMedia("google-session-1") }
+        }
+    }
+
+    @Test(timeout = 15000)
+    fun `second local cast unregisters first media session`() = runBlocking {
+        withLocalMediaCast { controller, _ ->
+            assertTrue(controller.castMedia("content://media/second", "video/mp4", CastMediaType.VIDEO, "Second").isSuccess)
+            coVerify(exactly = 1) { mockLocalMediaServer.unregisterMedia("google-session-1") }
+        }
+    }
+
+    @Test(timeout = 15000)
+    fun `failed load after registration unregisters local media`() = runBlocking {
+        withLocalMediaCast(loadFailure = true) { _, firstResult ->
+            assertTrue(firstResult.isFailure)
+            coVerify(exactly = 1) { mockLocalMediaServer.unregisterMedia("google-session-1") }
+        }
+    }
+
+    private suspend fun withLocalMediaCast(
+        stopFailure: Boolean = false,
+        loadFailure: Boolean = false,
+        action: suspend (GoogleCastController, Result<Unit>) -> Unit
+    ) = kotlinx.coroutines.coroutineScope {
+        val registeredIds = mutableListOf<String>()
+        coEvery { mockLocalMediaServer.registerMedia(any(), any(), any()) } answers {
+            val id = "google-session-${registeredIds.size + 1}"
+            registeredIds += id
+            CastMediaSession(id, "token-$id", "http://192.168.1.50:8080/$id", firstArg(), secondArg(), thirdArg())
+        }
+        val transportId = "transport-local-cleanup"
+        val serverJob = runFullCastMockServer(transportId) { payload, output ->
+            when (payload.optString("type")) {
+                "LOAD" -> {
+                    val requestId = payload.optInt("requestId")
+                    if (loadFailure) {
+                        CastV2Framing.writeFrame(output, buildMediaErrorMessage(transportId, requestId, "LOAD_FAILED"))
+                    } else {
+                        CastV2Framing.writeFrame(output, buildMediaStatusMessage(transportId, requestId, "BUFFERING", mediaSessionId = 1))
+                    }
+                }
+                "STOP" -> {
+                    val requestId = payload.optInt("requestId")
+                    if (stopFailure) {
+                        CastV2Framing.writeFrame(output, buildMediaErrorMessage(transportId, requestId, "INVALID_REQUEST"))
+                    } else {
+                        CastV2Framing.writeFrame(output, buildMediaStatusMessage(transportId, requestId, "IDLE", mediaSessionId = 1, idleReason = "CANCELLED"))
+                    }
+                }
+            }
+        }
+        val controller = GoogleCastController(
+            ipAddress = "127.0.0.1",
+            port = serverPort,
+            localMediaServer = mockLocalMediaServer,
+            sslSocketFactory = mockSslSocketFactory,
+            authManager = authManager
+        )
+        try {
+            val firstResult = controller.castMedia("content://media/first", "video/mp4", CastMediaType.VIDEO, "First")
+            action(controller, firstResult)
+        } finally {
+            controller.teardown()
+            closeAcceptedSockets()
+            serverJob.cancelAndJoin()
+        }
+    }
+
+    private fun buildMediaErrorMessage(transportId: String, requestId: Int, type: String): CastMessage {
+        val payload = JSONObject().put("type", type).put("requestId", requestId)
+        return CastMessage.newBuilder()
+            .setProtocolVersion(CastMessage.ProtocolVersion.CASTV2_1_0)
+            .setSourceId(transportId)
+            .setDestinationId(GoogleCastMediaController.SENDER_ID)
+            .setNamespace(GoogleCastMediaController.MEDIA_NAMESPACE)
+            .setPayloadType(CastMessage.PayloadType.STRING)
+            .setPayloadUtf8(payload.toString())
+            .build()
+    }
+
     @Test(timeout = 10000)
     fun `controlCast fails when no active media session exists`() = runBlocking {
         val controller = GoogleCastController(

@@ -5,5 +5,6 @@ data class MediaItem(
     val title: String,
     val url: String,
     val mimeType: String, // e.g., "video/mp4", "image/jpeg"
-    val thumbnailUrl: String? = null
+    val thumbnailUrl: String? = null,
+    val sizeBytes: Long? = null
 )

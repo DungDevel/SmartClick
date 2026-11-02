@@ -32,6 +32,7 @@ class LgWebOsCastController(
     )
 
     private var activeSession: MediaViewerSession? = null
+    private var registeredMediaSessionId: String? = null
 
     override suspend fun castMedia(
         url: String,
@@ -61,12 +62,14 @@ class LgWebOsCastController(
             })
             activeSession = null
         }
+        releaseRegisteredMedia()
 
         _castPlaybackState.value = CastPlaybackState.BUFFERING
 
         val externalUrl = if (url.startsWith("content://")) {
             registeringLocalMedia = true
             val session = localMediaServer.registerMedia(android.net.Uri.parse(url), mimeType)
+            registeredMediaSessionId = session.sessionId
             registeringLocalMedia = false
             session.mediaUrl
         } else {
@@ -83,34 +86,37 @@ class LgWebOsCastController(
 
         val result = transport.sendRequest("ssap://media.viewer/open", payload)
 
-        return result.fold(
-            onSuccess = { response ->
-                val sessionId = response.optString("sessionId")
-                val appId = response.optString("appId", response.optString("id"))
-                if (sessionId.isNotEmpty()) {
-                    activeSession = MediaViewerSession(sessionId, appId.takeIf { it.isNotEmpty() }, externalUrl)
-                    // Treat MediaViewerReady as BUFFERING until explicit playback confirm (or just keep it in BUFFERING)
-                    _castPlaybackState.value = CastPlaybackState.BUFFERING
-                    Result.success(Unit)
-                } else {
-                    _castPlaybackState.value = CastPlaybackState.IDLE
-                    Result.failure(CastError.ProtocolCommandFailed("Missing sessionId in response"))
-                }
-            },
-            onFailure = { error ->
-                _castPlaybackState.value = CastPlaybackState.IDLE
-                Result.failure(error)
-            }
-        )
+        if (result.isFailure) {
+            _castPlaybackState.value = CastPlaybackState.IDLE
+            releaseRegisteredMedia()
+            return Result.failure(result.exceptionOrNull() ?: CastError.ProtocolCommandFailed("Media open failed"))
+        }
+        val response = result.getOrThrow()
+        val sessionId = response.optString("sessionId")
+        val appId = response.optString("appId", response.optString("id"))
+        if (sessionId.isEmpty()) {
+            _castPlaybackState.value = CastPlaybackState.IDLE
+            releaseRegisteredMedia()
+            return Result.failure(CastError.ProtocolCommandFailed("Missing sessionId in response"))
+        }
+        activeSession = MediaViewerSession(sessionId, appId.takeIf { it.isNotEmpty() }, externalUrl)
+        // Treat MediaViewerReady as BUFFERING until explicit playback confirm.
+        _castPlaybackState.value = CastPlaybackState.BUFFERING
+        Result.success(Unit)
         } catch (e: Exception) {
             _castPlaybackState.value = CastPlaybackState.IDLE
             _castSessionInfo.value = CastSessionInfo()
-            Result.failure(if (registeringLocalMedia) CastError.MediaRegistrationFailed(e) else CastError.NetworkError(e))
+            releaseRegisteredMedia()
+            Result.failure(if (registeringLocalMedia) {
+                if (e is com.example.smartclick.app.tvconnection.cast.NoLanAddressException) CastError.NoLanAddress(e)
+                else CastError.MediaRegistrationFailed(e)
+            } else CastError.NetworkError(e))
         }
     }
 
     override suspend fun controlCast(command: CastCommand): Result<Unit> {
         if (!transport.isConnected) {
+            if (command == CastCommand.Stop) releaseRegisteredMedia()
             return Result.failure(CastError.NetworkError(Exception("Not connected")))
         }
 
@@ -124,9 +130,13 @@ class LgWebOsCastController(
                 res.map { Unit }
             }
             CastCommand.Stop -> {
-                val res = transport.sendRequest("ssap://media.controls/stop")
-                if (res.isSuccess) _castPlaybackState.value = CastPlaybackState.IDLE
-                res.map { Unit }
+                try {
+                    val res = transport.sendRequest("ssap://media.controls/stop")
+                    if (res.isSuccess) _castPlaybackState.value = CastPlaybackState.IDLE
+                    res.map { Unit }
+                } finally {
+                    releaseRegisteredMedia()
+                }
             }
             is CastCommand.SeekTo, is CastCommand.SeekBy -> {
                 Result.failure(CastError.UnsupportedCommand("Seek is not currently implemented for LG SSAP directly via open endpoint requirements"))
@@ -143,14 +153,31 @@ class LgWebOsCastController(
         _castPlaybackState.value = CastPlaybackState.IDLE
         _castSessionInfo.value = CastSessionInfo()
 
-        val res = if (session != null && transport.isConnected) {
-            transport.sendRequest("ssap://media.viewer/close", JSONObject().apply {
-                put("sessionId", session.sessionId)
-            }).map { Unit }
-        } else {
-            Result.success(Unit)
+        return try {
+            if (session != null && transport.isConnected) {
+                transport.sendRequest("ssap://media.viewer/close", JSONObject().apply {
+                    put("sessionId", session.sessionId)
+                }).map { Unit }
+            } else {
+                Result.success(Unit)
+            }
+        } catch (error: Exception) {
+            Result.failure(error)
+        } finally {
+            try {
+                releaseRegisteredMedia()
+            } finally {
+                transport.disconnect()
+            }
         }
-        transport.disconnect()
-        return res
+    }
+
+    private suspend fun releaseRegisteredMedia() {
+        val sessionId = registeredMediaSessionId ?: return
+        try {
+            localMediaServer.unregisterMedia(sessionId)
+        } finally {
+            registeredMediaSessionId = null
+        }
     }
 }

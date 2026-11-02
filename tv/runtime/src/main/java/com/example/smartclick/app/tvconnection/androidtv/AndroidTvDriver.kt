@@ -107,17 +107,27 @@ class AndroidTvDriver : IProtocolDriver {
             authManager = authManager,
             onDeviceAuthenticated = { leafSha256 ->
                 val ref = device.credentialsRef ?: throw IllegalStateException("Cast TLS pin cannot be saved without credential reference")
-                val store = credentialStore ?: throw IllegalStateException("Credential store unavailable for Cast TLS pin")
-                val updated = values.toMutableMap().apply {
-                    put(CAST_TLS_SHA256, leafSha256)
-                    put(CAST_TLS_PIN_ESTABLISHED, "true")
-                }
-                if (!store.updateCredentials(device.id, ref, Credentials(updated))) {
-                    throw IllegalStateException("Cast TLS credential record no longer exists")
-                }
+                persistCastTlsPin(device.id, ref, leafSha256)
             }
         )
         return controller
+    }
+
+    internal suspend fun persistCastTlsPin(
+        deviceId: String,
+        credentialsRef: String,
+        leafSha256: String
+    ) {
+        val store = credentialStore ?: throw IllegalStateException("Credential store unavailable for Cast TLS pin")
+        val current = store.getCredentials(deviceId, credentialsRef)
+            ?: throw IllegalStateException("Cast TLS credential record no longer exists")
+        val updated = current.protocolValues.toMutableMap().apply {
+            put(CAST_TLS_SHA256, leafSha256)
+            put(CAST_TLS_PIN_ESTABLISHED, "true")
+        }
+        if (!store.updateCredentials(deviceId, credentialsRef, Credentials(updated))) {
+            throw IllegalStateException("Cast TLS credential record no longer exists")
+        }
     }
 
     companion object {

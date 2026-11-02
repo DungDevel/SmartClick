@@ -5,6 +5,7 @@ import com.example.smartclick.app.domain.model.MediaItem
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.model.TvProtocol
 import com.example.smartclick.app.domain.connection.DriverRegistry
+import com.example.smartclick.app.domain.connection.CastError
 import com.example.smartclick.app.domain.connection.ICastController
 import com.example.smartclick.app.domain.connection.IProtocolDriver
 import com.example.smartclick.app.domain.connection.ITvCredentialStore
@@ -101,5 +102,13 @@ class CastMediaUseCaseTest {
 
         assertTrue(result.isFailure)
         assertEquals("pinned cast setup failed", result.exceptionOrNull()?.message)
+    }
+
+    @Test
+    fun `unsupported MIME is classified and never becomes audio`() = runTest {
+        val result = useCase(MediaItem("m2", "Unknown", "content://picker/unknown", "application/octet-stream"))
+
+        assertTrue(result.exceptionOrNull() is CastError.UnsupportedMediaFormat)
+        io.mockk.verify(exactly = 0) { mockDriver.createCastController(any(), any()) }
     }
 }

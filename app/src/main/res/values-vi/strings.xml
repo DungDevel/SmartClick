@@ -104,6 +104,16 @@
     <string name="recommended">Đề xuất</string>
     <string name="cast_title">Truyền nội dung</string>
     <string name="cast_desc">Chia sẻ màn hình hoặc nội dung</string>
+    <string name="cast_pick_media">Chọn ảnh hoặc video</string>
+    <string name="cast_unsupported_format">Chỉ hỗ trợ định dạng ảnh hoặc video phù hợp.</string>
+    <string name="cast_media_unavailable">Không thể truy cập nội dung đã chọn. Hãy chọn lại.</string>
+    <string name="cast_not_connected">Hãy kết nối với TV đã chọn trước khi truyền.</string>
+    <string name="cast_no_visual_capability">TV đã chọn không hỗ trợ nhận ảnh hoặc video.</string>
+    <string name="cast_capability_missing">TV đã chọn không hỗ trợ loại nội dung này.</string>
+    <string name="cast_state_idle">Sẵn sàng</string><string name="cast_state_preparing">Đang chuẩn bị</string><string name="cast_state_sent">Đã gửi tới TV</string><string name="cast_state_playing">Đang phát</string><string name="cast_state_error">Lỗi</string>
+    <string name="cast_error_no_lan">Không có địa chỉ mạng Wi-Fi riêng để chia sẻ nội dung này.</string>
+    <string name="cast_action_retry">Thử lại</string><string name="cast_action_repair">Gỡ TV và ghép nối lại</string><string name="cast_action_choose">Chọn nội dung</string>
+    <string name="cast_error_device_not_found">Không tìm thấy TV. Kiểm tra kết nối rồi thử lại.</string><string name="cast_error_invalid_source">Nguồn media này không được hỗ trợ. Hãy chọn từ Ảnh hoặc Video.</string><string name="cast_error_network">Lỗi mạng. Kiểm tra Wi-Fi rồi thử lại.</string><string name="cast_error_discovery">TV hết thời gian phản hồi. Hãy thử truyền lại.</string><string name="cast_error_unsupported_device">TV này không hỗ trợ nhận nội dung.</string><string name="cast_error_unsupported_command">TV từ chối lệnh truyền này.</string><string name="cast_error_media_registration">Không đăng ký được media với TV. Hãy thử lại.</string><string name="cast_error_device_rejected">TV từ chối yêu cầu media.</string><string name="cast_error_invalid_credentials">Thông tin TV không hợp lệ. Hãy gỡ TV và ghép nối lại.</string><string name="cast_error_certificate_changed">Chứng chỉ TV đã đổi. Hãy gỡ TV và ghép nối lại.</string><string name="cast_error_protocol">Yêu cầu giao thức TV thất bại. Hãy thử lại.</string>
     <string name="casting_to_tv">Đang truyền tới %1$s</string>
 
     <!-- Settings & Auth -->
