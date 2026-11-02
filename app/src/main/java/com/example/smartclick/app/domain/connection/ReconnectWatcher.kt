@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.min
 
 /** Tracks transient command failures and retries the device that was active when retry began. */
@@ -24,9 +25,9 @@ class ReconnectWatcher @Inject constructor(
 ) {
     private var consecutiveFailures = 0
     private var isReconnecting = false
-    private var currentReconnectJob: Job? = null
-    private var reconnectGeneration = 0L
-    private var reconnectDeviceId: String? = null
+    @Volatile private var currentReconnectJob: Job? = null
+    private val reconnectGeneration = AtomicLong(0L)
+    @Volatile private var reconnectDeviceId: String? = null
     private val mutex = Mutex()
 
     private val FAILURE_THRESHOLD = 2
@@ -35,13 +36,15 @@ class ReconnectWatcher @Inject constructor(
     private val MAX_DELAY_MS = 10000L
     private val BACKOFF_MULTIPLIER = 2.0
 
+    fun isReconnectingForDevice(deviceId: String): Boolean = reconnectDeviceId == deviceId
+
     fun onCommandResult(success: Boolean) {
+        if (success) reconnectGeneration.incrementAndGet()
         scope.launch {
             mutex.withLock {
                 if (success) {
                     consecutiveFailures = 0
                     isReconnecting = false
-                    reconnectGeneration++
                     reconnectDeviceId = null
                     currentReconnectJob?.cancel()
                     currentReconnectJob = null
@@ -56,9 +59,10 @@ class ReconnectWatcher @Inject constructor(
     }
 
     fun cancelReconnect() {
+        reconnectGeneration.incrementAndGet()
+        currentReconnectJob?.cancel()
         scope.launch {
             mutex.withLock {
-                reconnectGeneration++
                 isReconnecting = false
                 consecutiveFailures = 0
                 reconnectDeviceId = null
@@ -78,14 +82,15 @@ class ReconnectWatcher @Inject constructor(
 
         isReconnecting = true
         reconnectDeviceId = device.id
-        val generation = ++reconnectGeneration
+        val generation = reconnectGeneration.incrementAndGet()
         currentReconnectJob = scope.launch {
             val deviceChangeMonitor = launch {
                 activeTvSession.currentController.collect { controller ->
-                    if (controller?.device?.id != device.id) {
+                    val controllerDeviceId = controller?.device?.id
+                    if (controllerDeviceId != null && controllerDeviceId != device.id) {
                         mutex.withLock {
-                            if (reconnectGeneration == generation && isReconnecting) {
-                                reconnectGeneration++
+                            if (reconnectGeneration.get() == generation && isReconnecting) {
+                                reconnectGeneration.incrementAndGet()
                                 consecutiveFailures = 0
                                 isReconnecting = false
                                 reconnectDeviceId = null
@@ -189,11 +194,11 @@ class ReconnectWatcher @Inject constructor(
     }
 
     private fun isCurrentReconnectLocked(generation: Long, deviceId: String): Boolean =
-        isReconnecting && reconnectGeneration == generation && reconnectDeviceId == deviceId &&
-            activeTvSession.currentController.value?.device?.id == deviceId
+        isReconnecting && reconnectGeneration.get() == generation && reconnectDeviceId == deviceId &&
+            activeTvSession.currentController.value?.device?.id.let { it == null || it == deviceId }
 
     private fun clearStaleReconnectLocked(generation: Long) {
-        if (reconnectGeneration == generation) {
+        if (reconnectGeneration.get() == generation) {
             isReconnecting = false
             reconnectDeviceId = null
             currentReconnectJob = null
