@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="command_failed">Command failed</string>
+    <string name="wol_unavailable">No valid MAC address; this TV may not support remote power-on.</string>
+    <string name="wol_failed_retry">Wake-on-LAN failed. Check the network and try again.</string>
 </resources>

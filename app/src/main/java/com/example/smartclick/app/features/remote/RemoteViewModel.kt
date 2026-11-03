@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -41,6 +42,8 @@ sealed class RemoteUiEvent {
     object CommandNotConnected : RemoteUiEvent()
     object CommandFailed : RemoteUiEvent()
     object WolSent : RemoteUiEvent()
+    object WakeOnLanUnavailable : RemoteUiEvent()
+    object WakeOnLanFailed : RemoteUiEvent()
     object VoiceNotSupportedError : RemoteUiEvent()
     object VoiceUnrecognizedError : RemoteUiEvent()
     data class VoiceError(val message: String) : RemoteUiEvent()
@@ -109,8 +112,20 @@ class RemoteViewModel @Inject constructor(
     private val _isLocked = kotlinx.coroutines.flow.MutableStateFlow(false)
     val isLocked: StateFlow<Boolean> = _isLocked.asStateFlow()
 
-    private val _muteState = MutableStateFlow(-1)
-    val muteState: StateFlow<Int> = _muteState.asStateFlow()
+    private val muteStatesByDevice = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val muteState: StateFlow<Int> = combine(
+        activeTvSession.currentController,
+        muteStatesByDevice
+    ) { controller, states ->
+        states[controller?.device?.id ?: NO_ACTIVE_DEVICE_KEY] ?: MUTE_STATE_UNKNOWN
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = MUTE_STATE_UNKNOWN
+    )
+
+    private fun currentMuteStateKey(): String =
+        activeTvSession.currentController.value?.device?.id ?: NO_ACTIVE_DEVICE_KEY
 
     fun toggleScreenLock() {
         if (!_isLocked.value) {
@@ -153,9 +168,19 @@ class RemoteViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            var lastConnectedDeviceId: String? = null
             connectionState.collect { state ->
-                if (state !is TvConnectionState.Connected) {
-                    _muteState.value = -1
+                if (state is TvConnectionState.Connected) {
+                    val connectedDeviceId = state.device.id
+                    lastConnectedDeviceId?.takeIf { it != connectedDeviceId }?.let { previousId ->
+                        muteStatesByDevice.value = muteStatesByDevice.value - previousId
+                    }
+                    lastConnectedDeviceId = connectedDeviceId
+                } else {
+                    lastConnectedDeviceId?.let { disconnectedDeviceId ->
+                        muteStatesByDevice.value = muteStatesByDevice.value - disconnectedDeviceId
+                    }
+                    lastConnectedDeviceId = null
                 }
             }
         }
@@ -250,16 +275,23 @@ class RemoteViewModel @Inject constructor(
     fun sendCommand(command: RemoteCommand) {
         viewModelScope.launch {
             if (command == RemoteCommand.Power && connectionState.value !is TvConnectionState.Connected) {
-                // Trigger Wake-on-LAN if device not connected but we have a MAC
-                activeDevice.value?.macAddress?.let { mac ->
+                val mac = activeTvSession.currentController.value?.device?.macAddress
+                if (mac.isNullOrBlank() || runCatching {
+                        com.example.smartclick.app.domain.connection.WakeOnLan.getMacBytes(mac)
+                    }.isFailure
+                ) {
+                    emitThrottledEvent(RemoteUiEvent.WakeOnLanUnavailable)
+                    return@launch
+                }
+                run {
                     val success = com.example.smartclick.app.domain.connection.WakeOnLan.wake(mac)
                     if (success) {
                         emitThrottledEvent(RemoteUiEvent.WolSent)
                     } else {
-                        emitThrottledEvent(RemoteUiEvent.CommandFailed)
+                        emitThrottledEvent(RemoteUiEvent.WakeOnLanFailed)
                     }
-                    return@launch
                 }
+                return@launch
             }
 
             sendCommandForHold(command)
@@ -267,12 +299,17 @@ class RemoteViewModel @Inject constructor(
     }
 
     suspend fun sendCommandForHold(command: RemoteCommand): SendCommandResult {
+        val deviceId = currentMuteStateKey()
+        val muteStateBeforeCommand = muteStatesByDevice.value[deviceId] ?: MUTE_STATE_UNKNOWN
         val result = sendCommandUseCase(command)
         if (result == SendCommandResult.SUCCESS) {
             when (command) {
-                RemoteCommand.MuteOn -> _muteState.value = 1
-                RemoteCommand.MuteOff -> _muteState.value = 0
-                RemoteCommand.Mute -> _muteState.value = if (_muteState.value == 1) 0 else 1
+                RemoteCommand.MuteOn -> setMuteState(deviceId, MUTE_STATE_MUTED)
+                RemoteCommand.MuteOff -> setMuteState(deviceId, MUTE_STATE_UNMUTED)
+                RemoteCommand.Mute -> setMuteState(
+                    deviceId,
+                    if (muteStateBeforeCommand == MUTE_STATE_MUTED) MUTE_STATE_UNMUTED else MUTE_STATE_MUTED
+                )
                 else -> {}
             }
         }
@@ -283,5 +320,16 @@ class RemoteViewModel @Inject constructor(
             else -> {}
         }
         return result
+    }
+
+    private fun setMuteState(deviceId: String, state: Int) {
+        muteStatesByDevice.value = muteStatesByDevice.value + (deviceId to state)
+    }
+
+    private companion object {
+        const val NO_ACTIVE_DEVICE_KEY = ""
+        const val MUTE_STATE_UNKNOWN = -1
+        const val MUTE_STATE_UNMUTED = 0
+        const val MUTE_STATE_MUTED = 1
     }
 }

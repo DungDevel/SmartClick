@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="command_failed">Error al ejecutar el comando</string>
+    <string name="wol_unavailable">No hay una dirección MAC válida; es posible que el televisor no admita el encendido remoto.</string>
+    <string name="wol_failed_retry">No se pudo enviar Wake-on-LAN. Comprueba la red e inténtalo de nuevo.</string>
 </resources>

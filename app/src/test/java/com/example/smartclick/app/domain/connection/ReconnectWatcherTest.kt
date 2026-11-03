@@ -3,12 +3,19 @@ package com.example.smartclick.app.domain.connection
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.model.TvProtocol
 import com.example.smartclick.app.domain.usecase.ConnectToTvUseCase
+import com.example.smartclick.app.domain.usecase.RemoveDeviceUseCase
+import com.example.smartclick.app.domain.repository.ITvDeviceRepository
+import com.example.smartclick.app.domain.connection.ITvCredentialStore
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -34,10 +41,11 @@ class ReconnectWatcherTest {
     )
 
     private val mockController = mockk<ITvController>(relaxed = true)
+    private val controllerFlow = MutableStateFlow<ITvController?>(mockController)
 
     @Before
     fun setup() {
-        every { activeTvSession.currentController } returns MutableStateFlow(mockController)
+        every { activeTvSession.currentController } returns controllerFlow
         every { mockController.device } returns sampleDevice
         reconnectWatcher = ReconnectWatcher(activeTvSession, connectToTvUseCase, testScope)
     }
@@ -131,6 +139,31 @@ class ReconnectWatcherTest {
     }
 
     @Test
+    fun `cancelReconnect cancels in flight connect before controller becomes null`() = testScope.runTest {
+        var attempts = 0
+        var cancellationObserved = false
+        coEvery { connectToTvUseCase(sampleDevice) } coAnswers {
+            attempts++
+            suspendCancellableCoroutine { continuation ->
+                continuation.invokeOnCancellation { cancellationObserved = true }
+            }
+        }
+
+        reconnectWatcher.onCommandResult(false)
+        reconnectWatcher.onCommandResult(false)
+        testScope.advanceTimeBy(1600L)
+        assertEquals(1, attempts)
+
+        reconnectWatcher.cancelReconnect()
+        assertTrue("in-flight connect must be cancelled before cancelReconnect returns", cancellationObserved)
+        controllerFlow.value = null
+        testScope.advanceUntilIdle()
+
+        assertEquals(1, attempts)
+        assertNull(controllerFlow.value)
+    }
+
+    @Test
     fun `exponential delay progression and max cap`() = testScope.runTest {
         val timestamps = mutableListOf<Long>()
         coEvery { connectToTvUseCase(sampleDevice) } answers {
@@ -174,8 +207,7 @@ class ReconnectWatcherTest {
     }
 
     @Test
-    fun `session invalidation during backoff stops retry work`() = testScope.runTest {
-        val controllerFlow = MutableStateFlow<ITvController?>(mockController)
+    fun `null active controller during backoff does not cancel retry work`() = testScope.runTest {
         every { activeTvSession.currentController } returns controllerFlow
 
         coEvery { connectToTvUseCase(sampleDevice) } returns ConnectOutcome.Failed("Timeout")
@@ -187,10 +219,177 @@ class ReconnectWatcherTest {
         // Invalidate session (set controller to null)
         controllerFlow.value = null
 
+        testScope.advanceUntilIdle()
+
+        // Null can be produced by a failed connect attempt; only explicit cancellation
+        // or a different non-null device invalidates the reconnect generation.
+        coVerify(exactly = 5) { connectToTvUseCase(sampleDevice) }
+    }
+
+    @Test
+    fun `switching active device during backoff never reconnects the previous device`() = testScope.runTest {
+        val secondDevice = sampleDevice.copy(id = "dev_2", name = "Other TV", ipAddress = "192.168.1.51")
+        val secondController = mockk<ITvController>(relaxed = true)
+        every { secondController.device } returns secondDevice
+        controllerFlow.value = mockController
+        coEvery { connectToTvUseCase(any()) } returns ConnectOutcome.Failed("Timeout")
+
+        reconnectWatcher.onCommandResult(false)
+        reconnectWatcher.onCommandResult(false)
+        testScope.advanceTimeBy(500L)
+        controllerFlow.value = secondController
         testScope.advanceTimeBy(30000L)
 
-        // Should not have executed connect since session became null
-        coVerify(exactly = 0) { connectToTvUseCase(any()) }
+        coVerify(exactly = 0) { connectToTvUseCase(sampleDevice) }
+        verify(exactly = 0) { activeTvSession.setConnectionState(match { it == TvConnectionState.Connected(sampleDevice) }) }
+    }
+
+    @Test
+    fun `successful reconnect does not write old device state after active device switches`() = testScope.runTest {
+        val secondDevice = sampleDevice.copy(id = "dev_2", name = "Other TV", ipAddress = "192.168.1.51")
+        val secondController = mockk<ITvController>(relaxed = true)
+        every { secondController.device } returns secondDevice
+        val reconnectStarted = CompletableDeferred<Unit>()
+        val finishReconnect = CompletableDeferred<ConnectOutcome>()
+        coEvery { connectToTvUseCase(sampleDevice) } coAnswers {
+            reconnectStarted.complete(Unit)
+            finishReconnect.await()
+        }
+
+        reconnectWatcher.onCommandResult(false)
+        reconnectWatcher.onCommandResult(false)
+        testScope.advanceTimeBy(1600L)
+        assertTrue("reconnect attempt should be in progress", reconnectStarted.isCompleted)
+
+        controllerFlow.value = secondController
+        finishReconnect.complete(ConnectOutcome.Connected)
+        testScope.advanceUntilIdle()
+
+        verify(exactly = 0) {
+            activeTvSession.setConnectionState(TvConnectionState.Connected(sampleDevice))
+        }
+    }
+
+
+    @Test
+    fun `reconnect retries after failed use case clears active controller`() = testScope.runTest {
+        var attempts = 0
+        coEvery { connectToTvUseCase(sampleDevice) } coAnswers {
+            attempts++
+            val controller = mockk<ITvController>(relaxed = true)
+            every { controller.device } returns sampleDevice.copy()
+            controllerFlow.value = controller
+
+            if (attempts == 1) {
+                controllerFlow.value = null
+                ConnectOutcome.Failed("Temporary network failure")
+            } else {
+                ConnectOutcome.Connected
+            }
+        }
+
+        reconnectWatcher.onCommandResult(false)
+        reconnectWatcher.onCommandResult(false)
+        testScope.advanceTimeBy(6000L)
+
+        assertEquals("failed attempt should be retried for the same TV", 2, attempts)
+        verify { activeTvSession.setConnectionState(TvConnectionState.Connected(sampleDevice)) }
+    }
+
+    @Test
+    fun `maximum failed attempts finish in Failed state exactly once`() = testScope.runTest {
+        val states = mutableListOf<TvConnectionState>()
+        every { activeTvSession.setConnectionState(any()) } answers {
+            states += firstArg<TvConnectionState>()
+        }
+        coEvery { connectToTvUseCase(sampleDevice) } returns ConnectOutcome.Failed("Temporary network failure")
+
+        reconnectWatcher.onCommandResult(false)
+        reconnectWatcher.onCommandResult(false)
+        testScope.advanceTimeBy(60000L)
+
+        coVerify(exactly = 5) { connectToTvUseCase(sampleDevice) }
+        assertEquals(
+            1,
+            states.count { it is TvConnectionState.Failed && it.reason.startsWith("Connection dropped after") }
+        )
+        assertTrue(states.last() is TvConnectionState.Failed)
+    }
+
+    @Test
+    fun `transient null followed by the same device controller does not cancel reconnect`() = testScope.runTest {
+        val replacementController = mockk<ITvController>(relaxed = true)
+        every { replacementController.device } returns sampleDevice.copy()
+        val reconnectStarted = CompletableDeferred<Unit>()
+        val finishReconnect = CompletableDeferred<ConnectOutcome>()
+        coEvery { connectToTvUseCase(sampleDevice) } coAnswers {
+            reconnectStarted.complete(Unit)
+            finishReconnect.await()
+        }
+
+        reconnectWatcher.onCommandResult(false)
+        reconnectWatcher.onCommandResult(false)
+        testScope.advanceTimeBy(1600L)
+        assertTrue("reconnect attempt should be in progress", reconnectStarted.isCompleted)
+
+        controllerFlow.value = null
+        testScope.runCurrent()
+        controllerFlow.value = replacementController
+        finishReconnect.complete(ConnectOutcome.Connected)
+        testScope.advanceUntilIdle()
+
+        verify { activeTvSession.setConnectionState(TvConnectionState.Connected(sampleDevice)) }
+    }
+
+    @Test
+    fun `removing reconnect target cancels before clearing controller and prevents another attempt`() = testScope.runTest {
+        val reconnectStarted = CompletableDeferred<Unit>()
+        val finishReconnect = CompletableDeferred<ConnectOutcome>()
+        val lateController = mockk<ITvController>(relaxed = true)
+        every { lateController.device } returns sampleDevice
+        val states = mutableListOf<TvConnectionState>()
+        val lifecycle = mutableListOf<String>()
+        every { mockController.connectionState } returns MutableStateFlow(TvConnectionState.Connected(sampleDevice))
+        every { activeTvSession.setConnectionState(any()) } answers {
+            states += firstArg<TvConnectionState>()
+        }
+        coEvery { connectToTvUseCase(sampleDevice) } coAnswers {
+            reconnectStarted.complete(Unit)
+            val outcome = finishReconnect.await()
+            if (outcome is ConnectOutcome.Connected) {
+                activeTvSession.setActiveController(lateController)
+            }
+            outcome
+        }
+
+        reconnectWatcher.onCommandResult(false)
+        reconnectWatcher.onCommandResult(false)
+        testScope.advanceTimeBy(1600L)
+        assertTrue("reconnect attempt should be in progress", reconnectStarted.isCompleted)
+
+        val deviceRepository = mockk<ITvDeviceRepository>(relaxed = true)
+        coEvery { deviceRepository.getDeviceById(sampleDevice.id) } returns sampleDevice
+        coEvery { mockController.disconnect() } coAnswers { lifecycle += "disconnect" }
+        every { activeTvSession.setActiveController(null) } answers {
+            lifecycle += "clear"
+            controllerFlow.value = null
+        }
+        val removeUseCase = RemoveDeviceUseCase(
+            deviceRepository,
+            activeTvSession,
+            mockk<ITvCredentialStore>(relaxed = true),
+            reconnectWatcher
+        )
+
+        removeUseCase(sampleDevice.id)
+        finishReconnect.complete(ConnectOutcome.Connected)
+        testScope.advanceUntilIdle()
+
+        assertEquals(listOf("disconnect", "clear"), lifecycle)
+        coVerify(exactly = 1) { connectToTvUseCase(sampleDevice) }
+        verify(exactly = 0) { activeTvSession.setActiveController(lateController) }
+        assertNull(controllerFlow.value)
+        assertTrue(states.none { it is TvConnectionState.Connected || it is TvConnectionState.Failed })
     }
 
     @Test
@@ -205,8 +404,8 @@ class ReconnectWatcherTest {
 
         for (outcome in permanentOutcomes) {
             clearMocks(connectToTvUseCase, activeTvSession, answers = false, recordedCalls = true)
-            every { activeTvSession.currentController } returns MutableStateFlow(mockController)
-            every { activeTvSession.currentController.value } returns mockController
+            val controllerFlow = MutableStateFlow<ITvController?>(mockController)
+            every { activeTvSession.currentController } returns controllerFlow
             every { mockController.device } returns sampleDevice
             coEvery { connectToTvUseCase(sampleDevice) } returns outcome
 

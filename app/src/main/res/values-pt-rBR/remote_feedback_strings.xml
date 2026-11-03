@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="command_failed">Falha ao executar o comando</string>
+    <string name="wol_unavailable">Não há um endereço MAC válido; talvez a TV não aceite ligar remotamente.</string>
+    <string name="wol_failed_retry">Falha ao enviar Wake-on-LAN. Verifique a rede e tente novamente.</string>
 </resources>
