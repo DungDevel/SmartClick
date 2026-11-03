@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -63,6 +64,7 @@ fun RemoteScreen(
     val controlsEnabled = connectionState is TvConnectionState.Connected
     val isHapticEnabled by viewModel.isHapticEnabled.collectAsState()
     val haptic = LocalHapticFeedback.current
+    val coroutineScope = rememberCoroutineScope()
     val networkState by viewModel.networkState.collectAsState()
     val capabilities by viewModel.capabilities.collectAsState()
 
@@ -134,12 +136,12 @@ fun RemoteScreen(
         }
     }
 
-    fun dispatchCommand(command: RemoteCommand) {
+    fun dispatchCommand(command: RemoteCommand, withHaptic: Boolean = true) {
         if (isLocked) {
             android.widget.Toast.makeText(context, context.getString(R.string.remote_is_locked), android.widget.Toast.LENGTH_SHORT).show()
             return
         }
-        if (isHapticEnabled) {
+        if (withHaptic && isHapticEnabled) {
             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         }
 
@@ -159,6 +161,20 @@ fun RemoteScreen(
         }
 
         viewModel.sendCommand(command)
+    }
+
+    val dispatchPointerMove by rememberUpdatedState<(RemoteCommand.PointerMove) -> Unit>({
+        dispatchCommand(it, withHaptic = false)
+    })
+    val pointerMoveHaptic by rememberUpdatedState {
+        if (isHapticEnabled && !isLocked) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+    }
+    val pointerMoveDispatcher = remember(coroutineScope) {
+        TouchpadPointerMoveDispatcher(
+            scope = coroutineScope,
+            send = { dispatchPointerMove(it) },
+            haptic = { pointerMoveHaptic() }
+        )
     }
 
     suspend fun dispatchHeldCommand(command: RemoteCommand): SendCommandResult {
@@ -493,7 +509,8 @@ fun RemoteScreen(
                     activeMode == RemoteMode.TOUCHPAD -> {
                         when (RemotePadBehavior.layoutFor(capabilities)) {
                             RemotePadLayout.POINTER -> TouchPad(
-                                onMove = { dx, dy -> dispatchCommand(RemoteCommand.PointerMove(dx, dy)) },
+                                onMove = pointerMoveDispatcher::onMove,
+                                onDragEnd = pointerMoveDispatcher::onDragEnd,
                                 onTap = { dispatchCommand(RemoteCommand.PointerClick) },
                                 onLeftClick = { dispatchCommand(RemoteCommand.PointerClick) },
                                 onRightClick = { dispatchCommand(RemoteCommand.Back) },
