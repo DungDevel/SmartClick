@@ -326,6 +326,17 @@ class RemoteViewModel @Inject constructor(
         muteStatesByDevice.value = muteStatesByDevice.value + (deviceId to state)
     }
 
+    fun confirmPowerOff() {
+        val capabilities = activeTvSession.currentController.value?.capabilities ?: emptySet()
+        val isConnected = connectionState.value is TvConnectionState.Connected
+        val command = when {
+            capabilities.contains(com.example.smartclick.app.domain.model.TvCapability.POWER_OFF) -> RemoteCommand.PowerOff
+            capabilities.contains(com.example.smartclick.app.domain.model.TvCapability.POWER_TOGGLE) && isConnected -> RemoteCommand.Power
+            else -> RemoteCommand.PowerOff
+        }
+        sendCommand(command)
+    }
+
     private companion object {
         const val NO_ACTIVE_DEVICE_KEY = ""
         const val MUTE_STATE_UNKNOWN = -1

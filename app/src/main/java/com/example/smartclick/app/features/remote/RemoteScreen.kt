@@ -195,7 +195,7 @@ fun RemoteScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showPowerOffDialog = false
-                    viewModel.sendCommand(RemoteCommand.PowerOff)
+                    viewModel.confirmPowerOff()
                 }) {
                     Text(stringResource(R.string.yes))
                 }
