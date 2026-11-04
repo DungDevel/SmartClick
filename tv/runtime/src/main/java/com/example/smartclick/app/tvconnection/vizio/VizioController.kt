@@ -5,6 +5,8 @@ import com.example.smartclick.app.domain.connection.TvConnectionState
 import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.domain.model.TvDevice
+import com.example.smartclick.app.domain.connection.ConnectProgress
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,11 +17,14 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.net.InetSocketAddress
+import java.net.Socket
 
 class VizioController(
     private val ipAddress: String,
     private val authToken: String?,
-    private val httpClient: OkHttpClient
+    private val httpClient: OkHttpClient,
+    private val probePort: Int = 7345
 ) : ITvController {
 
     private val _connectionState = MutableStateFlow<TvConnectionState>(TvConnectionState.Idle)
@@ -38,9 +43,21 @@ class VizioController(
     )
 
     override suspend fun connect(device: TvDevice): Result<Unit> = withContext(Dispatchers.IO) {
-        currentDevice = device
-        _connectionState.value = TvConnectionState.Connected(device)
-        Result.success(Unit)
+        _connectionState.value = TvConnectionState.Connecting(ConnectProgress.CONNECTING_SOCKET)
+        try {
+            Socket().use { socket ->
+                socket.connect(InetSocketAddress(ipAddress, probePort), 1500)
+            }
+            currentDevice = device
+            _connectionState.value = TvConnectionState.Connected(device)
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            val msg = "Connection failed: ${e.message}"
+            _connectionState.value = TvConnectionState.Failed(msg)
+            Result.failure(e)
+        }
     }
 
     override suspend fun disconnect() {
