@@ -40,6 +40,18 @@ class RokuDriverTest : AbstractDriverContractTest() {
     }
 
     @Test
+    fun `capabilities should include POWER_OFF and POWER_TOGGLE`() {
+        assertTrue(
+            "Roku capability should contain POWER_OFF",
+            RokuDriver.ROKU_CAPABILITIES.contains(TvCapability.POWER_OFF)
+        )
+        assertTrue(
+            "Roku capability should contain POWER_TOGGLE",
+            RokuDriver.ROKU_CAPABILITIES.contains(TvCapability.POWER_TOGGLE)
+        )
+    }
+
+    @Test
     fun `fingerprint rejects non private destination before making a request`() = kotlinx.coroutines.test.runTest {
         val driver = RokuDriver(
             rokuControllerProvider = { mockk<RokuController>(relaxed = true) },

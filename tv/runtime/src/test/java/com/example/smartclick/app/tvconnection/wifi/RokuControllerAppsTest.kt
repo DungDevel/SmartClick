@@ -1,6 +1,7 @@
 package com.example.smartclick.app.tvconnection.wifi
 
 import com.example.smartclick.app.domain.connection.TvConnectionState
+import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.model.TvProtocol
@@ -99,5 +100,23 @@ class RokuControllerAppsTest {
     @Test fun `not connected app listing is rejected`() = runTest {
         assertTrue(controller.connectionState.value is TvConnectionState.Idle)
         assertTrue(controller.getApps().isFailure)
+    }
+
+    @Test fun `sendCommand PowerOff posts to keypress PowerOff`() = runTest {
+        connect()
+        server.enqueue(MockResponse().setResponseCode(200))
+        assertTrue(controller.sendCommand(RemoteCommand.PowerOff).isSuccess)
+        val request = server.takeRequest()
+        assertEquals("POST", request.method)
+        assertEquals("/keypress/PowerOff", request.path)
+    }
+
+    @Test fun `sendCommand Power posts to keypress Power`() = runTest {
+        connect()
+        server.enqueue(MockResponse().setResponseCode(200))
+        assertTrue(controller.sendCommand(RemoteCommand.Power).isSuccess)
+        val request = server.takeRequest()
+        assertEquals("POST", request.method)
+        assertEquals("/keypress/Power", request.path)
     }
 }
