@@ -195,7 +195,7 @@ fun RemoteScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showPowerOffDialog = false
-                    viewModel.sendCommand(RemoteCommand.PowerOff)
+                    viewModel.confirmPowerOff()
                 }) {
                     Text(stringResource(R.string.yes))
                 }
@@ -294,8 +294,9 @@ fun RemoteScreen(
             NoActiveDeviceState(onNavigateToDevices = onNavigateToDevices)
         } else {
             val contextForToast = androidx.compose.ui.platform.LocalContext.current
+            val controlsAlpha = if (controlsEnabled) (if (isLocked) 0.3f else 1f) else 0.4f
             Box(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = Modifier.fillMaxSize().alpha(if (controlsEnabled) (if (isLocked) 0.3f else 1f) else 0.4f)) {
+                Column(modifier = Modifier.fillMaxSize()) {
             // Mode + action row
             Row(
                 modifier = Modifier
@@ -317,31 +318,30 @@ fun RemoteScreen(
                     label = "alpha_pulse"
                 )
 
+                val powerState = RemotePowerButton.stateFor(connectionState, activeDevice?.macAddress?.isNotEmpty() == true)
+                val powerAlpha = RemotePowerButton.alphaFor(powerState, isLocked, pulseAlpha)
+
                 val powerBg: Color
                 val powerBorder: Color
                 val powerIconTint: Color
-                var powerAlpha = 1f
 
-                val isConnectingOrReconnecting = connectionState is TvConnectionState.Connecting || connectionState is TvConnectionState.Reconnecting
-
-                when {
-                    connectionState is TvConnectionState.Connected -> {
+                when (powerState) {
+                    RemotePowerButton.PowerVisualState.CONNECTED -> {
                         powerBg = colors.orange
                         powerBorder = Color.Transparent
                         powerIconTint = Color.White
                     }
-                    isConnectingOrReconnecting -> {
+                    RemotePowerButton.PowerVisualState.CONNECTING -> {
                         powerBg = colors.orange.copy(alpha = 0.3f)
                         powerBorder = Color.Transparent
                         powerIconTint = Color.White
-                        powerAlpha = pulseAlpha
                     }
-                    activeDevice?.macAddress?.isNotEmpty() == true -> {
+                    RemotePowerButton.PowerVisualState.WAKEABLE -> {
                         powerBg = colors.surfEl
                         powerBorder = colors.orange.copy(alpha = 0.5f)
                         powerIconTint = colors.orange
                     }
-                    else -> {
+                    RemotePowerButton.PowerVisualState.UNAVAILABLE -> {
                         powerBg = colors.surfEl
                         powerBorder = colors.bord
                         powerIconTint = colors.tx1
@@ -376,6 +376,7 @@ fun RemoteScreen(
                 // Mute (3-states: Unknown, Muted, Unmuted)
                 Box(
                     modifier = Modifier
+                        .alpha(controlsAlpha)
                         .size(45.dp)
                         .background(colors.surfEl, CircleShape)
                         .border(1.dp, colors.bord, CircleShape)
@@ -404,6 +405,7 @@ fun RemoteScreen(
                 // Mode Switcher
                 Row(
                     modifier = Modifier
+                        .alpha(controlsAlpha)
                         .width(200.dp)
                         .height(50.dp)
                         .background(
@@ -456,6 +458,7 @@ fun RemoteScreen(
                 // Lock
                 Box(
                     modifier = Modifier
+                        .alpha(controlsAlpha)
                         .size(45.dp)
                         .background(if (isLocked) colors.acc else colors.surfEl, CircleShape)
                         .border(1.dp, if (isLocked) colors.acc else colors.bord, CircleShape)
@@ -496,6 +499,7 @@ fun RemoteScreen(
             // Scrollable Body
             Column(
                 modifier = Modifier
+                    .alpha(controlsAlpha)
                     .fillMaxSize()
                     .verticalScroll(scrollState)
                     .padding(horizontal = 16.dp, vertical = 16.dp)

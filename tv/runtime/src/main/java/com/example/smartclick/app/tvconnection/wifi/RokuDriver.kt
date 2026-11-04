@@ -138,7 +138,7 @@ class RokuDriver @Inject constructor(
             TvCapability.OPEN_SEARCH_UI,
             TvCapability.DIGITS,
             TvCapability.DPAD,
-            TvCapability.BACKSPACE, TvCapability.POWER_TOGGLE,
+            TvCapability.BACKSPACE, TvCapability.POWER_TOGGLE, TvCapability.POWER_OFF,
             TvCapability.CAST_IMAGE, TvCapability.CAST_VIDEO, TvCapability.CAST_AUDIO, TvCapability.CAST_PLAYBACK
         )
     }

@@ -326,4 +326,91 @@ class RemoteViewModelTest {
         viewModel.cancelVoiceSession()
         io.mockk.verify(exactly = 1) { speechToTextEngine.destroy() }
     }
+
+    @Test
+    fun `confirmPowerOff uses PowerOff when POWER_OFF capability is present`() = runTest {
+        val controller = mockk<com.example.smartclick.app.domain.connection.ITvController>(relaxed = true)
+        every { controller.capabilities } returns setOf(com.example.smartclick.app.domain.model.TvCapability.POWER_OFF)
+        currentControllerFlow.value = controller
+        coEvery { sendCommandUseCase(RemoteCommand.PowerOff) } returns SendCommandResult.SUCCESS
+
+        viewModel.confirmPowerOff()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { sendCommandUseCase(RemoteCommand.PowerOff) }
+        coVerify(exactly = 0) { sendCommandUseCase(RemoteCommand.Power) }
+    }
+
+    @Test
+    fun `confirmPowerOff uses Power when only POWER_TOGGLE capability is present`() = runTest {
+        connectionStateFlow.value = TvConnectionState.Connected(com.example.smartclick.app.domain.model.TvDevice("1", "Test", "1.9.2.1", "00:11:22:33:44:55"))
+        val controller = mockk<com.example.smartclick.app.domain.connection.ITvController>(relaxed = true)
+        every { controller.capabilities } returns setOf(com.example.smartclick.app.domain.model.TvCapability.POWER_TOGGLE)
+        currentControllerFlow.value = controller
+        coEvery { sendCommandUseCase(RemoteCommand.Power) } returns SendCommandResult.SUCCESS
+
+        viewModel.confirmPowerOff()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { sendCommandUseCase(RemoteCommand.Power) }
+        coVerify(exactly = 0) { sendCommandUseCase(RemoteCommand.PowerOff) }
+    }
+
+    @Test
+    fun `confirmPowerOff prefers PowerOff when both capabilities are present`() = runTest {
+        val controller = mockk<com.example.smartclick.app.domain.connection.ITvController>(relaxed = true)
+        every { controller.capabilities } returns setOf(
+            com.example.smartclick.app.domain.model.TvCapability.POWER_OFF,
+            com.example.smartclick.app.domain.model.TvCapability.POWER_TOGGLE
+        )
+        currentControllerFlow.value = controller
+        coEvery { sendCommandUseCase(RemoteCommand.PowerOff) } returns SendCommandResult.SUCCESS
+
+        viewModel.confirmPowerOff()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { sendCommandUseCase(RemoteCommand.PowerOff) }
+        coVerify(exactly = 0) { sendCommandUseCase(RemoteCommand.Power) }
+    }
+
+    @Test
+    fun `confirmPowerOff defaults to PowerOff when neither capability is present`() = runTest {
+        val controller = mockk<com.example.smartclick.app.domain.connection.ITvController>(relaxed = true)
+        every { controller.capabilities } returns emptySet()
+        currentControllerFlow.value = controller
+        coEvery { sendCommandUseCase(RemoteCommand.PowerOff) } returns SendCommandResult.NOT_SUPPORTED
+
+        viewModel.confirmPowerOff()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { sendCommandUseCase(RemoteCommand.PowerOff) }
+        coVerify(exactly = 0) { sendCommandUseCase(RemoteCommand.Power) }
+    }
+
+    @Test
+    fun `confirmPowerOff uses PowerOff when only POWER_TOGGLE capability and not connected`() = runTest {
+        connectionStateFlow.value = TvConnectionState.Idle
+        val controller = mockk<com.example.smartclick.app.domain.connection.ITvController>(relaxed = true)
+        every { controller.capabilities } returns setOf(com.example.smartclick.app.domain.model.TvCapability.POWER_TOGGLE)
+        currentControllerFlow.value = controller
+        coEvery { sendCommandUseCase(RemoteCommand.PowerOff) } returns SendCommandResult.NOT_CONNECTED
+
+        viewModel.confirmPowerOff()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { sendCommandUseCase(RemoteCommand.Power) }
+        coVerify(exactly = 1) { sendCommandUseCase(RemoteCommand.PowerOff) }
+    }
+
+    @Test
+    fun `confirmPowerOff calls PowerOff when controller is null`() = runTest {
+        currentControllerFlow.value = null
+        coEvery { sendCommandUseCase(RemoteCommand.PowerOff) } returns SendCommandResult.NOT_CONNECTED
+
+        viewModel.confirmPowerOff()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { sendCommandUseCase(RemoteCommand.PowerOff) }
+        coVerify(exactly = 0) { sendCommandUseCase(RemoteCommand.Power) }
+    }
 }
