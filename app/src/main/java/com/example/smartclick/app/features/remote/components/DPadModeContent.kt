@@ -123,7 +123,7 @@ fun DPadModeContent(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         RemoteStepperCard(
-            title = "VOL",
+            title = stringResource(R.string.vol),
             onMinus = { dispatchCommand(RemoteCommand.VolumeDown) },
             onPlus = { dispatchCommand(RemoteCommand.VolumeUp) },
             minusCommand = RemoteCommand.VolumeDown,
@@ -133,7 +133,7 @@ fun DPadModeContent(
             onPressStart = onPressStart
         )
         RemoteStepperCard(
-            title = "CH",
+            title = stringResource(R.string.ch),
             onMinus = { dispatchCommand(RemoteCommand.ChannelDown) },
             onPlus = { dispatchCommand(RemoteCommand.ChannelUp) },
             minusCommand = RemoteCommand.ChannelDown,

@@ -29,8 +29,12 @@ data class PlanPrice(
     val isBestValue: Boolean = false
 )
 
+private const val PLAN_WEEKLY = "weekly"
+private const val PLAN_ANNUAL = "annual"
+private const val PLAN_LIFETIME = "lifetime"
+
 fun buildPlans(prices: Map<String, PlanPrice>): List<PricingPlan> {
-    val order = listOf("weekly", "annual", "lifetime")
+    val order = listOf(PLAN_WEEKLY, PLAN_ANNUAL, PLAN_LIFETIME)    
     return order.mapNotNull { id ->
         prices[id]?.let { p ->
             val displayName = when (id) {
