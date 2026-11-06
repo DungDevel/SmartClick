@@ -19,6 +19,10 @@ import androidx.compose.ui.unit.sp
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import androidx.compose.ui.res.stringResource
 import com.example.smartclick.R
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import com.example.smartclick.app.core.ui.theme.onboardingBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,7 +38,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg)
+            .onboardingBackground()
     ) {
         // Skip Button
         Text(
@@ -58,15 +62,14 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             // App Logo
-            Box(
+            Image(
+                painter = painterResource(id = R.drawable.img),
+                contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier
                     .size(88.dp)
                     .shadow(16.dp, RoundedCornerShape(20.dp), spotColor = colors.acDim)
-                    .background(colors.primaryGradient, RoundedCornerShape(20.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("📺", fontSize = 44.sp)
-            }
+                    .clip(RoundedCornerShape(20.dp))
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 

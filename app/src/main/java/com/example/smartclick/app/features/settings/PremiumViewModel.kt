@@ -38,9 +38,13 @@ class PremiumViewModel @Inject constructor(
             _uiState.value = PremiumUiState(isLoading = true)
             try {
                 val plans = subscriptionRepository.availablePlans()
-                _uiState.value = PremiumUiState(plans = plans, isLoading = false)
+                if (plans.isEmpty()) {
+                    _uiState.value = PremiumUiState(isLoading = false, error = "Failed to load plans")
+                } else {
+                    _uiState.value = PremiumUiState(plans = plans, isLoading = false)
+                }
             } catch (e: Exception) {
-                _uiState.value = PremiumUiState(isLoading = false, error = e.message)
+                _uiState.value = PremiumUiState(isLoading = false, error = e.message ?: "Failed to load plans")
             }
         }
     }

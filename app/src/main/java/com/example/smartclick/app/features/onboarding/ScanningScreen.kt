@@ -26,6 +26,7 @@ import com.example.smartclick.app.features.devices.ScanState
 import com.example.smartclick.app.domain.connection.NetworkState
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
+import com.example.smartclick.app.core.ui.theme.onboardingBackground
 
 @Composable
 fun ScanningScreen(
@@ -63,7 +64,7 @@ fun ScanningScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg)
+            .onboardingBackground()
     ) {
         WifiBanner(
             isVisible = isWifiOff,

@@ -15,11 +15,44 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import javax.inject.Inject
 import javax.inject.Singleton
 import com.example.smartclick.R
+
+data class PlanPrice(
+    val id: String,
+    val formattedPrice: String,
+    val period: String,
+    val isBestValue: Boolean = false
+)
+
+private const val PLAN_WEEKLY = "weekly"
+private const val PLAN_ANNUAL = "annual"
+private const val PLAN_LIFETIME = "lifetime"
+
+fun buildPlans(prices: Map<String, PlanPrice>): List<PricingPlan> {
+    val order = listOf(PLAN_WEEKLY, PLAN_ANNUAL, PLAN_LIFETIME)    
+    return order.mapNotNull { id ->
+        prices[id]?.let { p ->
+            val displayName = when (id) {
+                "weekly" -> "Weekly"
+                "annual" -> "Annual"
+                "lifetime" -> "Lifetime"
+                else -> id
+            }
+            PricingPlan(
+                id = id,
+                displayName = displayName,
+                price = p.formattedPrice,
+                period = p.period,
+                isBestValue = (id == "annual")
+            )
+        }
+    }
+}
 
 @Singleton
 class PlayBillingRepository @Inject constructor(
@@ -34,7 +67,8 @@ class PlayBillingRepository @Inject constructor(
     private val _currentPlan = MutableStateFlow(SubscriptionPlan.FREE)
     private val _billingMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
 
-    private var productDetailsMap = emptyMap<String, ProductDetails>()
+    private var productDetailsMap = emptyMap<String, PlanPrice>()
+    private var rawProductDetailsMap = emptyMap<String, ProductDetails>()
 
     private val billingClient = BillingClient.newBuilder(context)
         .setListener(this)
@@ -52,22 +86,13 @@ class PlayBillingRepository @Inject constructor(
     override val billingMessages: Flow<String> = _billingMessages
 
     override suspend fun availablePlans(): List<PricingPlan> {
-        val annualDetails = productDetailsMap["annual"]
-        val annualPhases = annualDetails?.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList
-        val annualPrice = annualPhases?.firstOrNull()?.formattedPrice ?: "$19.99"
-
-        val weeklyDetails = productDetailsMap["weekly"]
-        val weeklyPhases = weeklyDetails?.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList
-        val weeklyPrice = weeklyPhases?.firstOrNull()?.formattedPrice ?: "$2.99"
-
-        val lifetimeDetails = productDetailsMap["lifetime"]
-        val lifetimePrice = lifetimeDetails?.oneTimePurchaseOfferDetails?.formattedPrice ?: "$49.99"
-
-        return listOf(
-            PricingPlan("weekly", "Weekly", weeklyPrice, "per week"),
-            PricingPlan("annual", "Annual", annualPrice, "per year", isBestValue = true),
-            PricingPlan("lifetime", "Lifetime", lifetimePrice, "one-time")
-        )
+        val map = withTimeoutOrNull(5000) {
+            while (productDetailsMap.isEmpty()) {
+                kotlinx.coroutines.delay(100)
+            }
+            productDetailsMap
+        } ?: emptyMap()
+        return buildPlans(map)
     }
 
     override suspend fun subscribe(plan: SubscriptionPlan) {
@@ -82,7 +107,7 @@ class PlayBillingRepository @Inject constructor(
             return
         }
 
-        val productDetails = productDetailsMap[planId]
+        val productDetails = rawProductDetailsMap[planId]
         if (productDetails == null) {
             _billingMessages.tryEmit(context.getString(R.string.billing_plan_not_found))
             return
@@ -160,13 +185,33 @@ class PlayBillingRepository @Inject constructor(
             val params = QueryProductDetailsParams.newBuilder().setProductList(productList).build()
             billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList != null) {
-                    val newMap = mutableMapOf<String, ProductDetails>()
+                    val newPlanPrices = mutableMapOf<String, PlanPrice>()
+                    val newRawMap = mutableMapOf<String, ProductDetails>()
                     (productDetailsList as List<*>).forEach { details ->
                         if (details is ProductDetails) {
-                            newMap[details.productId] = details
+                            newRawMap[details.productId] = details
+                            val price = if (details.productType == BillingClient.ProductType.SUBS) {
+                                details.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
+                            } else {
+                                details.oneTimePurchaseOfferDetails?.formattedPrice
+                            }
+                            if (price != null) {
+                                val period = when (details.productId) {
+                                    "weekly" -> "per week"
+                                    "annual" -> "per year"
+                                    else -> "one-time"
+                                }
+                                newPlanPrices[details.productId] = PlanPrice(
+                                    id = details.productId,
+                                    formattedPrice = price,
+                                    period = period,
+                                    isBestValue = (details.productId == "annual")
+                                )
+                            }
                         }
                     }
-                    productDetailsMap = newMap
+                    productDetailsMap = newPlanPrices
+                    rawProductDetailsMap = newRawMap
                 } else {
                     Log.e(TAG, "Lỗi queryProducts: ${billingResult.debugMessage}")
                 }
@@ -296,7 +341,6 @@ class PlayBillingRepository @Inject constructor(
         Log.e(TAG, "Billing Error in $contextCaller: $errorMessage code: $responseCode")
         _billingMessages.tryEmit(errorMessage)
 
-        // Nếu trùng, kích hoạt tự động cập nhật lại các gói xem liệu đã được mua chưa
         if (responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
             queryPurchases()
         }

@@ -27,7 +27,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.smartclick"
+        applicationId = "com.pscd.smartclick"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -58,8 +58,8 @@ android {
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
-    
-        
+
+
 
 // E1: cổng chặn chuỗi tiếng Anh hardcode trong UI Compose.
 // Quét các Text("...") / label = "..." / contentDescription = "..." còn để literal.

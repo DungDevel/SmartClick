@@ -37,6 +37,7 @@ import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import com.example.smartclick.app.core.ui.theme.Typography
 import androidx.compose.ui.res.stringResource
 import com.example.smartclick.R
+import com.example.smartclick.app.core.ui.theme.onboardingBackground
 
 data class LanguageItem(val code: String, val nameRes: Int, val flag: String)
 
@@ -60,7 +61,7 @@ fun LanguageScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg)
+            .onboardingBackground()
     ) {
         Column(
             modifier = Modifier

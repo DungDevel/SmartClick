@@ -34,10 +34,14 @@ import com.example.smartclick.R
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import com.example.smartclick.app.core.ui.theme.Typography
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.example.smartclick.app.core.ui.theme.onboardingBackground
 
 @Composable
 
 fun SplashScreen(
+    delayMs: Long = 2200L,
     onNext: () -> Unit
 ) {
     val colors = SmartClickThemeTokens.colors
@@ -55,23 +59,25 @@ fun SplashScreen(
 
     LaunchedEffect(Unit) {
         visible = true
-        delay(2200)
+        delay(delayMs)
         onNext()
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg)
+            .onboardingBackground()
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Box(
+            Image(
+                painter = painterResource(id = R.drawable.img),
+                contentDescription = stringResource(R.string.app_name),
                 modifier = Modifier
-                    .size(96.dp)
+                    .size(120.dp)
                     .scale(scale)
                     .shadow(
                         elevation = 20.dp,
@@ -79,17 +85,8 @@ fun SplashScreen(
                         ambientColor = colors.acGlow,
                         spotColor = colors.acGlow
                     )
-                    .background(
-                        brush = colors.primaryGradient,
-                        shape = RoundedCornerShape(28.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "📺",
-                    fontSize = 46.sp
-                )
-            }
+                    .clip(RoundedCornerShape(28.dp))
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
