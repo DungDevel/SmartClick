@@ -1,27 +1,42 @@
 package com.example.smartclick.app.features.remote.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
-
-import androidx.compose.ui.draw.alpha
+import com.example.smartclick.app.core.ui.theme.raisedSurface
 import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.domain.usecase.SendCommandResult
+
+/** Thẻ nền trắng, không viền, chỉ có bóng đổ rất nhẹ (giống thiết kế Figma). */
+@Composable
+fun Modifier.raisedCard(): Modifier {
+    val colors = SmartClickThemeTokens.colors
+    return this.raisedSurface(
+        shape = RoundedCornerShape(18.dp),
+        pressable = false,
+        fill = SolidColor(colors.surf),
+        shadowTint = Color(0xFF102B4E).copy(alpha = 0.10f),
+        innerShadow = false
+    )
+}
 
 @Composable
 fun RowScope.RemoteStepperCard(
@@ -39,8 +54,7 @@ fun RowScope.RemoteStepperCard(
         modifier = Modifier
             .weight(1f)
             .alpha(if (enabled) 1f else 0.4f)
-            .background(colors.surf, RoundedCornerShape(14.dp))
-            .border(1.dp, colors.bord, RoundedCornerShape(14.dp))
+            .raisedCard()
             .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -57,11 +71,16 @@ fun RowScope.RemoteStepperCard(
                 val repeatModifier = if (command != null && onHoldCommand != null) {
                     Modifier.heldCommandInput(command, enabled, onPressStart, onHoldCommand)
                 } else {
-                    Modifier.clickable(enabled = enabled, onClick = onClick)
+                    Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        enabled = enabled,
+                        onClick = onClick
+                    )
                 }
                 Box(
                     modifier = Modifier.weight(1f).height(48.dp)
-                        .background(colors.surfEl, RoundedCornerShape(8.dp))
+                        .raisedSurface(RoundedCornerShape(14.dp))
                         .then(repeatModifier)
                         .semantics { contentDescription = title + label },
                     contentAlignment = Alignment.Center
@@ -82,16 +101,19 @@ fun RowScope.RemoteSquareButton(
         modifier = Modifier
             .weight(1f)
             .height(44.dp)
-            .background(colors.surf, RoundedCornerShape(12.dp))
-            .border(1.dp, colors.bord, RoundedCornerShape(12.dp))
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick),
+            .raisedSurface(RoundedCornerShape(14.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            ),
         contentAlignment = Alignment.Center
     ) {
         Image(
             painter = painterResource(id = icon),
             contentDescription = contentDescription,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(20.dp),
+            colorFilter = ColorFilter.tint(colors.tx2)
         )
     }
 }

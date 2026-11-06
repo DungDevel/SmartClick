@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartclick.R
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
+import com.example.smartclick.app.core.ui.theme.onboardingBackground
 
 /**
  * Maps a brand ID to its corresponding brand image.
@@ -79,7 +80,7 @@ fun BrandScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg)
+            .onboardingBackground()
             .padding(
                 top = 32.dp,
                 start = 20.dp,

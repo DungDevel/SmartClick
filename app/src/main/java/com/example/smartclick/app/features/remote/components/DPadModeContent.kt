@@ -1,31 +1,33 @@
 package com.example.smartclick.app.features.remote.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartclick.R
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
+import com.example.smartclick.app.core.ui.theme.raisedSurface
 import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.domain.model.TvCapability
-import androidx.compose.ui.res.stringResource
 import com.example.smartclick.app.domain.usecase.SendCommandResult
 
 @Composable
 fun DPadModeContent(
     dispatchCommand: (RemoteCommand) -> Unit,
     capabilities: Set<TvCapability>,
+    connected: Boolean = true,
     navigationEnabled: Boolean = TvCapability.DPAD in capabilities,
     onHoldCommand: (suspend (RemoteCommand) -> SendCommandResult)? = null,
     onPressStart: () -> Unit = {},
@@ -38,7 +40,7 @@ fun DPadModeContent(
 ) {
     val colors = SmartClickThemeTokens.colors
 
-    // Nav row
+    // Nav row: MENU / BACK / HOME / INPUT (vuông bo góc, không viền, có bóng)
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
@@ -54,20 +56,23 @@ fun DPadModeContent(
             val command = data.second
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(5.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
-                        .background(colors.surf, CircleShape)
-                        .border(1.dp, colors.bord, CircleShape)
-                        .clickable { dispatchCommand(command) },
+                        .size(54.dp)
+                        .raisedSurface(RoundedCornerShape(16.dp))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { dispatchCommand(command) },
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         painter = painterResource(id = iconRes),
                         contentDescription = label,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(22.dp),
+                        colorFilter = ColorFilter.tint(colors.tx2)
                     )
                 }
                 Text(
@@ -118,35 +123,34 @@ fun DPadModeContent(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         RemoteStepperCard(
-            title = stringResource(R.string.vol),
+            title = "VOL",
             onMinus = { dispatchCommand(RemoteCommand.VolumeDown) },
             onPlus = { dispatchCommand(RemoteCommand.VolumeUp) },
             minusCommand = RemoteCommand.VolumeDown,
             plusCommand = RemoteCommand.VolumeUp,
-            enabled = controlsEnabled && capabilities.contains(TvCapability.VOLUME),
+            enabled = controlsEnabled && (!connected || capabilities.contains(TvCapability.VOLUME)),
             onHoldCommand = onHoldCommand,
             onPressStart = onPressStart
         )
         RemoteStepperCard(
-            title = stringResource(R.string.ch),
+            title = "CH",
             onMinus = { dispatchCommand(RemoteCommand.ChannelDown) },
             onPlus = { dispatchCommand(RemoteCommand.ChannelUp) },
             minusCommand = RemoteCommand.ChannelDown,
             plusCommand = RemoteCommand.ChannelUp,
-            enabled = controlsEnabled && capabilities.contains(TvCapability.CHANNEL_CONTROL),
+            enabled = controlsEnabled && (!connected || capabilities.contains(TvCapability.CHANNEL_CONTROL)),
             onHoldCommand = onHoldCommand,
             onPressStart = onPressStart
         )
     }
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Media Controls
+    // Media Controls: thẻ không viền, mỗi nút là một ô nổi
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.surf, RoundedCornerShape(14.dp))
-            .border(1.dp, colors.bord, RoundedCornerShape(14.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .raisedCard()
+            .padding(horizontal = 12.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -158,13 +162,23 @@ fun DPadModeContent(
             R.drawable.next_button to RemoteCommand.FastForward
         )
         mediaIcons.forEach { (iconRes, command) ->
-            Image(
-                painter = painterResource(id = iconRes),
-                contentDescription = command.javaClass.simpleName, // Fixed empty content description
+            Box(
                 modifier = Modifier
-                    .size(24.dp)
-                    .clickable { dispatchCommand(command) }
-            )
+                    .size(44.dp)
+                    .raisedSurface(RoundedCornerShape(14.dp))
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { dispatchCommand(command) },
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = command.javaClass.simpleName,
+                    modifier = Modifier.size(22.dp),
+                    colorFilter = ColorFilter.tint(colors.tx2)
+                )
+            }
         }
     }
     Spacer(modifier = Modifier.height(16.dp))

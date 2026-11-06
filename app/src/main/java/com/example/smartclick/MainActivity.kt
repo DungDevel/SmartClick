@@ -42,8 +42,10 @@ class MainActivity : AppCompatActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     if (settings != null) {
-                        AppNavigation(startDestination = if (settings!!.onboardingCompleted) "main" else "onboarding")
-                    }
+                        AppNavigation(
+                            startDestination = "onboarding",
+                            onboardingCompleted = settings!!.onboardingCompleted
+                        )                    }
                 }
             }
         }

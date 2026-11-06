@@ -17,7 +17,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -34,7 +33,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import com.example.smartclick.R
-import com.example.smartclick.app.core.ui.components.NoActiveDeviceState
 import com.example.smartclick.app.core.ui.components.ReconnectBanner
 import com.example.smartclick.app.core.ui.components.WifiBanner
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
@@ -49,10 +47,14 @@ import com.example.smartclick.app.features.remote.components.KeyboardModal
 import com.example.smartclick.app.features.remote.components.NumPad
 import com.example.smartclick.app.features.remote.components.TouchPad
 import com.example.smartclick.app.domain.usecase.SendCommandResult
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.SolidColor
+import com.example.smartclick.app.core.ui.theme.raisedSurface
 
 @Composable
 fun RemoteScreen(
     onNavigateToDevices: () -> Unit = {},
+    onNavigateToPremium: () -> Unit = {},
     viewModel: RemoteViewModel = hiltViewModel()
 ) {
     val scrollState = rememberScrollState()
@@ -89,6 +91,7 @@ fun RemoteScreen(
     }
 
     var showPowerOffDialog by remember { mutableStateOf(false) }
+    val currentOnNavigateToPremium by rememberUpdatedState(onNavigateToPremium)
 
     LaunchedEffect(viewModel) {
         viewModel.uiEvents.collect { event ->
@@ -115,7 +118,7 @@ fun RemoteScreen(
                     android.widget.Toast.makeText(context, context.getString(R.string.wol_failed_retry), android.widget.Toast.LENGTH_LONG).show()
                 }
                 RemoteUiEvent.VoicePremiumRequired -> {
-                    android.widget.Toast.makeText(context, context.getString(R.string.voice_premium_required), android.widget.Toast.LENGTH_SHORT).show()
+                    currentOnNavigateToPremium()
                 }
                 RemoteUiEvent.RequestVoicePermission -> {
                     recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
@@ -221,7 +224,7 @@ fun RemoteScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -236,10 +239,8 @@ fun RemoteScreen(
             // Devices Button
             Box(
                 modifier = Modifier
-                    .size(38.dp)
-                    .clip(CircleShape)
-                    .background(colors.surfEl)
-                    .border(1.dp, colors.bord, CircleShape)
+                    .size(45.dp)
+                    .raisedSurface(CircleShape, pressable = false)
                     .clickable { onNavigateToDevices() },
                 contentAlignment = Alignment.Center
             ) {
@@ -290,332 +291,319 @@ fun RemoteScreen(
             }
         )
 
-        if (activeDevice == null && !isReconnecting) {
-            NoActiveDeviceState(onNavigateToDevices = onNavigateToDevices)
-        } else {
+        run {
             val contextForToast = androidx.compose.ui.platform.LocalContext.current
-            val controlsAlpha = if (controlsEnabled) (if (isLocked) 0.3f else 1f) else 0.4f
+            val controlsAlpha = if (isLocked) 0.3f else 1f
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(modifier = Modifier.fillMaxSize()) {
-            // Mode + action row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
+                    // Mode + action row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(7.dp)
+                    ) {
 
-                val infiniteTransition = rememberInfiniteTransition(label = "power_pulse")
-                val pulseAlpha by infiniteTransition.animateFloat(
-                    initialValue = 0.3f,
-                    targetValue = 1f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(800, easing = LinearEasing),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "alpha_pulse"
-                )
+                        val infiniteTransition = rememberInfiniteTransition(label = "power_pulse")
+                        val pulseAlpha by infiniteTransition.animateFloat(
+                            initialValue = 0.3f,
+                            targetValue = 1f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(800, easing = LinearEasing),
+                                repeatMode = RepeatMode.Reverse
+                            ),
+                            label = "alpha_pulse"
+                        )
 
-                val powerState = RemotePowerButton.stateFor(connectionState, activeDevice?.macAddress?.isNotEmpty() == true)
-                val powerAlpha = RemotePowerButton.alphaFor(powerState, isLocked, pulseAlpha)
+                        val powerState = RemotePowerButton.stateFor(connectionState, activeDevice?.macAddress?.isNotEmpty() == true)
+                        val powerAlpha = RemotePowerButton.alphaFor(powerState, isLocked, pulseAlpha)
 
-                val powerBg: Color
-                val powerBorder: Color
-                val powerIconTint: Color
+                        val powerBg: Color
+                        val powerBorder: Color
+                        val powerIconTint: Color
 
-                when (powerState) {
-                    RemotePowerButton.PowerVisualState.CONNECTED -> {
-                        powerBg = colors.orange
-                        powerBorder = Color.Transparent
-                        powerIconTint = Color.White
-                    }
-                    RemotePowerButton.PowerVisualState.CONNECTING -> {
-                        powerBg = colors.orange.copy(alpha = 0.3f)
-                        powerBorder = Color.Transparent
-                        powerIconTint = Color.White
-                    }
-                    RemotePowerButton.PowerVisualState.WAKEABLE -> {
-                        powerBg = colors.surfEl
-                        powerBorder = colors.orange.copy(alpha = 0.5f)
-                        powerIconTint = colors.orange
-                    }
-                    RemotePowerButton.PowerVisualState.UNAVAILABLE -> {
-                        powerBg = colors.surfEl
-                        powerBorder = colors.bord
-                        powerIconTint = colors.tx1
-                    }
-                }
-
-                // Power (5-states visual representation)
-                Box(
-                    modifier = Modifier
-                        .size(45.dp)
-                        .background(powerBg, CircleShape)
-                        .border(1.dp, powerBorder, CircleShape)
-                        .alpha(powerAlpha)
-                        .clickable { dispatchCommand(RemoteCommand.Power) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.turn_off),
-                        contentDescription = stringResource(R.string.power),
-                        modifier = Modifier.size(20.dp),
-                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(powerIconTint)
-                    )
-                }
-
-                val hasMuteOnOff = capabilities.contains(TvCapability.MUTE_ON_OFF)
-                val muteIcon = when (muteState) {
-                    1 -> R.drawable.mute
-                    else -> R.drawable.volume
-                }
-                val mAlpha = if (muteState == -1 || !hasVolume) 0.4f else 1f
-
-                // Mute (3-states: Unknown, Muted, Unmuted)
-                Box(
-                    modifier = Modifier
-                        .alpha(controlsAlpha)
-                        .size(45.dp)
-                        .background(colors.surfEl, CircleShape)
-                        .border(1.dp, colors.bord, CircleShape)
-                        .alpha(mAlpha)
-                        .clickable(enabled = hasVolume) {
-                            if (hasMuteOnOff) {
-                                if (muteState == -1 || muteState == 0) {
-                                    dispatchCommand(RemoteCommand.MuteOn)
-                                } else {
-                                    dispatchCommand(RemoteCommand.MuteOff)
-                                }
-                            } else {
-                                dispatchCommand(RemoteCommand.Mute)
+                        when (powerState) {
+                            RemotePowerButton.PowerVisualState.CONNECTED -> {
+                                powerBg = colors.orange
+                                powerBorder = Color.Transparent
+                                powerIconTint = Color.White
                             }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = muteIcon),
-                        contentDescription = stringResource(R.string.mute),
-                        modifier = Modifier.size(20.dp),
-                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(colors.tx1)
-                    )
-                }
+                            RemotePowerButton.PowerVisualState.CONNECTING -> {
+                                powerBg = colors.orange.copy(alpha = 0.3f)
+                                powerBorder = Color.Transparent
+                                powerIconTint = Color.White
+                            }
+                            RemotePowerButton.PowerVisualState.WAKEABLE -> {
+                                powerBg = colors.surfEl
+                                powerBorder = colors.orange.copy(alpha = 0.5f)
+                                powerIconTint = colors.orange
+                            }
+                            RemotePowerButton.PowerVisualState.UNAVAILABLE -> {
+                                powerBg = colors.surfEl
+                                powerBorder = colors.bord
+                                powerIconTint = colors.tx1
+                            }
+                        }
 
-                // Mode Switcher
-                Row(
-                    modifier = Modifier
-                        .alpha(controlsAlpha)
-                        .width(200.dp)
-                        .height(50.dp)
-                        .background(
-                            colors.surf,
-                            RoundedCornerShape(11.dp)
-                        )
-                        .border(
-                            1.dp,
-                            colors.bord,
-                            RoundedCornerShape(11.dp)
-                        )
-                        .padding(3.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val modes = listOf(
-                        RemoteMode.DPAD to R.drawable.lists,
-                        RemoteMode.TOUCHPAD to R.drawable.top_left,
-                        RemoteMode.NUMPAD to R.drawable.dial_pad
-                    )
-
-                    modes.forEach { (mode, iconRes) ->
-                        val isSelected = activeMode == mode
-
+                        // Power (5-states visual representation)
                         Box(
                             modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                                .background(
-                                    color = if (isSelected) {
-                                        colors.acc
-                                    } else {
-                                        Color.Transparent
-                                    },
-                                    shape = RoundedCornerShape(8.dp)
+                                .size(45.dp)
+                                .then(
+                                    if (powerState == RemotePowerButton.PowerVisualState.CONNECTED ||
+                                        powerState == RemotePowerButton.PowerVisualState.CONNECTING
+                                    ) Modifier.background(powerBg, CircleShape)
+                                    else Modifier.raisedSurface(CircleShape, pressable = false)
                                 )
-                                .clickable {
-                                    viewModel.setMode(mode)
+                                .then(
+                                    if (powerState == RemotePowerButton.PowerVisualState.WAKEABLE)
+                                        Modifier.border(1.dp, powerBorder, CircleShape)
+                                    else Modifier
+                                )
+                                .alpha(powerAlpha)
+                                .clickable { dispatchCommand(RemoteCommand.Power) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.turn_off),
+                                contentDescription = stringResource(R.string.power),
+                                modifier = Modifier.size(20.dp),
+                                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(powerIconTint)
+                            )
+                        }
+
+                        val hasMuteOnOff = capabilities.contains(TvCapability.MUTE_ON_OFF)
+                        val muteIcon = when (muteState) {
+                            1 -> R.drawable.mute
+                            else -> R.drawable.volume
+                        }
+                        val mAlpha = if (!controlsEnabled) 1f else if (muteState == -1 || !hasVolume) 0.4f else 1f
+
+                        // Mute (3-states: Unknown, Muted, Unmuted)
+                        Box(
+                            modifier = Modifier
+                                .alpha(controlsAlpha)
+                                .size(45.dp)
+                                .raisedSurface(CircleShape)
+                                .alpha(mAlpha)
+                                .clickable(enabled = hasVolume) {
+                                    if (hasMuteOnOff) {
+                                        if (muteState == -1 || muteState == 0) {
+                                            dispatchCommand(RemoteCommand.MuteOn)
+                                        } else {
+                                            dispatchCommand(RemoteCommand.MuteOff)
+                                        }
+                                    } else {
+                                        dispatchCommand(RemoteCommand.Mute)
+                                    }
                                 },
                             contentAlignment = Alignment.Center
                         ) {
                             Image(
-                                painter = painterResource(id = iconRes),
-                                contentDescription = mode.name,
-                                modifier = Modifier.size(20.dp)
+                                painter = painterResource(id = muteIcon),
+                                contentDescription = stringResource(R.string.mute),
+                                modifier = Modifier.size(20.dp),
+                                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(colors.tx2)
                             )
                         }
-                    }
-                }
 
-                // Lock
-                Box(
-                    modifier = Modifier
-                        .alpha(controlsAlpha)
-                        .size(45.dp)
-                        .background(if (isLocked) colors.acc else colors.surfEl, CircleShape)
-                        .border(1.dp, if (isLocked) colors.acc else colors.bord, CircleShape)
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onLongPress = {
-                                    if (isLocked) {
-                                        viewModel.unlockScreen()
-                                        if (isHapticEnabled) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        }
-                                    }
-                                },
-                                onTap = {
-                                    if (!isLocked) {
-                                        viewModel.toggleScreenLock()
-                                        if (isHapticEnabled) {
-                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        }
-                                    } else {
-                                        android.widget.Toast.makeText(contextForToast, contextForToast.getString(R.string.remote_is_locked), android.widget.Toast.LENGTH_SHORT).show()
-                                    }
+                        // Mode Switcher
+                        Row(
+                            modifier = Modifier
+                                .alpha(controlsAlpha)
+                                .width(200.dp)
+                                .height(45.dp)
+                                .raisedSurface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    pressable = false,
+                                    fill = SolidColor(colors.surf),
+                                    shadowTint = Color(0xFF102B4E).copy(alpha = 0.10f),
+                                    innerShadow = false
+                                )
+                                .padding(4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val modes = listOf(
+                                RemoteMode.DPAD to R.drawable.lists,
+                                RemoteMode.TOUCHPAD to R.drawable.top_left,
+                                RemoteMode.NUMPAD to R.drawable.dial_pad
+                            )
+
+                            modes.forEach { (mode, iconRes) ->
+                                val isSelected = activeMode == mode
+
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .then(
+                                            if (isSelected) Modifier.raisedSurface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                pressable = false,
+                                                fill = Brush.verticalGradient(listOf(Color(0xFF365D89), Color(0xFF102B4E))),
+                                                shadowTint = Color(0xFF1E3D68).copy(alpha = 0.18f),
+                                                innerShadow = false
+                                            ) else Modifier
+                                        )
+                                        .clickable {
+                                            viewModel.setMode(mode)
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = iconRes),
+                                        contentDescription = mode.name,
+                                        modifier = Modifier.size(20.dp),
+                                        colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(
+                                            if (isSelected) Color.White else colors.tx2
+                                        )
+                                    )
                                 }
-                            )
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.lock),
-                        contentDescription = stringResource(R.string.lock),
-                        modifier = Modifier.size(20.dp),
-                        colorFilter = if (isLocked) androidx.compose.ui.graphics.ColorFilter.tint(Color.White) else null
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(0.dp))
-
-            // Scrollable Body
-            Column(
-                modifier = Modifier
-                    .alpha(controlsAlpha)
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
-            ) {
-                var showKeyboard by remember { mutableStateOf(false) }
-                var dictatedText by remember { mutableStateOf("") }
-                val secondaryActions = RemoteSecondaryActions.forCapabilities(capabilities, viewModel.dictationAvailable)
-                val hasKeyboard = secondaryActions.keyboard
-                val canDictate = secondaryActions.dictation
-                when {
-                    activeMode == RemoteMode.TOUCHPAD -> {
-                        when (RemotePadBehavior.layoutFor(capabilities)) {
-                            RemotePadLayout.POINTER -> TouchPad(
-                                onMove = pointerMoveDispatcher::onMove,
-                                onDragEnd = pointerMoveDispatcher::onDragEnd,
-                                onTap = { dispatchCommand(RemoteCommand.PointerClick) },
-                                onLeftClick = { dispatchCommand(RemoteCommand.PointerClick) },
-                                onRightClick = { dispatchCommand(RemoteCommand.Back) },
-                                onKeyboardRequest = { showKeyboard = true }
-                            )
-                            RemotePadLayout.CIRCULAR_DPAD -> {
-                                val navigationEnabled = RemotePadBehavior.navigationEnabled(
-                                    connected = controlsEnabled,
-                                    locked = isLocked,
-                                    capabilities = capabilities
-                                )
-                                DPad(
-                                    enabled = navigationEnabled,
-                                    onUp = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.UP, navigationEnabled, ::dispatchCommand) },
-                                    onDown = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.DOWN, navigationEnabled, ::dispatchCommand) },
-                                    onLeft = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.LEFT, navigationEnabled, ::dispatchCommand) },
-                                    onRight = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.RIGHT, navigationEnabled, ::dispatchCommand) },
-                                    onOk = { RemotePadBehavior.dispatchIfEnabled(RemotePadAction.OK, navigationEnabled, ::dispatchCommand) },
-                                    onHoldCommand = ::dispatchHeldCommand,
-                                    onPressStart = ::onHeldPressStart
-                                )
                             }
                         }
 
+                        // Lock
+                        Box(
+                            modifier = Modifier
+                                .alpha(controlsAlpha)
+                                .size(45.dp)
+                                .then(
+                                    if (isLocked) Modifier.background(colors.acc, CircleShape)
+                                    else Modifier.raisedSurface(CircleShape, pressable = false)
+                                )
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = {
+                                            if (isLocked) {
+                                                viewModel.unlockScreen()
+                                                if (isHapticEnabled) {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                }
+                                            }
+                                        },
+                                        onTap = {
+                                            if (!isLocked) {
+                                                viewModel.toggleScreenLock()
+                                                if (isHapticEnabled) {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                }
+                                            } else {
+                                                android.widget.Toast.makeText(contextForToast, contextForToast.getString(R.string.remote_is_locked), android.widget.Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    )
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.lock),
+                                contentDescription = stringResource(R.string.lock),
+                                modifier = Modifier.size(20.dp),
+                                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(
+                                    if (isLocked) Color.White else colors.tx2
+                                )
+                            )
+                        }
                     }
+                    Spacer(modifier = Modifier.height(0.dp))
 
-                    activeMode == RemoteMode.NUMPAD -> {
-                        val isDigitsSupported = capabilities.contains(TvCapability.DIGITS)
-                        NumPad(
-                            modifier = Modifier.alpha(if (isDigitsSupported) 1f else 0.4f),
-                            canDelete = capabilities.contains(TvCapability.BACKSPACE),
-                            onDigit = { digit ->
-                                digit.toIntOrNull()?.let {
-                                    dispatchCommand(RemoteCommand.Numpad(it))
+                    // Scrollable Body
+                    Column(
+                        modifier = Modifier
+                            .alpha(controlsAlpha)
+                            .fillMaxSize()
+                            .verticalScroll(scrollState)
+                            .padding(horizontal = 16.dp, vertical = 16.dp)
+                    ) {
+                        var showKeyboard by remember { mutableStateOf(false) }
+                        var dictatedText by remember { mutableStateOf("") }
+                        val secondaryActions = RemoteSecondaryActions.forCapabilities(capabilities, viewModel.dictationAvailable)
+                        val hasKeyboard = secondaryActions.keyboard
+                        val canDictate = secondaryActions.dictation
+                        when {
+                            activeMode == RemoteMode.TOUCHPAD -> {
+                                TouchPad(
+                                    onMove = pointerMoveDispatcher::onMove,
+                                    onDragEnd = pointerMoveDispatcher::onDragEnd,
+                                    onTap = { dispatchCommand(RemoteCommand.PointerClick) },
+                                    onLeftClick = { dispatchCommand(RemoteCommand.PointerClick) },
+                                    onRightClick = { dispatchCommand(RemoteCommand.Back) },
+                                    onKeyboardRequest = { showKeyboard = true }
+                                )
+                            }
+
+                            activeMode == RemoteMode.NUMPAD -> {
+                                val isDigitsSupported = capabilities.contains(TvCapability.DIGITS)
+                                NumPad(
+                                    modifier = Modifier.alpha(if (isDigitsSupported || !controlsEnabled) 1f else 0.4f),
+                                    canDelete = capabilities.contains(TvCapability.BACKSPACE) || !controlsEnabled,
+                                    onDigit = { digit ->
+                                        digit.toIntOrNull()?.let {
+                                            dispatchCommand(RemoteCommand.Numpad(it))
+                                        }
+                                    },
+                                    onExit = { viewModel.setMode(RemoteMode.DPAD) },
+                                    onDelete = { dispatchCommand(RemoteCommand.Backspace) }
+                                )
+                            }
+
+                            else -> DPadModeContent(
+                                dispatchCommand = { cmd -> dispatchCommand(cmd) },
+                                capabilities = capabilities,
+                                connected = controlsEnabled,
+                                navigationEnabled = !isLocked,
+                                onHoldCommand = ::dispatchHeldCommand,
+                                onPressStart = ::onHeldPressStart,
+                                controlsEnabled = !isLocked,
+                                showKeyboard = hasKeyboard,
+                                showDictation = canDictate,
+                                showHeadphone = secondaryActions.headphone,
+                                onKeyboard = { showKeyboard = true },
+                                onDictate = {
+                                    showKeyboard = true
+                                    val hasPerm = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                                    viewModel.prepareDictation(hasPerm)
                                 }
+                            )
+                        }
+
+                        if (showKeyboard && TvCapability.KEYBOARD_TEXT in capabilities) {
+                            KeyboardModal(
+                                onDismissRequest = { showKeyboard = false },
+                                onSendText = { command -> dispatchCommand(command) },
+                                dictatedText = dictatedText,
+                                onDictate = {
+                                    val hasPerm = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                                    viewModel.prepareDictation(hasPerm)
+                                }
+                            )
+                        }
+
+                        LaunchedEffect(viewModel) { viewModel.dictationResults.collect { dictatedText = it } }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        val speechState by viewModel.speechState.collectAsState()
+
+                        BottomActions(
+                            speechState = speechState,
+                            onStartVoice = {
+                                if (isHapticEnabled) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                }
+                                val hasPerm = ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+                                viewModel.prepareVoiceListening(hasRecordAudioPermission = hasPerm)
                             },
-                            onExit = { viewModel.setMode(RemoteMode.DPAD) },
-                            onDelete = { dispatchCommand(RemoteCommand.Backspace) }
+                            onStopVoice = {
+                                viewModel.stopListening()
+                            }
                         )
                     }
-
-                    else -> DPadModeContent(
-                        dispatchCommand = { cmd ->
-                            dispatchCommand(cmd)
-                        },
-                        capabilities = capabilities,
-                        navigationEnabled = RemotePadBehavior.navigationEnabled(
-                            connected = controlsEnabled,
-                            locked = isLocked,
-                            capabilities = capabilities
-                        ),
-                        onHoldCommand = ::dispatchHeldCommand,
-                        onPressStart = ::onHeldPressStart,
-                        controlsEnabled = controlsEnabled && !isLocked,
-                        showKeyboard = hasKeyboard,
-                        showDictation = canDictate,
-                        showHeadphone = secondaryActions.headphone,
-                        onKeyboard = { showKeyboard = true },
-                        onDictate = {
-                            showKeyboard = true
-                            val hasPerm = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-                            viewModel.prepareDictation(hasPerm)
-                        }
-                    )
-                }
-
-                if (showKeyboard && TvCapability.KEYBOARD_TEXT in capabilities) {
-                    KeyboardModal(
-                        onDismissRequest = { showKeyboard = false },
-                        onSendText = { command -> dispatchCommand(command) },
-                        dictatedText = dictatedText,
-                        onDictate = {
-                            val hasPerm = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-                            viewModel.prepareDictation(hasPerm)
-                        }
-                    )
-                }
-
-                LaunchedEffect(viewModel) { viewModel.dictationResults.collect { dictatedText = it } }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                val speechState by viewModel.speechState.collectAsState()
-
-                BottomActions(
-                    speechState = speechState,
-                    onStartVoice = {
-                        if (isHapticEnabled) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        }
-                        val hasPerm = ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.RECORD_AUDIO
-                        ) == PackageManager.PERMISSION_GRANTED
-                        viewModel.prepareVoiceListening(hasRecordAudioPermission = hasPerm)
-                    },
-                    onStopVoice = {
-                        viewModel.stopListening()
-                    }
-                )
-            }
                 }
             }
         }

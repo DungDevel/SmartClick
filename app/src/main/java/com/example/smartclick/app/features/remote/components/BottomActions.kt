@@ -3,11 +3,13 @@ package com.example.smartclick.app.features.remote.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
 import androidx.compose.ui.Alignment
@@ -36,12 +38,11 @@ fun BottomActions(
     val colors = SmartClickThemeTokens.colors
 
 
-    // Delete / Shot / Config
+    // Delete / Shot / Config (thẻ không viền, chỉ có bóng nhẹ)
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.surf, RoundedCornerShape(14.dp))
-            .border(1.dp, colors.bord, RoundedCornerShape(14.dp))
+            .raisedCard()
             .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
@@ -55,7 +56,10 @@ fun BottomActions(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(10.dp))
-                    .clickable {
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
                         Toast.makeText(context, context.getString(R.string.feature_coming_soon, label), Toast.LENGTH_SHORT).show()
                     },
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -88,15 +92,15 @@ fun BottomActions(
         is SpeechState.Error -> stringResource(R.string.voice_error_display, speechState.message)
     }
 
-    val boxColor = if (isListening) colors.acc.copy(alpha = 0.3f) else colors.acc.copy(alpha = 0.15f)
+    val boxColor = if (isListening) colors.acc.copy(alpha = 0.25f) else colors.acc.copy(alpha = 0.12f)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(16.dp))
             .background(boxColor)
-            .border(1.dp, colors.acc, RoundedCornerShape(12.dp))
+            .border(1.dp, colors.acc.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
             .pointerInput(Unit) {
                 detectTapGestures(
                     onPress = {
@@ -118,7 +122,7 @@ fun BottomActions(
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = voiceTextStr,
-            color = colors.tx1,
+            color = colors.acc,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1

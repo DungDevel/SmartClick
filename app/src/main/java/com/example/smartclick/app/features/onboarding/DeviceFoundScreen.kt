@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import com.example.smartclick.app.core.ui.theme.onboardingBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -145,7 +146,7 @@ fun DeviceFoundScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(colors.bg)
+                .onboardingBackground()
                 .padding(paddingValues)
         ) {
             Box(

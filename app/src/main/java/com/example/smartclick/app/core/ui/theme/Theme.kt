@@ -34,7 +34,9 @@ data class SmartClickColors(
 ) {
     val primaryGradient: Brush
         get() = Brush.linearGradient(
-            colors = listOf(gradStart, gradMid, gradEnd)
+            0f to gradStart,
+            0.5f to gradMid,
+            1f to androidx.compose.ui.graphics.lerp(gradMid, gradEnd, 0.48f)
         )
 }
 
@@ -47,7 +49,10 @@ val DarkSmartClickColors = SmartClickColors(
     bordBr = DarkBorderBright,
     tx1 = DarkText1,
     tx2 = DarkText2,
-    tx3 = DarkText3
+    tx3 = DarkText3,
+    gradStart = Color(0xFF24456D),
+    gradMid = Color(0xFF172F4F),
+    gradEnd = Accent
 )
 
 val LightSmartClickColors = SmartClickColors(
@@ -59,7 +64,10 @@ val LightSmartClickColors = SmartClickColors(
     bordBr = LightBorderBright,
     tx1 = LightText1,
     tx2 = LightText2,
-    tx3 = LightText3
+    tx3 = LightText3,
+    gradStart = Color(0xFF183A61),
+    gradMid = Color(0xFF102B4E),
+    gradEnd = Accent
 )
 
 val LocalSmartClickColors = staticCompositionLocalOf { DarkSmartClickColors }

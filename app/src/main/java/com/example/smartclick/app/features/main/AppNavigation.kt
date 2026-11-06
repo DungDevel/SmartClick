@@ -36,6 +36,7 @@ object NavRoutes {
 @Composable
 fun AppNavigation(
     startDestination: String = NavRoutes.WELCOME,
+    onboardingCompleted: Boolean = false,
     viewModel: OnboardingStateViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
@@ -57,8 +58,10 @@ fun AppNavigation(
     ) {
         composable(NavRoutes.SPLASH) {
             SplashScreen(
+                delayMs = if (onboardingCompleted) 1000L else 2200L,
                 onNext = {
-                    navController.navigate(NavRoutes.WELCOME) {
+                    val next = if (onboardingCompleted) NavRoutes.MAIN else NavRoutes.WELCOME
+                    navController.navigate(next) {
                         popUpTo(NavRoutes.SPLASH) { inclusive = true }
                     }
                 }

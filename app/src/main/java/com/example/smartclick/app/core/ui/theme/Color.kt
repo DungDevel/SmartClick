@@ -15,23 +15,25 @@ val GradientMid = Color(0xFF4361EE)
 val GradientEnd = Color(0xFF3651D4)
 
 // Dark Theme Colors
-val DarkBackground = Color(0xFF13141F)
-val DarkSurface = Color(0xFF1E1F2E)
-val DarkSurfaceElement = Color(0xFF252636)
-val DarkSurfaceRaised = Color(0xFF2C2D42)
-val DarkBorder = Color(0x14FFFFFF) // 8% alpha
-val DarkBorderBright = Color(0x24FFFFFF) // 14% alpha
-val DarkText1 = Color(0xFFFFFFFF)
-val DarkText2 = Color(0x80FFFFFF)
-val DarkText3 = Color(0x33FFFFFF)
+val DarkBackground = Color(0xFF0C1522)
+val DarkSurface = Color(0xFF132135)
+val DarkSurfaceElement = Color(0xFF192B43)
+val DarkSurfaceRaised = Color(0xFF213650)
+val DarkBorder = Color(0x1AADCAE8)
+val DarkText1 = Color(0xFFF5F9FD)
+val DarkText2 = Color(0xFF9BAFC4)
+val DarkText3 = Color(0xFF5F7690)
+val DarkBorderBright = Color(0x24FFFFFF)
+
 
 // Light Theme Colors
-val LightBackground = Color(0xFFF0F1F6)
+// Light Theme Colors
+val LightBackground = Color(0xFFF3F7FA)
 val LightSurface = Color(0xFFFFFFFF)
-val LightSurfaceElement = Color(0xFFF5F5FA)
-val LightSurfaceRaised = Color(0xFFEBEBF5)
-val LightBorder = Color(0x14000000) // 8% alpha
-val LightBorderBright = Color(0x24000000) // 14% alpha
-val LightText1 = Color(0xFF0D0E1A)
-val LightText2 = Color(0xFF666680)
-val LightText3 = Color(0xFFAAAACC)
+val LightSurfaceElement = Color(0xFFE9F0F8)   // trước: F7FAFD
+val LightSurfaceRaised = Color(0xFFDCE6F1)    // trước: EDF3F7
+val LightBorder = Color(0x2E0F2B48)           // trước: 12 (7%), nay khoảng 18%
+val LightText1 = Color(0xFF102B4E)
+val LightText2 = Color(0xFF65788B)
+val LightText3 = Color(0xFFA2AFBB)
+val LightBorderBright = Color(0x400F2B48)     // trước: 24000000

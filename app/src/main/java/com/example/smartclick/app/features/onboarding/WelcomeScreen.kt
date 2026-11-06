@@ -28,6 +28,10 @@ import androidx.compose.ui.res.stringResource
 import com.example.smartclick.R
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import com.example.smartclick.app.core.ui.theme.Typography
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import com.example.smartclick.app.core.ui.theme.onboardingBackground
 
 data class FeatureItem(val icon: String, val title: String, val desc: String)
 
@@ -47,7 +51,7 @@ fun WelcomeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.bg)
+            .onboardingBackground()
     ) {
         Column(
             modifier = Modifier
@@ -61,7 +65,9 @@ fun WelcomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // TV Icon Header
-                Box(
+                Image(
+                    painter = painterResource(id = R.drawable.img),
+                    contentDescription = stringResource(R.string.app_name),
                     modifier = Modifier
                         .size(100.dp)
                         .shadow(
@@ -70,17 +76,8 @@ fun WelcomeScreen(
                             ambientColor = colors.acGlow,
                             spotColor = colors.acGlow
                         )
-                        .background(
-                            brush = colors.primaryGradient,
-                            shape = RoundedCornerShape(30.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "📺",
-                        fontSize = 50.sp
-                    )
-                }
+                        .clip(RoundedCornerShape(30.dp))
+                )
 
                 // Title & Subtitle
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
