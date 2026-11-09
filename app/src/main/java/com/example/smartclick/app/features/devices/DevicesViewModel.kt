@@ -12,6 +12,7 @@ import com.example.smartclick.app.domain.usecase.PairTvUseCase
 import com.example.smartclick.app.domain.connection.PairingStep
 import kotlinx.coroutines.Job
 import com.example.smartclick.app.domain.usecase.RemoveDeviceUseCase
+import com.example.smartclick.app.domain.usecase.SwitchActiveDeviceUseCase
 import com.example.smartclick.app.domain.usecase.ScanTvDevicesUseCase
 import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.TvConnectionState
@@ -45,6 +46,7 @@ class DevicesViewModel @Inject constructor(
     private val pairTvUseCase: PairTvUseCase,
     private val connectToTvUseCase: ConnectToTvUseCase,
     private val removeDeviceUseCase: RemoveDeviceUseCase,
+    private val switchActiveDeviceUseCase: SwitchActiveDeviceUseCase,
     private val wifiNetworkProvider: IWifiNetworkProvider,
     private val activeTvSession: IActiveTvSession,
     private val subscriptionRepository: ISubscriptionRepository,
@@ -258,6 +260,13 @@ class DevicesViewModel @Inject constructor(
             } else {
                 _connectionResult.emit(ConnectOutcome.Failed("Could not identify TV at $ipAddress"))
             }
+        }
+    }
+
+    fun switchDevice(device: TvDevice) {
+        viewModelScope.launch {
+            val result = switchActiveDeviceUseCase(device)
+            _connectionResult.emit(result)
         }
     }
 
