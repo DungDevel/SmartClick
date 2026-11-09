@@ -44,6 +44,11 @@ fun UpdateToPremiumScreen(
     val uiState by viewModel.uiState.collectAsState()
     val billingMessage by viewModel.billingMessages.collectAsState(initial = null)
     var selectedPlanId by remember { mutableStateOf("annual") }
+    val isPremium by viewModel.isPremium.collectAsState(initial = false)
+    var purchaseRequested by remember { mutableStateOf(false) }
+    LaunchedEffect(isPremium, purchaseRequested) {
+        if (isPremium && purchaseRequested) onBack()
+    }
     val context = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(billingMessage) {
@@ -147,6 +152,7 @@ fun UpdateToPremiumScreen(
 
             Button(
                 onClick = {
+                    purchaseRequested = true
                     (context as? android.app.Activity)?.let { activity ->
                         viewModel.onStartFreeTrial(activity, selectedPlanId)
                     }

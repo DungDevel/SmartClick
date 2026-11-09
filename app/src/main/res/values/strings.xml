@@ -40,6 +40,16 @@
     <string name="choose_language_desc">Select your preferred language</string>
 
     <!-- Scanning & Connection -->
+    <string name="device_management">Device Management</string>
+    <string name="connected_tv">Connected TV</string>
+    <string name="saved_tvs">Saved TVs</string>
+    <string name="network_tvs">Found on Network</string>
+    <string name="pair">Pair</string>
+    <string name="no_connected_tv">No TV currently connected</string>
+    <string name="no_saved_tv">No saved TVs</string>
+    <string name="no_network_tv">No new TVs found on network</string>
+    <string name="manual_ip_title">Enter IP Address</string>
+    <string name="manual_ip_hint">e.g. 192.168.1.50</string>
     <string name="scanning_network">Scanning Network...</string>
     <string name="looking_for_tvs">Looking for TVs on your Wi-Fi</string>
     <string name="tv_not_found_try_manually">TV not found? Try adding manually.</string>
@@ -287,4 +297,12 @@ Effortlessly
     <string name="voice_error_no_speech">No speech was heard. Try again.</string>
     <string name="voice_error_busy">Speech recognition is busy. Try again.</string>
     <string name="voice_error_generic">Speech recognition failed. Try again.</string>
+    <string name="billing_test_upgraded" translatable="false">Upgraded to Premium (test mode)</string>
+    <string name="voice_sheet_say_command">Say a command</string>
+    <string name="voice_sheet_processing">Processing...</string>
+    <string name="voice_sheet_please_wait">Please wait...</string>
+    <string name="voice_sheet_done">Command recognized</string>
+    <string name="voice_sheet_try_again">Try again</string>
+    <string name="voice_sheet_quote" translatable="false">“%1$s”</string>
+    <string name="voice_action">Voice Control</string>
 </resources>

@@ -22,6 +22,7 @@ import com.example.smartclick.app.core.ui.theme.raisedSurface
 import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.domain.usecase.SendCommandResult
+import androidx.compose.ui.draw.alpha
 
 @Composable
 fun DPadModeContent(
@@ -102,21 +103,6 @@ fun DPadModeContent(
     }
     Spacer(modifier = Modifier.height(16.dp))
 
-    if (showKeyboard || showDictation || showHeadphone) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (showKeyboard) androidx.compose.material3.OutlinedButton(onClick = onKeyboard, modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.keyboard))
-            }
-            if (showDictation) androidx.compose.material3.OutlinedButton(onClick = onDictate, modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.dictate_text))
-            }
-            if (showHeadphone) androidx.compose.material3.OutlinedButton(onClick = {}, modifier = Modifier.weight(1f)) {
-                Text(stringResource(R.string.headphone))
-            }
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-    }
-
     // VOL / CH
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -183,4 +169,39 @@ fun DPadModeContent(
     }
     Spacer(modifier = Modifier.height(16.dp))
 
+    // Keyboard / Headphone / Dictate: ba nút nổi riêng, không có thẻ bao ngoài
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val extraButtons = listOf(
+            Triple(R.drawable.keyboard, stringResource(R.string.keyboard), showKeyboard to onKeyboard),
+            Triple(R.drawable.headphone, stringResource(R.string.headphone), showHeadphone to {}),
+            Triple(R.drawable.microphone, stringResource(R.string.dictate_text), showDictation to onDictate)
+        )
+        extraButtons.forEach { (iconRes, label, state) ->
+            val (enabled, onClick) = state
+            Box(
+                modifier = Modifier
+                    .size(54.dp)
+                    .alpha(if (enabled) 1f else 0.4f)
+                    .raisedSurface(RoundedCornerShape(16.dp))
+                    .clickable(
+                        enabled = enabled,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { onClick() },
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = label,
+                    modifier = Modifier.size(22.dp),
+                    colorFilter = ColorFilter.tint(colors.tx2)
+                )
+            }
+        }
+    }
+    Spacer(modifier = Modifier.height(16.dp))
 }

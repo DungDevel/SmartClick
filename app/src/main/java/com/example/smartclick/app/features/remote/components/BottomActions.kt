@@ -83,14 +83,9 @@ fun BottomActions(
     }
     Spacer(modifier = Modifier.height(16.dp))
 
-    val isListening = speechState is SpeechState.Listening || speechState is SpeechState.Processing
-    val voiceTextStr = when (speechState) {
-        is SpeechState.Idle -> stringResource(R.string.voice_search)
-        is SpeechState.Listening -> stringResource(R.string.voice_listening)
-        is SpeechState.Processing -> stringResource(R.string.voice_processing, speechState.partialText)
-        is SpeechState.Result -> stringResource(R.string.voice_result, speechState.text)
-        is SpeechState.Error -> stringResource(R.string.voice_error_display, speechState.message)
-    }
+    // Trạng thái nghe giờ hiện trong bảng VoiceSearchSheet, nút chỉ đóng vai trò mở bảng đó
+    val isListening = false
+    val voiceTextStr = stringResource(R.string.voice_action)
 
     val boxColor = if (isListening) colors.acc.copy(alpha = 0.25f) else colors.acc.copy(alpha = 0.12f)
 
@@ -102,20 +97,14 @@ fun BottomActions(
             .background(boxColor)
             .border(1.dp, colors.acc.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
             .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        onStartVoice()
-                        tryAwaitRelease()
-                        onStopVoice()
-                    }
-                )
+                detectTapGestures(onTap = { onStartVoice() })
             },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             painter = painterResource(id = R.drawable.microphone),
-            contentDescription = stringResource(R.string.voice_search),
+            contentDescription = stringResource(R.string.voice_action),
             tint = colors.acc,
             modifier = Modifier.size(24.dp)
         )

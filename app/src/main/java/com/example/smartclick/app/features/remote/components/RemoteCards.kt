@@ -55,16 +55,16 @@ fun RowScope.RemoteStepperCard(
             .weight(1f)
             .alpha(if (enabled) 1f else 0.4f)
             .raisedCard()
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = title,
             color = colors.tx2,
-            fontSize = 11.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.08.sp,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 10.dp)
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             arrayOf(Triple("-", minusCommand, onMinus), Triple("+", plusCommand, onPlus)).forEach { (label, command, onClick) ->
@@ -79,12 +79,12 @@ fun RowScope.RemoteStepperCard(
                     )
                 }
                 Box(
-                    modifier = Modifier.weight(1f).height(48.dp)
+                    modifier = Modifier.weight(1f).height(40.dp)
                         .raisedSurface(RoundedCornerShape(14.dp))
                         .then(repeatModifier)
                         .semantics { contentDescription = title + label },
                     contentAlignment = Alignment.Center
-                ) { Text(label, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors.tx1) }
+                ) { Text(label, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = colors.tx1) }
             }
         }
     }

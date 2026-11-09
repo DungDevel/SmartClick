@@ -30,6 +30,16 @@
     <string name="connect_tv">Conectar à TV</string>
     <string name="choose_language">Escolher idioma</string>
     <string name="choose_language_desc">Selecione seu idioma preferido</string>
+    <string name="device_management">Gerenciamento de dispositivos</string>
+    <string name="connected_tv">TV conectado</string>
+    <string name="saved_tvs">TVs salvos</string>
+    <string name="network_tvs">Encontrados na rede</string>
+    <string name="pair">Emparelhar</string>
+    <string name="no_connected_tv">Nenhum TV conectado no momento</string>
+    <string name="no_saved_tv">Nenhum TV salvo</string>
+    <string name="no_network_tv">Nenhum novo TV encontrado na rede</string>
+    <string name="manual_ip_title">Digitar endereço IP</string>
+    <string name="manual_ip_hint">ex. 192.168.1.50</string>
     <string name="scanning_network">Verificando a rede…</string>
     <string name="looking_for_tvs">Procurando TVs no seu Wi-Fi</string>
     <string name="tv_not_found_try_manually">Não encontrou sua TV? Tente adicioná-la manualmente.</string>
@@ -251,4 +261,10 @@
     <string name="voice_error_no_speech">Nenhuma fala foi detectada. Tente novamente.</string>
     <string name="voice_error_busy">O serviço de reconhecimento de fala está ocupado. Tente novamente.</string>
     <string name="voice_error_generic">Falha no reconhecimento de fala. Tente novamente.</string>
+    <string name="voice_sheet_say_command">Diga um comando</string>
+    <string name="voice_sheet_processing">Processando...</string>
+    <string name="voice_sheet_please_wait">Aguarde...</string>
+    <string name="voice_sheet_done">Comando reconhecido</string>
+    <string name="voice_sheet_try_again">Tentar novamente</string>
+    <string name="voice_action">Controle por voz</string>
 </resources>

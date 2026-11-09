@@ -25,12 +25,12 @@ import androidx.compose.ui.res.stringResource
 import com.example.smartclick.R
 import com.example.smartclick.app.core.ui.theme.SmartClickThemeTokens
 import com.example.smartclick.app.core.ui.theme.raisedSurface
-import com.example.smartclick.app.features.onboarding.DeviceFoundScreen
+import com.example.smartclick.app.features.devices.DeviceListScreen
 import com.example.smartclick.app.features.remote.RemoteScreen
 
 sealed class AppTab(val titleResId: Int, val icon: Int) {
     object Remote : AppTab(R.string.tab_remote, R.drawable.lists)
-    object Apps : AppTab(R.string.tab_channels, R.drawable.application)
+    object Channels : AppTab(R.string.tab_apps, R.drawable.application)
     object Cast : AppTab(R.string.tab_cast, R.drawable.upload)
     object Settings : AppTab(R.string.tab_settings, R.drawable.settings)
 }
@@ -43,7 +43,7 @@ fun MainAppScreen(onNavigateToPremium: () -> Unit = {}) {
 
     val tabs = listOf(
         AppTab.Remote,
-        AppTab.Apps,
+        AppTab.Channels,
         AppTab.Cast,
         AppTab.Settings
     )
@@ -56,6 +56,7 @@ fun MainAppScreen(onNavigateToPremium: () -> Unit = {}) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(colors.bg)
+                .statusBarsPadding()
         ) {
             // Content Area
             Box(
@@ -68,7 +69,7 @@ fun MainAppScreen(onNavigateToPremium: () -> Unit = {}) {
                         onNavigateToDevices = { showDeviceFound = true },
                         onNavigateToPremium = onNavigateToPremium
                     )
-                    AppTab.Apps -> com.example.smartclick.app.features.channels.ChannelsScreen(onNavigateToDevices = { showDeviceFound = true })
+                    AppTab.Channels -> com.example.smartclick.app.features.channels.ChannelsScreen(onNavigateToDevices = { showDeviceFound = true })
                     AppTab.Cast -> com.example.smartclick.app.features.cast.CastScreen(onNavigateToDevices = { showDeviceFound = true }, onNavigateToPremium = onNavigateToPremium)
                     AppTab.Settings -> com.example.smartclick.app.features.settings.SettingsScreen()
                 }
@@ -109,7 +110,8 @@ fun MainAppScreen(onNavigateToPremium: () -> Unit = {}) {
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
-                                ) { currentTabName = tab.javaClass.simpleName },
+                                ) { currentTabName = tab.javaClass.simpleName }
+                                .padding(top = 8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
@@ -156,8 +158,12 @@ fun MainAppScreen(onNavigateToPremium: () -> Unit = {}) {
                     .fillMaxSize()
                     .clickable(enabled = false) {}
             ) {
-                DeviceFoundScreen(
-                    onClose = { showDeviceFound = false }
+                DeviceListScreen(
+                    onClose = { showDeviceFound = false },
+                    onNavigateToPremium = {
+                        showDeviceFound = false
+                        onNavigateToPremium()
+                    }
                 )
             }
         }

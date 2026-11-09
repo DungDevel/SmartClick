@@ -41,6 +41,7 @@ import com.example.smartclick.app.domain.connection.TvConnectionState
 import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.features.remote.components.BottomActions
+import com.example.smartclick.app.features.remote.components.VoiceSearchSheet
 import com.example.smartclick.app.features.remote.components.DPadModeContent
 import com.example.smartclick.app.features.remote.components.DPad
 import com.example.smartclick.app.features.remote.components.KeyboardModal
@@ -50,6 +51,9 @@ import com.example.smartclick.app.domain.usecase.SendCommandResult
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import com.example.smartclick.app.core.ui.theme.raisedSurface
+
+// TẠM THỜI: true = bỏ qua yêu cầu Premium để test micro. Nhớ đặt lại false trước khi phát hành.
+private const val VOICE_TEST_UNLOCK = false
 
 @Composable
 fun RemoteScreen(
@@ -91,6 +95,7 @@ fun RemoteScreen(
     }
 
     var showPowerOffDialog by remember { mutableStateOf(false) }
+    var showVoiceSheet by remember { mutableStateOf(false) }
     val currentOnNavigateToPremium by rememberUpdatedState(onNavigateToPremium)
 
     LaunchedEffect(viewModel) {
@@ -118,12 +123,20 @@ fun RemoteScreen(
                     android.widget.Toast.makeText(context, context.getString(R.string.wol_failed_retry), android.widget.Toast.LENGTH_LONG).show()
                 }
                 RemoteUiEvent.VoicePremiumRequired -> {
-                    currentOnNavigateToPremium()
+                    if (VOICE_TEST_UNLOCK) {
+                        val hasPerm = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+                        if (hasPerm) viewModel.startListening()
+                        else recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    } else {
+                        showVoiceSheet = false
+                        currentOnNavigateToPremium()
+                    }
                 }
                 RemoteUiEvent.RequestVoicePermission -> {
                     recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                 }
                 RemoteUiEvent.VoiceNotSupportedError -> {
+                    showVoiceSheet = false
                     android.widget.Toast.makeText(context, context.getString(R.string.command_not_supported), android.widget.Toast.LENGTH_SHORT).show()
                 }
                 RemoteUiEvent.VoiceUnrecognizedError -> {
@@ -244,7 +257,12 @@ fun RemoteScreen(
                     .clickable { onNavigateToDevices() },
                 contentAlignment = Alignment.Center
             ) {
-                Text("📺", fontSize = 20.sp)
+                Image(
+                    painter = painterResource(id = R.drawable.smart_tv),
+                    contentDescription = stringResource(R.string.select_device),
+                    modifier = Modifier.size(22.dp),
+                    colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(colors.tx2)
+                )
             }
         }
 
@@ -282,14 +300,24 @@ fun RemoteScreen(
         val reconnectAttempt = (connectionState as? TvConnectionState.Reconnecting)?.attempt ?: 0
         ReconnectBanner(isVisible = isReconnecting, attempt = reconnectAttempt)
 
-        WifiBanner(
-            isVisible = isWifiOff && !isReconnecting,
-            message = when (networkState) {
+        // Thông báo mất Wi-Fi: chỉ hiện một dòng chữ nhỏ, không có khung nền
+        if (isWifiOff && !isReconnecting) {
+            val wifiHint = when (networkState) {
                 is NetworkState.Disconnected -> stringResource(R.string.wifi_off_remote_message)
                 is NetworkState.ConnectedNoWifi -> stringResource(R.string.no_wifi_network_message)
                 else -> ""
             }
-        )
+            if (wifiHint.isNotEmpty()) {
+                Text(
+                    text = wifiHint,
+                    color = colors.tx2.copy(alpha = 0.8f),
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 10.dp)
+                )
+            }
+        }
 
         run {
             val contextForToast = androidx.compose.ui.platform.LocalContext.current
@@ -464,10 +492,9 @@ fun RemoteScreen(
                             }
                         }
 
-                        // Lock
+                        // Lock (không làm mờ, vì đây là nút duy nhất để mở khóa)
                         Box(
                             modifier = Modifier
-                                .alpha(controlsAlpha)
                                 .size(45.dp)
                                 .then(
                                     if (isLocked) Modifier.background(colors.acc, CircleShape)
@@ -507,7 +534,16 @@ fun RemoteScreen(
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(0.dp))
+                    if (isLocked) {
+                        Text(
+                            text = stringResource(R.string.remote_is_locked),
+                            color = colors.tx2,
+                            fontSize = 12.sp,
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .padding(bottom = 4.dp)
+                        )
+                    }
 
                     // Scrollable Body
                     Column(
@@ -586,23 +622,40 @@ fun RemoteScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         val speechState by viewModel.speechState.collectAsState()
+                        val voiceOutcome by viewModel.voiceOutcome.collectAsState()
+
+                        val startVoice: () -> Unit = {
+                            if (isHapticEnabled) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            }
+                            val hasPerm = ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.RECORD_AUDIO
+                            ) == PackageManager.PERMISSION_GRANTED
+                            viewModel.prepareVoiceListening(hasRecordAudioPermission = hasPerm)
+                        }
 
                         BottomActions(
                             speechState = speechState,
                             onStartVoice = {
-                                if (isHapticEnabled) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                }
-                                val hasPerm = ContextCompat.checkSelfPermission(
-                                    context,
-                                    Manifest.permission.RECORD_AUDIO
-                                ) == PackageManager.PERMISSION_GRANTED
-                                viewModel.prepareVoiceListening(hasRecordAudioPermission = hasPerm)
+                                showVoiceSheet = true
+                                startVoice()
                             },
-                            onStopVoice = {
-                                viewModel.stopListening()
-                            }
+                            onStopVoice = {}
                         )
+
+                        if (showVoiceSheet) {
+                            VoiceSearchSheet(
+                                state = speechState,
+                                outcome = voiceOutcome,
+                                onCancel = {
+                                    viewModel.cancelVoiceSession()
+                                    showVoiceSheet = false
+                                },
+                                onFinished = { showVoiceSheet = false },
+                                onRetry = { startVoice() }
+                            )
+                        }
                     }
                 }
             }

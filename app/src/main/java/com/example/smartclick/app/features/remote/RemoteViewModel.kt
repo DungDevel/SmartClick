@@ -165,6 +165,9 @@ class RemoteViewModel @Inject constructor(
         )
 
     val speechState: StateFlow<SpeechState> = speechToTextEngine.state
+    // Kết quả xử lý lệnh giọng nói, để bảng Voice Search biết thành công hay thất bại
+    private val _voiceOutcome = MutableStateFlow<VoiceCommandResult?>(null)
+    val voiceOutcome: StateFlow<VoiceCommandResult?> = _voiceOutcome.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -207,6 +210,7 @@ class RemoteViewModel @Inject constructor(
     }
 
     fun prepareVoiceListening(hasRecordAudioPermission: Boolean) {
+        _voiceOutcome.value = null
         viewModelScope.launch {
             if (!isVoiceAllowed()) {
                 _uiEvents.tryEmit(RemoteUiEvent.VoicePremiumRequired)
@@ -252,9 +256,11 @@ class RemoteViewModel @Inject constructor(
         val intent = intentParser.parse(text)
         if (intent is com.example.smartclick.app.domain.model.voice.VoiceIntent.TurnOff) {
             _uiEvents.tryEmit(RemoteUiEvent.RequestPowerOffConfirmation)
+            _voiceOutcome.value = VoiceCommandResult.SUCCESS
             return
         }
         val result = processVoiceCommandUseCase(intent)
+        _voiceOutcome.value = result
         when (result) {
             VoiceCommandResult.NOT_CONNECTED -> _uiEvents.tryEmit(RemoteUiEvent.CommandNotConnected)
             VoiceCommandResult.NOT_SUPPORTED -> _uiEvents.tryEmit(RemoteUiEvent.CommandNotSupported)

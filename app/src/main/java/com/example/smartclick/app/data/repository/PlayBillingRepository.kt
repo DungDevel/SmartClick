@@ -34,7 +34,7 @@ private const val PLAN_ANNUAL = "annual"
 private const val PLAN_LIFETIME = "lifetime"
 
 fun buildPlans(prices: Map<String, PlanPrice>): List<PricingPlan> {
-    val order = listOf(PLAN_WEEKLY, PLAN_ANNUAL, PLAN_LIFETIME)    
+    val order = listOf(PLAN_WEEKLY, PLAN_ANNUAL, PLAN_LIFETIME)
     return order.mapNotNull { id ->
         prices[id]?.let { p ->
             val displayName = when (id) {
@@ -61,10 +61,20 @@ class PlayBillingRepository @Inject constructor(
 
     companion object {
         private const val TAG = "PlayBillingRepo"
+
+        // TẠM THỜI: true = nhấn mua là lên Premium ngay, không qua Google Play.
+        // Trước khi phát hành phải đổi thành false.
+        private const val PREMIUM_TEST_MODE = true
+        private const val TEST_PREFS = "smartclick_billing_test"
+        private const val TEST_KEY = "test_premium"
     }
 
     private val applicationScope = CoroutineScope(Dispatchers.IO)
-    private val _currentPlan = MutableStateFlow(SubscriptionPlan.FREE)
+    private val testPrefs = context.getSharedPreferences(TEST_PREFS, Context.MODE_PRIVATE)
+    private val _currentPlan = MutableStateFlow(
+        if (PREMIUM_TEST_MODE && testPrefs.getBoolean(TEST_KEY, false)) SubscriptionPlan.PREMIUM
+        else SubscriptionPlan.FREE
+    )
     private val _billingMessages = MutableSharedFlow<String>(extraBufferCapacity = 1)
 
     private var productDetailsMap = emptyMap<String, PlanPrice>()
@@ -100,6 +110,12 @@ class PlayBillingRepository @Inject constructor(
     }
 
     override fun launchBillingFlow(activity: Any, planId: String) {
+        if (PREMIUM_TEST_MODE) {
+            testPrefs.edit().putBoolean(TEST_KEY, true).apply()
+            _currentPlan.value = SubscriptionPlan.PREMIUM
+            _billingMessages.tryEmit(context.getString(R.string.billing_test_upgraded))
+            return
+        }
         val act = activity as? Activity ?: return
         if (!billingClient.isReady) {
             _billingMessages.tryEmit(context.getString(R.string.billing_not_ready))
@@ -282,11 +298,8 @@ class PlayBillingRepository @Inject constructor(
             _billingMessages.tryEmit(context.getString(R.string.billing_processing_pending))
         }
 
-        if (hasPremium) {
-            _currentPlan.value = SubscriptionPlan.PREMIUM
-        } else {
-            _currentPlan.value = SubscriptionPlan.FREE
-        }
+        val testPremium = PREMIUM_TEST_MODE && testPrefs.getBoolean(TEST_KEY, false)
+        _currentPlan.value = if (hasPremium || testPremium) SubscriptionPlan.PREMIUM else SubscriptionPlan.FREE
     }
 
     private fun acknowledgePurchase(purchase: Purchase, retryCount: Int = 3) {
