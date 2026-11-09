@@ -63,6 +63,7 @@ class RemoteViewModel @Inject constructor(
     private val processVoiceCommandUseCase: ProcessVoiceCommandUseCase,
     private val featureGate: FeatureGate,
     private val subscriptionRepository: ISubscriptionRepository,
+    private val reconnectWatcher: com.example.smartclick.app.domain.connection.ReconnectWatcher,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -340,6 +341,12 @@ class RemoteViewModel @Inject constructor(
             capabilities.contains(com.example.smartclick.app.domain.model.TvCapability.POWER_TOGGLE) && isConnected -> RemoteCommand.Power
             else -> RemoteCommand.PowerOff
         }
+
+        val deviceId = activeTvSession.currentController.value?.device?.id
+        if (deviceId != null) {
+            reconnectWatcher.setIntentionalPowerOff(deviceId, true)
+        }
+
         sendCommand(command)
     }
 
