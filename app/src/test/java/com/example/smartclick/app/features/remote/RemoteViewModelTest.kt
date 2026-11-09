@@ -105,6 +105,7 @@ class RemoteViewModelTest {
             processVoiceCommandUseCase,
             featureGate,
             subscriptionRepository,
+            mockk(relaxed = true),
             savedStateHandle
         )
     }
@@ -200,6 +201,7 @@ class RemoteViewModelTest {
             processVoiceCommandUseCase,
             featureGate,
             subscriptionRepository,
+            mockk(relaxed = true),
             savedStateHandle
         )
 

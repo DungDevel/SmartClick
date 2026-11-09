@@ -78,6 +78,7 @@ class RemotePowerTest {
             mockk<ProcessVoiceCommandUseCase>(relaxed = true),
             mockk<FeatureGate>(relaxed = true),
             mockk<ISubscriptionRepository>(relaxed = true),
+            mockk(relaxed = true),
             SavedStateHandle()
         )
     }
