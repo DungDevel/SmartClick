@@ -45,10 +45,10 @@ jobs:
         run: ./gradlew :app:assembleRelease --stacktrace
 
       - name: Unit tests
-        run: ./gradlew :tv:runtime:testDebugUnitTest :tv:runtime:testReleaseUnitTest :app:testDebugUnitTest :app:testReleaseUnitTest :core:model:testDebugUnitTest :core:tv-api:testDebugUnitTest --stacktrace
+        run: ./gradlew testDebugUnitTest :app:testDebugUnitTest :app:testReleaseUnitTest :core:model:testDebugUnitTest :core:tv-api:testDebugUnitTest --stacktrace
 
       - name: Lint
-        run: ./gradlew :app:lintDebug :tv:runtime:lintDebug --stacktrace
+        run: ./gradlew :app:lintDebug lintDebug --stacktrace
 
       # E1: cổng chặn chuỗi hardcode trong UI Compose
       - name: Check hardcoded UI strings (E1)
@@ -64,8 +64,8 @@ jobs:
             app/build/reports/lint-results-*.html
             core/model/build/reports/tests/
             core/tv-api/build/reports/tests/
-            tv/runtime/build/reports/tests/
-            tv/runtime/build/reports/lint-results-*.html
+            tv/*/build/reports/tests/
+            tv/*/build/reports/lint-results-*.html
           if-no-files-found: ignore
 
       - name: Upload debug APK
