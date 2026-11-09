@@ -26,6 +26,10 @@ class ConnectToTvUseCase @Inject constructor(
     private val tvCredentialStore: ITvCredentialStore
 ) {
     suspend operator fun invoke(device: TvDevice): ConnectOutcome {
+        if (!com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils.isPrivateLanAddress(device.ipAddress)) {
+            return ConnectOutcome.Failed("Invalid or public IP address destination blocked by security policy.")
+        }
+
         if (!device.isPaired) {
             val plan = subscriptionRepository.currentPlan.first()
             val pairedList = tvDeviceRepository.getPairedDevices().first()
