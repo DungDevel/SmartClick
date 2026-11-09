@@ -12,6 +12,7 @@ import com.example.smartclick.app.domain.usecase.ConnectToTvUseCase
 import com.example.smartclick.app.domain.usecase.PairTvUseCase
 import com.example.smartclick.app.domain.usecase.RemoveDeviceUseCase
 import com.example.smartclick.app.domain.usecase.ScanTvDevicesUseCase
+import com.example.smartclick.app.domain.usecase.SwitchActiveDeviceUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -39,6 +40,7 @@ class DevicesViewModelTest {
     private lateinit var pairTvUseCase: PairTvUseCase
     private lateinit var connectToTvUseCase: ConnectToTvUseCase
     private lateinit var removeDeviceUseCase: RemoveDeviceUseCase
+    private lateinit var switchActiveDeviceUseCase: SwitchActiveDeviceUseCase
     private lateinit var wifiNetworkProvider: IWifiNetworkProvider
     private lateinit var activeTvSession: IActiveTvSession
     private lateinit var subscriptionRepository: ISubscriptionRepository
@@ -58,6 +60,7 @@ class DevicesViewModelTest {
         pairTvUseCase = mockk(relaxed = true)
         connectToTvUseCase = mockk(relaxed = true)
         removeDeviceUseCase = mockk(relaxed = true)
+        switchActiveDeviceUseCase = mockk(relaxed = true)
         wifiNetworkProvider = mockk(relaxed = true)
         activeTvSession = mockk(relaxed = true)
         subscriptionRepository = mockk(relaxed = true)
@@ -78,6 +81,7 @@ class DevicesViewModelTest {
             pairTvUseCase,
             connectToTvUseCase,
             removeDeviceUseCase,
+            switchActiveDeviceUseCase,
             wifiNetworkProvider,
             activeTvSession,
             subscriptionRepository,
