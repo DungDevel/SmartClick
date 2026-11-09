@@ -9,21 +9,21 @@ Báo cáo này lập kế hoạch chi tiết chia các việc còn lại từ `d
 | Mã yêu cầu | Mô tả chức năng | Độ lớn | Luồng | Thứ tự | File chính liên quan |
 |---|---|---|---|---|---|
 | `F-BASE-04` | Dọn repo, gitattributes, CI | S | A | 1 | `.github/workflows/android-ci.yml`, `.gitattributes`, xóa file patch thừa |
-| `F-BASE-07` | Sửa lỗi build B17 (chuỗi vi + cứng) | S | A | 2 | `app/src/main/res/values-vi/strings.xml`, `DeviceFoundScreen.kt` |
-| `F-DEV-01` | Màn danh sách thiết bị riêng | M | A | 3 | `app/src/main/java/com/example/smartclick/app/features/devices/DeviceListScreen.kt`, `DevicesViewModel.kt` |
-| `F-DEV-02` | Chuyển / Xoá thiết bị | S | A | 4 | `RemoveDeviceUseCase.kt`, `SwitchActiveDeviceUseCase.kt`, `DevicesViewModel.kt` |
-| `F-DEV-03` | Kết nối lại tự động (`ReconnectWatcher`) | M | A | 5 | `app/src/main/java/com/example/smartclick/app/domain/connection/ReconnectWatcher.kt` |
-| `F-DEV-05` | Lưu địa chỉ MAC cho WoL | S | A | 6 | `DeviceFingerprintEngine.kt`, các driver (`RokuController.kt`, v.v.) |
-| `F-PRE-01..05` | Premium & Google Play Billing (thêm lifetime, 4 quyền lợi, strings) | L | A | 7 | `PlayBillingRepository.kt`, `UpdateToPremiumScreen.kt`, `PremiumViewModel.kt`, `strings.xml` |
-| `F-PRE-06` | FeatureGate & gỡ chặn LaunchAppOnTvUseCase | S | A | 8 | `LaunchAppOnTvUseCase.kt`, `FeatureGate.kt` |
-| `F-REL-01` | Cấu hình Phát hành (Release, R8, ký APK) | M | A | 9 | `app/build.gradle.kts` |
-| `F-REM-03` | Nút nguồn 5 trạng thái & WoL (sửa lớp phủ `RemoteScreen`) | M | B | 1 | `RemoteScreen.kt`, `RemotePowerButton.kt`, `RemoteViewModel.kt` |
+| `F-BASE-07` | Sửa lỗi build B17 (chuỗi vi + cứng) | S | A | 2 | **Đã hoàn thành sẵn** (xác minh từ working tree), bỏ qua việc sửa code. |
+| `F-DEV-01` | Màn danh sách thiết bị riêng | M | - | - | **Đã giao riêng cho Claude khác làm trong thư mục chính**, bỏ khỏi luồng A, chờ gộp. |
+| `F-DEV-02` | Chuyển / Xoá thiết bị (Kiểm tra DeviceListScreen/DevicesViewModel, chỉ làm phần chưa có) | S | A | 3 | `RemoveDeviceUseCase.kt`, `SwitchActiveDeviceUseCase.kt`, `DevicesViewModel.kt` |
+| `F-DEV-03` | Kết nối lại tự động (`ReconnectWatcher`) | M | A | 4 | `app/src/main/java/com/example/smartclick/app/domain/connection/ReconnectWatcher.kt` |
+| `F-DEV-05` | Lưu địa chỉ MAC cho WoL | S | A | 5 | `DeviceFingerprintEngine.kt`, `tv/core/**`, `tv/roku/**`, `tv/lg/**`, `tv/samsung/**` |
+| `F-PRE-01..05` | Premium & Google Play Billing (kiểm tra git log Billing, bổ sung phần thiếu, lifetime, 4 quyền lợi) | L | A | 6 | `PlayBillingRepository.kt`, `UpdateToPremiumScreen.kt`, `PremiumViewModel.kt`, 5 file strings |
+| `F-PRE-06` | FeatureGate & PairingLimitPolicy | S | A | 7 | `FeatureGate.kt` |
+| `F-REL-01` | Cấu hình Phát hành (Release, R8 keep rules cho Hilt/Protobuf/OkHttp, ProGuard) | M | A | 8 | `app/build.gradle.kts`, `app/proguard-rules.pro`, `tv/*/consumer-rules.pro` |
+| `F-REM-03` | Nút nguồn 5 trạng thái & WoL (đọc code hiện tại, bổ sung phần thiếu) | M | B | 1 | `RemoteScreen.kt`, `RemotePowerButton.kt`, `RemoteViewModel.kt` |
 | `F-REM-04` | Nút Mute 3 trạng thái & lưu theo thiết bị | M | B | 2 | `RemoteSecondaryActions.kt`, `RemoteViewModel.kt` |
-| `F-REM-06` | Nút Khoá (R8) (bổ sung vi, cố định 1s) | S | B | 3 | `RemoteViewModel.kt`, `values-vi/strings.xml` |
-| `F-REM-07`, `12` | Hàng 3 nút phụ mới (Keyboard, Mic, Headphone) & gỡ nút giả | M | B | 4 | `DPadModeContent.kt`, `BottomActions.kt` |
+| `F-REM-06` | Nút Khoá (R8) (bổ sung đa ngôn ngữ, cố định 1s) | S | B | 3 | `RemoteViewModel.kt`, 5 file strings |
+| `F-REM-07`, `12` | Hàng 3 nút phụ mới (Keyboard, Mic, Headphone - đã có UI 54dp, nối logic) | M | B | 4 | `DPadModeContent.kt`, `BottomActions.kt`, 5 file strings |
 | `F-REM-10` | Sửa bàn phím chữ (`KeyboardModal` dạng gõ xong bấm Gửi) | M | B | 5 | `KeyboardModal.kt`, `KeyboardTextDraft.kt` |
-| `F-CHN-01..03` | Hoàn thiện Channels (`channels.json` + ViewModel) | M | B | 6 | `app/src/main/assets/channels.json` (tạo mới), `ChannelsViewModel.kt`, `ChannelsScreen.kt` |
-| `F-CST-01..06` | Nối Backend Cast (`ICastController`) vào UI (`CastViewModel`, `CastScreen`) | L | B | 7 | `CastViewModel.kt`, `CastScreen.kt`, `CastErrorPresentation.kt` |
+| `F-CHN-01..03` | Hoàn thiện Channels (`channels.json` + ViewModel + Gỡ chặn `LaunchAppOnTvUseCase`) | M | B | 6 | `app/src/main/assets/channels.json` (tạo mới), `ChannelsViewModel.kt`, `LaunchAppOnTvUseCase.kt` |
+| `F-CST-01..06` | Nối Backend Cast (`:tv:cast`, `:tv:core`) vào UI (`CastViewModel`, `CastScreen`) | L | B | 7 | `CastViewModel.kt`, `CastScreen.kt`, `CastErrorPresentation.kt` |
 
 ---
 
@@ -31,7 +31,7 @@ Báo cáo này lập kế hoạch chi tiết chia các việc còn lại từ `d
 
 | File dùng chung | Các luồng đụng | Nguyên tắc xử lý xung đột |
 |---|---|---|
-| `app/src/main/res/values/strings.xml` & `values-vi/strings.xml` | Cả A và B | **Thêm mới tuyệt đối ở CUỐI file**, trước thẻ đóng `</resources>`. Không sửa hoặc đảo thứ tự dòng cũ của nhau. |
+| 5 file strings (`values/strings.xml`, `values-vi/strings.xml`, `values-de/strings.xml`, `values-es/strings.xml`, `values-pt-rBR/strings.xml`) | Cả A và B | **Thêm mới tuyệt đối ở CUỐI file**, trước thẻ đóng `</resources>`. Mọi chuỗi mới phải thêm vào **đủ cả 5 file** để qua `LocaleResourcesConsistencyTest`. |
 | `app/src/main/java/com/example/smartclick/app/features/remote/RemoteViewModel.kt` | Cả A và B có thể dùng, nhưng trong phân công thực tế: **Chỉ Luồng B** chỉnh sửa file này để xử lý Remote state (Mute, Khoá, Power). |
 | `settings.gradle.kts`, `build.gradle.kts` (root) | Không ai sửa trong nhóm (a). Chỉ Luồng A sửa `app/build.gradle.kts` cho Release. |
 
@@ -50,15 +50,12 @@ Báo cáo này lập kế hoạch chi tiết chia các việc còn lại từ `d
 
 ---
 
-## 4. NHÓM (B) CẦN QUYẾT ĐỊNH VÀ NHÓM (C) BỊ CHẶN
+## 4. QUYẾT ĐỊNH ĐÃ CHỐT VÀ NHÓM (C) BỊ CHẶN
 
-### Nhóm (b) — Cần người dùng quyết định trước khi triển khai sâu:
-1. **Ý nghĩa nút Headphone (`F-REM-14`, `D-Headphone-1`):**
-   - *Đề xuất:* Tạm thời cấu hình nút Headphone mở menu cài đặt âm thanh trên TV (Phương án C) hoặc ẩn cho đến khi có firmware chuyên biệt.
-2. **Mức độ xác thực Google Cast (I34):**
-   - *Đề xuất:* Dùng chung cơ chế xác thực chứng chỉ ghim của cổng điều khiển hiện tại cho đến khi có phần cứng Cast thực tế để test.
-3. **Quyền lợi Mic / Giọng nói (`F-REM-13`):**
-   - *Đề xuất:* Đưa tính năng nhập giọng nói vào nhóm tính năng Premium hoặc cho phép Free giới hạn 3 lần/ngày.
+### Các quyết định thiết kế đã chốt (Nhóm b):
+1. **Ý nghĩa nút Headphone (`F-REM-14`, `D-Headphone-1`):** Giữ nút trên UI, khi bấm sẽ hiện thông báo Toast "Chưa hỗ trợ" (not supported).
+2. **Mic nhập chữ (`F-REM-13`):** Miễn phí cho mọi người dùng giống như Keyboard.
+3. **Xác thực Google Cast (I34):** Giữ nguyên cơ chế hiện tại, không thay đổi trong đợt này.
 
 ### Nhóm (c) — Chặn bởi phần cứng / dịch vụ ngoài (Không giao cho Claude):
 - `F-BASE-05`: Kiểm chứng đổi ngôn ngữ runtime trên thiết bị thật.
