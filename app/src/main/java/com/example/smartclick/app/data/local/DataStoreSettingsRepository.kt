@@ -26,6 +26,8 @@ class DataStoreSettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ISettingsRepository {
 
+    private val muteStateStore = MuteStateStore(context.dataStore)
+
     private object PreferencesKeys {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val HAPTIC_ENABLED = booleanPreferencesKey("haptic_enabled")
@@ -91,5 +93,13 @@ class DataStoreSettingsRepository @Inject constructor(
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.REMOTE_MODE] = mode
         }
+    }
+
+    override suspend fun setMuteState(deviceId: String, state: Int) {
+        muteStateStore.setMuteState(deviceId, state)
+    }
+
+    override suspend fun getMuteState(deviceId: String): Int? {
+        return muteStateStore.getMuteState(deviceId)
     }
 }

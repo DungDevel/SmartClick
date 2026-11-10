@@ -128,6 +128,8 @@ class RemoteViewModel @Inject constructor(
     private fun currentMuteStateKey(): String =
         activeTvSession.currentController.value?.device?.id ?: NO_ACTIVE_DEVICE_KEY
 
+    private var unlockJob: kotlinx.coroutines.Job? = null
+
     fun toggleScreenLock() {
         if (!_isLocked.value) {
             _isLocked.value = true
@@ -135,7 +137,16 @@ class RemoteViewModel @Inject constructor(
     }
 
     fun unlockScreen() {
-        _isLocked.value = false
+        unlockJob?.cancel()
+        unlockJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(UNLOCK_HOLD_DELAY_MS)
+            _isLocked.value = false
+        }
+    }
+
+    fun cancelUnlockScreen() {
+        unlockJob?.cancel()
+        unlockJob = null
     }
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
@@ -172,10 +183,28 @@ class RemoteViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            // Load all saved mute states from repository
+            val activeId = activeTvSession.currentController.value?.device?.id
+            if (activeId != null) {
+                val savedState = settingsRepository.getMuteState(activeId)
+                if (savedState != null) {
+                    muteStatesByDevice.value = muteStatesByDevice.value + (activeId to savedState)
+                }
+            }
+
             var lastConnectedDeviceId: String? = null
             connectionState.collect { state ->
                 if (state is TvConnectionState.Connected) {
                     val connectedDeviceId = state.device.id
+
+                    // Load mute state for the newly connected device
+                    viewModelScope.launch {
+                        val savedState = settingsRepository.getMuteState(connectedDeviceId)
+                        if (savedState != null) {
+                            muteStatesByDevice.value = muteStatesByDevice.value + (connectedDeviceId to savedState)
+                        }
+                    }
+
                     lastConnectedDeviceId?.takeIf { it != connectedDeviceId }?.let { previousId ->
                         muteStatesByDevice.value = muteStatesByDevice.value - previousId
                     }
@@ -203,6 +232,7 @@ class RemoteViewModel @Inject constructor(
             }
         }
     }
+
 
     fun startListening() {
         viewModelScope.launch {
@@ -311,12 +341,19 @@ class RemoteViewModel @Inject constructor(
         val result = sendCommandUseCase(command)
         if (result == SendCommandResult.SUCCESS) {
             when (command) {
-                RemoteCommand.MuteOn -> setMuteState(deviceId, MUTE_STATE_MUTED)
-                RemoteCommand.MuteOff -> setMuteState(deviceId, MUTE_STATE_UNMUTED)
-                RemoteCommand.Mute -> setMuteState(
-                    deviceId,
-                    if (muteStateBeforeCommand == MUTE_STATE_MUTED) MUTE_STATE_UNMUTED else MUTE_STATE_MUTED
-                )
+                RemoteCommand.MuteOn -> {
+                    setMuteState(deviceId, MUTE_STATE_MUTED)
+                    settingsRepository.setMuteState(deviceId, MUTE_STATE_MUTED)
+                }
+                RemoteCommand.MuteOff -> {
+                    setMuteState(deviceId, MUTE_STATE_UNMUTED)
+                    settingsRepository.setMuteState(deviceId, MUTE_STATE_UNMUTED)
+                }
+                RemoteCommand.Mute -> {
+                    val newState = if (muteStateBeforeCommand == MUTE_STATE_MUTED) MUTE_STATE_UNMUTED else MUTE_STATE_MUTED
+                    setMuteState(deviceId, newState)
+                    settingsRepository.setMuteState(deviceId, newState)
+                }
                 else -> {}
             }
         }
@@ -351,6 +388,7 @@ class RemoteViewModel @Inject constructor(
     }
 
     private companion object {
+        const val UNLOCK_HOLD_DELAY_MS = 1000L
         const val NO_ACTIVE_DEVICE_KEY = ""
         const val MUTE_STATE_UNKNOWN = -1
         const val MUTE_STATE_UNMUTED = 0

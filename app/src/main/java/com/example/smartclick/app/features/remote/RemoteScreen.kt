@@ -14,6 +14,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -322,85 +324,100 @@ fun RemoteScreen(
         run {
             val contextForToast = androidx.compose.ui.platform.LocalContext.current
             val controlsAlpha = if (isLocked) 0.3f else 1f
-            Box(modifier = Modifier.fillMaxSize()) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    // Mode + action row
-                    Row(
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Mode + action row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                ) {
+
+                    val infiniteTransition = rememberInfiniteTransition(label = "power_pulse")
+                    val pulseAlpha by infiniteTransition.animateFloat(
+                        initialValue = 0.3f,
+                        targetValue = 1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(800, easing = LinearEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "alpha_pulse"
+                    )
+
+                    val powerState = RemotePowerButton.stateFor(connectionState, activeDevice?.macAddress?.isNotEmpty() == true)
+                    val powerAlpha = RemotePowerButton.alphaFor(powerState, isLocked, pulseAlpha)
+
+                    val powerBg: Color
+                    val powerBorder: Color
+                    val powerIconTint: Color
+
+                    when (powerState) {
+                        RemotePowerButton.PowerVisualState.CONNECTED -> {
+                            powerBg = colors.orange
+                            powerBorder = Color.Transparent
+                            powerIconTint = Color.White
+                        }
+                        RemotePowerButton.PowerVisualState.CONNECTING -> {
+                            powerBg = colors.orange.copy(alpha = 0.3f)
+                            powerBorder = Color.Transparent
+                            powerIconTint = Color.White
+                        }
+                        RemotePowerButton.PowerVisualState.WAKEABLE -> {
+                            powerBg = colors.surfEl
+                            powerBorder = colors.orange.copy(alpha = 0.5f)
+                            powerIconTint = colors.orange
+                        }
+                        RemotePowerButton.PowerVisualState.UNAVAILABLE -> {
+                            powerBg = colors.surfEl
+                            powerBorder = colors.bord
+                            powerIconTint = colors.tx1
+                        }
+                        RemotePowerButton.PowerVisualState.FAILED -> {
+                            powerBg = colors.acc
+                            powerBorder = Color.Transparent
+                            powerIconTint = Color.White
+                        }
+                    }
+
+                    // Power (5-states visual representation)
+                    var lastPowerTapTime by remember { mutableLongStateOf(0L) }
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .padding(bottom = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(7.dp)
-                    ) {
-
-                        val infiniteTransition = rememberInfiniteTransition(label = "power_pulse")
-                        val pulseAlpha by infiniteTransition.animateFloat(
-                            initialValue = 0.3f,
-                            targetValue = 1f,
-                            animationSpec = infiniteRepeatable(
-                                animation = tween(800, easing = LinearEasing),
-                                repeatMode = RepeatMode.Reverse
-                            ),
-                            label = "alpha_pulse"
-                        )
-
-                        val powerState = RemotePowerButton.stateFor(connectionState, activeDevice?.macAddress?.isNotEmpty() == true)
-                        val powerAlpha = RemotePowerButton.alphaFor(powerState, isLocked, pulseAlpha)
-
-                        val powerBg: Color
-                        val powerBorder: Color
-                        val powerIconTint: Color
-
-                        when (powerState) {
-                            RemotePowerButton.PowerVisualState.CONNECTED -> {
-                                powerBg = colors.orange
-                                powerBorder = Color.Transparent
-                                powerIconTint = Color.White
-                            }
-                            RemotePowerButton.PowerVisualState.CONNECTING -> {
-                                powerBg = colors.orange.copy(alpha = 0.3f)
-                                powerBorder = Color.Transparent
-                                powerIconTint = Color.White
-                            }
-                            RemotePowerButton.PowerVisualState.WAKEABLE -> {
-                                powerBg = colors.surfEl
-                                powerBorder = colors.orange.copy(alpha = 0.5f)
-                                powerIconTint = colors.orange
-                            }
-                            RemotePowerButton.PowerVisualState.UNAVAILABLE -> {
-                                powerBg = colors.surfEl
-                                powerBorder = colors.bord
-                                powerIconTint = colors.tx1
-                            }
-                        }
-
-                        // Power (5-states visual representation)
-                        Box(
-                            modifier = Modifier
-                                .size(45.dp)
-                                .then(
-                                    if (powerState == RemotePowerButton.PowerVisualState.CONNECTED ||
-                                        powerState == RemotePowerButton.PowerVisualState.CONNECTING
-                                    ) Modifier.background(powerBg, CircleShape)
-                                    else Modifier.raisedSurface(CircleShape, pressable = false)
-                                )
-                                .then(
-                                    if (powerState == RemotePowerButton.PowerVisualState.WAKEABLE)
-                                        Modifier.border(1.dp, powerBorder, CircleShape)
-                                    else Modifier
-                                )
-                                .alpha(powerAlpha)
-                                .clickable { dispatchCommand(RemoteCommand.Power) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.turn_off),
-                                contentDescription = stringResource(R.string.power),
-                                modifier = Modifier.size(20.dp),
-                                colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(powerIconTint)
+                            .size(45.dp)
+                            .then(
+                                if (powerState == RemotePowerButton.PowerVisualState.CONNECTED ||
+                                    powerState == RemotePowerButton.PowerVisualState.CONNECTING ||
+                                    powerState == RemotePowerButton.PowerVisualState.FAILED
+                                ) Modifier.background(powerBg, CircleShape)
+                                else Modifier.raisedSurface(CircleShape, pressable = false)
                             )
-                        }
+                            .then(
+                                if (powerState == RemotePowerButton.PowerVisualState.WAKEABLE)
+                                    Modifier.border(1.dp, powerBorder, CircleShape)
+                                else Modifier
+                            )
+                            .alpha(powerAlpha)
+                            .pointerInput(Unit) {
+                                detectTapGestures(onTap = {
+                                    val now = System.currentTimeMillis()
+                                    if (now - lastPowerTapTime > 250L) {
+                                        lastPowerTapTime = now
+                                        dispatchCommand(RemoteCommand.Power)
+                                    }
+                                })
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.turn_off),
+                            contentDescription = stringResource(R.string.power),
+                            modifier = Modifier.size(20.dp),
+                            colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(powerIconTint)
+                        )
+                    }
+
 
                         val hasMuteOnOff = capabilities.contains(TvCapability.MUTE_ON_OFF)
                         val muteIcon = when (muteState) {
@@ -500,13 +517,20 @@ fun RemoteScreen(
                                     if (isLocked) Modifier.background(colors.acc, CircleShape)
                                     else Modifier.raisedSurface(CircleShape, pressable = false)
                                 )
-                                .pointerInput(Unit) {
+                                .pointerInput(isLocked) {
                                     detectTapGestures(
-                                        onLongPress = {
+                                        onPress = {
                                             if (isLocked) {
                                                 viewModel.unlockScreen()
                                                 if (isHapticEnabled) {
                                                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                }
+                                            }
+                                            try {
+                                                awaitRelease()
+                                            } finally {
+                                                if (isLocked) {
+                                                    viewModel.cancelUnlockScreen()
                                                 }
                                             }
                                         },
@@ -659,6 +683,5 @@ fun RemoteScreen(
                     }
                 }
             }
-        }
     }
 }

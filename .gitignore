@@ -35,3 +35,4 @@ build/
 core/model/build/
 core/tv-api/build/
 tv/runtime/build/
+.kotlin/

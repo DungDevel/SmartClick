@@ -26,6 +26,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -147,6 +148,61 @@ class RemoteMuteStateTest {
         advanceUntilIdle()
 
         assertEquals(-1, viewModel.muteState.value)
+    }
+
+    @Test
+    fun `mute state persists and loads via fake ISettingsRepository per deviceId`() = runTest {
+        class FakeSettingsRepository : ISettingsRepository {
+            val muteMap = mutableMapOf<String, Int>()
+            override val settings: Flow<AppSettings> = MutableStateFlow(AppSettings(ThemeMode.SYSTEM, true, null, true, "DPAD"))
+            override suspend fun setThemeMode(mode: ThemeMode) {}
+            override suspend fun setHapticEnabled(enabled: Boolean) {}
+            override suspend fun setLanguageTag(tag: String?) {}
+            override suspend fun setOnboardingCompleted(done: Boolean) {}
+            override suspend fun setRemoteMode(mode: String) {}
+            override suspend fun setMuteState(deviceId: String, state: Int) {
+                muteMap[deviceId] = state
+            }
+            override suspend fun getMuteState(deviceId: String): Int? {
+                return muteMap[deviceId]
+            }
+        }
+
+        val fakeSettings = FakeSettingsRepository()
+        fakeSettings.setMuteState("tv-1", 1) // muted
+
+        val session = mockk<IActiveTvSession>(relaxed = true)
+        val tv1Controller = controller("tv-1", "TV 1")
+        val tv2Controller = controller("tv-2", "TV 2")
+        val curController = MutableStateFlow<ITvController?>(tv1Controller)
+        every { session.currentController } returns curController
+        every { session.connectionState } returns MutableStateFlow(TvConnectionState.Connected(tv1Controller.device!!))
+
+        val vm = RemoteViewModel(
+            mockk(relaxed = true),
+            session,
+            fakeSettings,
+            mockk(relaxed = true),
+            mockk(relaxed = true) {
+                every { state } returns MutableStateFlow(SpeechState.Idle)
+                every { isAvailable } returns true
+            },
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            mockk(relaxed = true),
+            SavedStateHandle()
+        )
+        advanceUntilIdle()
+
+        // tv-1 initial mute state loaded from fakeSettings as 1
+        assertEquals(1, vm.muteState.value)
+
+        // switch to tv-2
+        curController.value = tv2Controller
+        advanceUntilIdle()
+        assertEquals(-1, vm.muteState.value)
     }
 
     private fun controller(id: String, name: String): ITvController = mockk(relaxed = true) {

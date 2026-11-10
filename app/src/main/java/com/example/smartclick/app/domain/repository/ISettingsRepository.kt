@@ -11,4 +11,6 @@ interface ISettingsRepository {
     suspend fun setLanguageTag(tag: String?)
     suspend fun setOnboardingCompleted(done: Boolean)
     suspend fun setRemoteMode(mode: String)
+    suspend fun setMuteState(deviceId: String, state: Int)
+    suspend fun getMuteState(deviceId: String): Int?
 }

@@ -191,6 +191,20 @@ class CastViewModelTest {
     }
 
     @Test
+    fun `playback state ERROR maps requestState to ERROR`() = runTest {
+        val playback = MutableStateFlow(CastPlaybackState.IDLE)
+        val session = MutableStateFlow(com.example.smartclick.app.domain.cast.CastSessionInfo())
+        val actualCastController = mockk<ICastController>(relaxed = true)
+        every { actualCastController.castPlaybackState } returns playback
+        every { actualCastController.castSessionInfo } returns session
+        castControllerFlow.value = actualCastController
+
+        playback.value = CastPlaybackState.ERROR
+        runCurrent()
+        assertEquals(CastRequestState.ERROR, viewModel.uiState.value.requestState)
+    }
+
+    @Test
     fun `stop tears down cast controller and clears selected picker media`() = runTest {
         viewModel.stopCasting()
 

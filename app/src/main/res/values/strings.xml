@@ -305,4 +305,5 @@ Effortlessly
     <string name="voice_sheet_try_again">Try again</string>
     <string name="voice_sheet_quote" translatable="false">“%1$s”</string>
     <string name="voice_action">Voice Control</string>
+    <string name="remote_headphone_not_supported">Not supported</string>
 </resources>

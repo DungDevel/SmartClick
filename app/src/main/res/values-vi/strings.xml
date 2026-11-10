@@ -302,4 +302,5 @@ một cách dễ dàng</string>
     <string name="voice_sheet_done">Đã nhận lệnh</string>
     <string name="voice_sheet_try_again">Thử lại</string>
     <string name="voice_action">Điều khiển bằng giọng nói</string>
+    <string name="remote_headphone_not_supported">Chưa hỗ trợ</string>
 </resources>

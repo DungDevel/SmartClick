@@ -99,7 +99,7 @@ class GetInstalledChannelsUseCaseTest {
     @Test fun `launch reports controller success and failure honestly`() = runTest {
         val controller = controller()
         val session = session(controller)
-        val useCase = LaunchAppOnTvUseCase(session, mockk(relaxed = true), mockk(relaxed = true))
+        val useCase = LaunchAppOnTvUseCase(session)
         coEvery { controller.launchApp("837") } returns Result.success(Unit)
         assertTrue(useCase("837").isSuccess)
         coEvery { controller.launchApp("837") } returns Result.failure(IllegalStateException("rejected"))

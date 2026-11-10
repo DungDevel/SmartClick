@@ -37,52 +37,6 @@ fun BottomActions(
 ) {
     val colors = SmartClickThemeTokens.colors
 
-
-    // Delete / Shot / Config (thẻ không viền, chỉ có bóng nhẹ)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .raisedCard()
-            .padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        val context = LocalContext.current
-        listOf(
-            stringResource(R.string.delete) to R.drawable.trash,
-            stringResource(R.string.shot) to R.drawable.camera,
-            stringResource(R.string.config) to R.drawable.settings
-        ).forEach { (label, iconRes) ->
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        Toast.makeText(context, context.getString(R.string.feature_coming_soon, label), Toast.LENGTH_SHORT).show()
-                    },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = label,
-                    tint = colors.tx2,
-                    modifier = Modifier.size(25.dp)
-                )
-                Text(
-                    text = label,
-                    color = colors.tx2,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-    }
-    Spacer(modifier = Modifier.height(16.dp))
-
     // Trạng thái nghe giờ hiện trong bảng VoiceSearchSheet, nút chỉ đóng vai trò mở bảng đó
     val isListening = false
     val voiceTextStr = stringResource(R.string.voice_action)

@@ -23,6 +23,7 @@ import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.domain.usecase.SendCommandResult
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun DPadModeContent(
@@ -175,10 +176,16 @@ fun DPadModeContent(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val canInput = capabilities.contains(TvCapability.KEYBOARD_TEXT)
+        val context = LocalContext.current
+        val notSupportedMsg = stringResource(R.string.remote_headphone_not_supported)
+
         val extraButtons = listOf(
-            Triple(R.drawable.keyboard, stringResource(R.string.keyboard), showKeyboard to onKeyboard),
-            Triple(R.drawable.headphone, stringResource(R.string.headphone), showHeadphone to {}),
-            Triple(R.drawable.microphone, stringResource(R.string.dictate_text), showDictation to onDictate)
+            Triple(R.drawable.keyboard, stringResource(R.string.keyboard), canInput to onKeyboard),
+            Triple(R.drawable.headphone, stringResource(R.string.headphone), true to {
+                android.widget.Toast.makeText(context, notSupportedMsg, android.widget.Toast.LENGTH_SHORT).show()
+            }),
+            Triple(R.drawable.microphone, stringResource(R.string.dictate_text), canInput to onDictate)
         )
         extraButtons.forEach { (iconRes, label, state) ->
             val (enabled, onClick) = state
@@ -203,5 +210,6 @@ fun DPadModeContent(
             }
         }
     }
+
     Spacer(modifier = Modifier.height(16.dp))
 }
