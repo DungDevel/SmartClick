@@ -28,13 +28,13 @@ Tại commit gốc `a21112f`, module `:tv:runtime` chứa tổng cộng **52 fil
 
 ## 3. Thống kê `@Test` (trước vs hiện tại)
 - **Bản gốc (`a21112f`)**: 275 test annotations (`@Test`, `@ParameterizedTest`, `@Ignore`).
-- **Hiện tại**: 271 test annotations trong source, thực thi qua Gradle XML test suites đạt tổng **294** test cases.
+- **Hiện tại**: 271 test annotations trong source, thực thi qua Gradle XML test suites đạt tổng **294** test cases (cùng **212** test cases cho `:app`).
 
 ## 4. Bảng kết quả chạy test từng module (Xác thực qua XML report)
 | Module | Số test chạy | Passed | Failed | Skipped | Trạng thái XML |
 |---|---|---|---|---|---|
 | `:tv:testing` | 4 | 4 | 0 | 0 | PASSED |
-| `:tv:core` | 50 | 50 | 0 | 0 | PASSED |
+| `:tv:core` | 58 | 58 | 0 | 0 | PASSED |
 | `:tv:androidtv` | 27 | 27 | 0 | 0 | PASSED |
 | `:tv:cast` | 71 | 71 | 0 | 0 | PASSED |
 | `:tv:dial` | 11 | 11 | 0 | 0 | PASSED |
@@ -45,4 +45,5 @@ Tại commit gốc `a21112f`, module `:tv:runtime` chứa tổng cộng **52 fil
 | `:tv:sony` | 14 | 14 | 0 | 0 | PASSED |
 | `:tv:vidaa` | 2 | 2 | 0 | 0 | PASSED |
 | `:tv:vizio` | 5 | 5 | 0 | 0 | PASSED |
-| **Tổng cộng** | **294** | **294** | **0** | **0** | **PASSED** |
+| **Tổng cộng (`tv/*`)** | **294** | **294** | **0** | **0** | **PASSED** |
+| `:app` | **212** | **212** | **0** | **0** | **PASSED** |
