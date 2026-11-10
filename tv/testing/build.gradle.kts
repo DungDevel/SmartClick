@@ -19,6 +19,7 @@ android {
 }
 
 dependencies {
+    api(project(":core:model"))
     api(project(":core:tv-api"))
     api(libs.junit)
     api(libs.mockk)

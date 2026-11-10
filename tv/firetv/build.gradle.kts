@@ -14,6 +14,9 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -25,4 +28,6 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.okhttp3)
     implementation(libs.kotlinx.coroutines.android)
+
+    testImplementation(project(":tv:testing"))
 }
