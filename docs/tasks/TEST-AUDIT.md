@@ -35,8 +35,7 @@ Tại commit gốc `a21112f`, module `:tv:runtime` chứa tổng cộng **52 fil
 - **Rationale**: Mọi class cài đặt `ITvController` (kể cả mock/fake controller trong `FakeDriver.kt`) bắt buộc phải override tường minh hai phương thức này để tuân thủ strict contract kiểm thử capability `INSTALLED_APPS` qua `AbstractDriverContractTest`.
 
 ## 4. Phân tích chênh lệch `@Test` tại module `:app` (217 tĩnh vs 212 chạy)
-- Khi thực hiện `git grep "@Test"` trên toàn bộ `app/src/test`, công cụ tìm thấy **217** dòng match do tồn tại tệp sao lưu `.orig` chưa được tracking (`RemoteViewModelTest.kt.orig` chứa 5 annotation `@Test`).
-- Số lượng `@Test` thực tế trong các tệp `.kt` được track phiên bản là **212**, khớp hoàn toàn với **212** test cases thực thi trong XML test reports.
+- Trước đó, `git grep "@Test"` đếm được 217 do tồn tại tệp sao lưu `.orig` (`RemoteViewModelTest.kt.orig`) không được tracking. Sau khi xóa tệp `.orig`, số lượng `@Test` tĩnh khớp hoàn toàn **212**, khớp tuyệt đối với **212** test cases thực thi trong XML test reports.
 
 ## 5. Bảng kết quả chạy test từng module (Xác thực qua XML report)
 | Module | Số test chạy (XML) | Passed | Failed | Skipped | Trạng thái |
@@ -56,5 +55,7 @@ Tại commit gốc `a21112f`, module `:tv:runtime` chứa tổng cộng **52 fil
 | **Tổng cộng (`tv/*`)** | **294** | **294** | **0** | **0** | **PASSED** |
 | `:app` | **212** | **212** | **0** | **0** | **PASSED** |
 
-## 6. Đề xuất bước tiếp theo (Section e)
-1. Tiến hành kiểm tra và chuẩn bị merge chiến lược.
+## 6. Trạng thái Git & Bước tiếp theo (Section e)
+- **Git status cuối**: `nothing to commit, working tree clean`
+- **Commit HEAD cuối**: `38b7226e1a4cadc749f74c0650da3ec32516ffde`
+- **Bước tiếp theo**: Chuẩn bị sẵn sàng thực hiện hợp nhất nhánh qua `git merge --squash`.
