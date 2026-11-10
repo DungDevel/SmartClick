@@ -16,25 +16,29 @@ Tại commit gốc `a21112f`, module `:tv:runtime` chứa tổng cộng **52 fil
 - **Thực thi thực tế tại các module `tv/*` và `:tv:testing`**: Đạt **294** test cases được ghi nhận qua XML report (+19 test cases).
 - **Nguyên nhân chênh lệch (+24 - 4 - 1 = +19)**:
   - Có **6 lớp driver test** kế thừa từ `AbstractDriverContractTest`: `AndroidTvDriverTest`, `DialDriverTest`, `LgWebOsDriverTest`, `RokuDriverTest`, `SamsungTizenDriverTest`, `FakeDriverTest`.
-  - Mỗi lớp thừa +4 test contract (`driver protocol must match device protocol`, `controller creation returns valid instance`, `controller app methods respect declared capability`, `fingerprint returns null for completely irrelevant protocol hints`), tổng cộng +24 test methods.
-  - Trừ đi 4 phương thức abstract định nghĩa trong lớp cha `AbstractDriverContractTest` (không có XML test suite độc lập riêng) = +20.
-  - Trừ đi 1 test trong `GoogleCastProtocolClientTest` (có 13 `@Test` tĩnh nhưng chỉ 12 chạy vì test `heartbeat timeout triggers disconnect` bị comment code) = +19.
+  - Mỗi lớp kế thừa +4 test contract (`driver protocol must match device protocol`, `controller creation returns valid instance`, `controller app methods respect declared capability`, `fingerprint returns null for completely irrelevant protocol hints`).
+  - Trừ đi 4 phương thức abstract định nghĩa trong lớp cha `AbstractDriverContractTest` (không sinh XML test suite riêng) = +20.
+  - Trừ đi 1 test trong `GoogleCastProtocolClientTest` (có 13 `@Test` tĩnh nhưng chỉ 12 chạy vì test `heartbeat timeout triggers disconnect` bị comment code — lưu ý dòng comment này đã có sẵn từ commit gốc `a21112f`) = +19.
 
 ### Bảng đối chiếu Contract Test Inheritance (6 lớp)
-| Lớp Test | Kế thừa AbstractDriverContractTest | Số test tĩnh | Số test chạy (XML) |
+| Lớp Test | Kế thừa AbstractDriverContractTest | Số test tĩnh (Local) | Số test chạy (XML) |
 |---|---|---|---|
-| `AndroidTvDriverTest` | Có | 10 | 10 |
-| `DialDriverTest` | Có | 6 | 6 |
-| `LgWebOsDriverTest` | Có | 20 | 20 |
-| `RokuDriverTest` | Có | 7 | 7 |
-| `SamsungTizenDriverTest` | Có | 9 | 9 |
-| `FakeDriverTest` | Có | 4 | 4 |
+| `AndroidTvDriverTest` | Có | 6 | 10 |
+| `DialDriverTest` | Có | 2 | 6 |
+| `LgWebOsDriverTest` | Có | 16 | 20 |
+| `RokuDriverTest` | Có | 3 | 7 |
+| `SamsungTizenDriverTest` | Có | 5 | 9 |
+| `FakeDriverTest` | Có | 0 | 4 |
 
 ## 3. Khai báo Interface `ITvController` & Rationale cho `getApps`/`launchApp`
 - Trong `core/tv-api/.../ITvController.kt`, hai hàm `getApps()` và `launchApp(appId)` được khai báo là **abstract functions** (không có default implementation trong interface).
 - **Rationale**: Mọi class cài đặt `ITvController` (kể cả mock/fake controller trong `FakeDriver.kt`) bắt buộc phải override tường minh hai phương thức này để tuân thủ strict contract kiểm thử capability `INSTALLED_APPS` qua `AbstractDriverContractTest`.
 
-## 4. Bảng kết quả chạy test từng module (Xác thực qua XML report)
+## 4. Phân tích chênh lệch `@Test` tại module `:app` (217 tĩnh vs 212 chạy)
+- Khi thực hiện `git grep "@Test"` trên toàn bộ `app/src/test`, công cụ tìm thấy **217** dòng match do tồn tại tệp sao lưu `.orig` chưa được tracking (`RemoteViewModelTest.kt.orig` chứa 5 annotation `@Test`).
+- Số lượng `@Test` thực tế trong các tệp `.kt` được track phiên bản là **212**, khớp hoàn toàn với **212** test cases thực thi trong XML test reports.
+
+## 5. Bảng kết quả chạy test từng module (Xác thực qua XML report)
 | Module | Số test chạy (XML) | Passed | Failed | Skipped | Trạng thái |
 |---|---|---|---|---|---|
 | `:tv:testing` | 4 | 4 | 0 | 0 | PASSED |
@@ -52,6 +56,5 @@ Tại commit gốc `a21112f`, module `:tv:runtime` chứa tổng cộng **52 fil
 | **Tổng cộng (`tv/*`)** | **294** | **294** | **0** | **0** | **PASSED** |
 | `:app` | **212** | **212** | **0** | **0** | **PASSED** |
 
-## 5. Đề xuất bước tiếp theo (Section e)
-1. Đối chiếu Luồng B với nhánh hiện tại.
-2. Thực hiện `git merge --squash` để hợp nhất các thay đổi.
+## 6. Đề xuất bước tiếp theo (Section e)
+1. Tiến hành kiểm tra và chuẩn bị merge chiến lược.
