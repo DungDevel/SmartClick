@@ -12,6 +12,9 @@ class PairTvUseCase @Inject constructor(
     private val driverRegistry: DriverRegistry
 ) {
     operator fun invoke(device: TvDevice): Flow<PairingStep> {
+        if (!com.example.smartclick.app.tvconnection.utils.NetworkSecurityUtils.isPrivateLanAddress(device.ipAddress)) {
+            return flowOf(PairingStep.Failed(com.example.smartclick.app.domain.connection.PairingFailure.Unknown("Invalid or public IP address destination blocked by security policy.")))
+        }
         val driver = driverRegistry.getDriver(device.protocol)
             ?: return flowOf(PairingStep.Failed(com.example.smartclick.app.domain.connection.PairingFailure.Unknown("No driver found for ${device.protocol}")))
         return driver.pair(device)

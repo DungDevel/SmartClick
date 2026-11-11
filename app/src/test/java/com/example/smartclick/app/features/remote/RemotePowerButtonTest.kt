@@ -25,19 +25,22 @@ class RemotePowerButtonTest {
     }
 
     @Test
-    fun `stateFor returns WAKEABLE when state is Idle or Failed and hasMac is true`() {
+    fun `stateFor returns WAKEABLE when state is Idle and hasMac is true`() {
         val idle = TvConnectionState.Idle
-        val failed = TvConnectionState.Failed("Error")
         assertEquals(RemotePowerButton.PowerVisualState.WAKEABLE, RemotePowerButton.stateFor(idle, true))
-        assertEquals(RemotePowerButton.PowerVisualState.WAKEABLE, RemotePowerButton.stateFor(failed, true))
     }
 
     @Test
-    fun `stateFor returns UNAVAILABLE when state is Idle or Failed and hasMac is false`() {
-        val idle = TvConnectionState.Idle
+    fun `stateFor returns FAILED when state is Failed`() {
         val failed = TvConnectionState.Failed("Error")
+        assertEquals(RemotePowerButton.PowerVisualState.FAILED, RemotePowerButton.stateFor(failed, true))
+        assertEquals(RemotePowerButton.PowerVisualState.FAILED, RemotePowerButton.stateFor(failed, false))
+    }
+
+    @Test
+    fun `stateFor returns UNAVAILABLE when state is Idle and hasMac is false`() {
+        val idle = TvConnectionState.Idle
         assertEquals(RemotePowerButton.PowerVisualState.UNAVAILABLE, RemotePowerButton.stateFor(idle, false))
-        assertEquals(RemotePowerButton.PowerVisualState.UNAVAILABLE, RemotePowerButton.stateFor(failed, false))
     }
 
     @Test

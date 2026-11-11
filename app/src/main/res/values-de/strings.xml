@@ -30,6 +30,16 @@
     <string name="connect_tv">TV verbinden</string>
     <string name="choose_language">Sprache auswählen</string>
     <string name="choose_language_desc">Wähle deine bevorzugte Sprache</string>
+    <string name="device_management">Geräteverwaltung</string>
+    <string name="connected_tv">Verbundenes TV</string>
+    <string name="saved_tvs">Gespeicherte TVs</string>
+    <string name="network_tvs">Im Netzwerk gefunden</string>
+    <string name="pair">Koppeln</string>
+    <string name="no_connected_tv">Aktuell kein TV verbunden</string>
+    <string name="no_saved_tv">Keine gespeicherten TVs</string>
+    <string name="no_network_tv">Keine neuen TVs im Netzwerk gefunden</string>
+    <string name="manual_ip_title">IP-Adresse eingeben</string>
+    <string name="manual_ip_hint">z. B. 192.168.1.50</string>
     <string name="scanning_network">Netzwerk wird durchsucht…</string>
     <string name="looking_for_tvs">Suche nach TVs in deinem WLAN</string>
     <string name="tv_not_found_try_manually">TV nicht gefunden? Füge ihn manuell hinzu.</string>
@@ -250,4 +260,11 @@
     <string name="voice_error_no_speech">Keine Sprache erkannt. Bitte erneut versuchen.</string>
     <string name="voice_error_busy">Der Spracherkennungsdienst ist beschäftigt. Bitte erneut versuchen.</string>
     <string name="voice_error_generic">Spracherkennung fehlgeschlagen. Bitte erneut versuchen.</string>
+    <string name="voice_sheet_say_command">Sag einen Befehl</string>
+    <string name="voice_sheet_processing">Wird verarbeitet...</string>
+    <string name="voice_sheet_please_wait">Bitte warten...</string>
+    <string name="voice_sheet_done">Befehl erkannt</string>
+    <string name="voice_sheet_try_again">Erneut versuchen</string>
+    <string name="voice_action">Sprachsteuerung</string>
+    <string name="remote_headphone_not_supported">Nicht unterstützt</string>
 </resources>

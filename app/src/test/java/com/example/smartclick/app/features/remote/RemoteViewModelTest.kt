@@ -18,6 +18,7 @@ import com.example.smartclick.app.domain.voice.IntentParser
 import com.example.smartclick.app.domain.policy.FeatureGate
 import com.example.smartclick.app.domain.repository.ISubscriptionRepository
 import com.example.smartclick.app.domain.model.SubscriptionPlan
+import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.voice.SpeechState
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -36,6 +37,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -61,9 +63,11 @@ class RemoteViewModelTest {
     private lateinit var settingsFlow: MutableStateFlow<AppSettings>
     private lateinit var speechStateFlow: MutableStateFlow<SpeechState>
 
+    private val testDispatcher = StandardTestDispatcher()
+
     @Before
     fun setup() {
-        Dispatchers.setMain(StandardTestDispatcher())
+        Dispatchers.setMain(testDispatcher)
 
         activeTvSession = mockk(relaxed = true)
         every { activeTvSession.connectionState } returns connectionStateFlow
@@ -105,6 +109,7 @@ class RemoteViewModelTest {
             processVoiceCommandUseCase,
             featureGate,
             subscriptionRepository,
+            mockk(relaxed = true),
             savedStateHandle
         )
     }
@@ -200,6 +205,7 @@ class RemoteViewModelTest {
             processVoiceCommandUseCase,
             featureGate,
             subscriptionRepository,
+            mockk(relaxed = true),
             savedStateHandle
         )
 
@@ -268,11 +274,20 @@ class RemoteViewModelTest {
     }
 
     @Test
-    fun `screen lock toggles correctly`() = runTest {
+    fun `screen lock requires hold delay to unlock`() = runTest(testDispatcher) {
         assertEquals(false, viewModel.isLocked.value)
         viewModel.toggleScreenLock()
         assertEquals(true, viewModel.isLocked.value)
+
         viewModel.unlockScreen()
+        // Before 1000ms, still locked
+        testDispatcher.scheduler.advanceTimeBy(500)
+        testDispatcher.scheduler.runCurrent()
+        assertEquals(true, viewModel.isLocked.value)
+
+        // After 1000ms total, unlocked
+        testDispatcher.scheduler.advanceTimeBy(500)
+        testDispatcher.scheduler.runCurrent()
         assertEquals(false, viewModel.isLocked.value)
     }
 
@@ -290,6 +305,7 @@ class RemoteViewModelTest {
         assertEquals(true, events.contains(RemoteUiEvent.CommandNotSupported))
         job.cancel()
     }
+
 
     @Test
     fun `free plan is gated before permission request`() = runTest {

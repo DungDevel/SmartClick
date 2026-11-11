@@ -63,6 +63,7 @@ class RemoteViewModel @Inject constructor(
     private val processVoiceCommandUseCase: ProcessVoiceCommandUseCase,
     private val featureGate: FeatureGate,
     private val subscriptionRepository: ISubscriptionRepository,
+    private val reconnectWatcher: com.example.smartclick.app.domain.connection.ReconnectWatcher,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -127,6 +128,8 @@ class RemoteViewModel @Inject constructor(
     private fun currentMuteStateKey(): String =
         activeTvSession.currentController.value?.device?.id ?: NO_ACTIVE_DEVICE_KEY
 
+    private var unlockJob: kotlinx.coroutines.Job? = null
+
     fun toggleScreenLock() {
         if (!_isLocked.value) {
             _isLocked.value = true
@@ -134,7 +137,16 @@ class RemoteViewModel @Inject constructor(
     }
 
     fun unlockScreen() {
-        _isLocked.value = false
+        unlockJob?.cancel()
+        unlockJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(UNLOCK_HOLD_DELAY_MS)
+            _isLocked.value = false
+        }
+    }
+
+    fun cancelUnlockScreen() {
+        unlockJob?.cancel()
+        unlockJob = null
     }
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
@@ -165,13 +177,34 @@ class RemoteViewModel @Inject constructor(
         )
 
     val speechState: StateFlow<SpeechState> = speechToTextEngine.state
+    // Kết quả xử lý lệnh giọng nói, để bảng Voice Search biết thành công hay thất bại
+    private val _voiceOutcome = MutableStateFlow<VoiceCommandResult?>(null)
+    val voiceOutcome: StateFlow<VoiceCommandResult?> = _voiceOutcome.asStateFlow()
 
     init {
         viewModelScope.launch {
+            // Load all saved mute states from repository
+            val activeId = activeTvSession.currentController.value?.device?.id
+            if (activeId != null) {
+                val savedState = settingsRepository.getMuteState(activeId)
+                if (savedState != null) {
+                    muteStatesByDevice.value = muteStatesByDevice.value + (activeId to savedState)
+                }
+            }
+
             var lastConnectedDeviceId: String? = null
             connectionState.collect { state ->
                 if (state is TvConnectionState.Connected) {
                     val connectedDeviceId = state.device.id
+
+                    // Load mute state for the newly connected device
+                    viewModelScope.launch {
+                        val savedState = settingsRepository.getMuteState(connectedDeviceId)
+                        if (savedState != null) {
+                            muteStatesByDevice.value = muteStatesByDevice.value + (connectedDeviceId to savedState)
+                        }
+                    }
+
                     lastConnectedDeviceId?.takeIf { it != connectedDeviceId }?.let { previousId ->
                         muteStatesByDevice.value = muteStatesByDevice.value - previousId
                     }
@@ -200,6 +233,7 @@ class RemoteViewModel @Inject constructor(
         }
     }
 
+
     fun startListening() {
         viewModelScope.launch {
             startListeningIfAllowed()
@@ -207,6 +241,7 @@ class RemoteViewModel @Inject constructor(
     }
 
     fun prepareVoiceListening(hasRecordAudioPermission: Boolean) {
+        _voiceOutcome.value = null
         viewModelScope.launch {
             if (!isVoiceAllowed()) {
                 _uiEvents.tryEmit(RemoteUiEvent.VoicePremiumRequired)
@@ -252,9 +287,11 @@ class RemoteViewModel @Inject constructor(
         val intent = intentParser.parse(text)
         if (intent is com.example.smartclick.app.domain.model.voice.VoiceIntent.TurnOff) {
             _uiEvents.tryEmit(RemoteUiEvent.RequestPowerOffConfirmation)
+            _voiceOutcome.value = VoiceCommandResult.SUCCESS
             return
         }
         val result = processVoiceCommandUseCase(intent)
+        _voiceOutcome.value = result
         when (result) {
             VoiceCommandResult.NOT_CONNECTED -> _uiEvents.tryEmit(RemoteUiEvent.CommandNotConnected)
             VoiceCommandResult.NOT_SUPPORTED -> _uiEvents.tryEmit(RemoteUiEvent.CommandNotSupported)
@@ -304,12 +341,19 @@ class RemoteViewModel @Inject constructor(
         val result = sendCommandUseCase(command)
         if (result == SendCommandResult.SUCCESS) {
             when (command) {
-                RemoteCommand.MuteOn -> setMuteState(deviceId, MUTE_STATE_MUTED)
-                RemoteCommand.MuteOff -> setMuteState(deviceId, MUTE_STATE_UNMUTED)
-                RemoteCommand.Mute -> setMuteState(
-                    deviceId,
-                    if (muteStateBeforeCommand == MUTE_STATE_MUTED) MUTE_STATE_UNMUTED else MUTE_STATE_MUTED
-                )
+                RemoteCommand.MuteOn -> {
+                    setMuteState(deviceId, MUTE_STATE_MUTED)
+                    settingsRepository.setMuteState(deviceId, MUTE_STATE_MUTED)
+                }
+                RemoteCommand.MuteOff -> {
+                    setMuteState(deviceId, MUTE_STATE_UNMUTED)
+                    settingsRepository.setMuteState(deviceId, MUTE_STATE_UNMUTED)
+                }
+                RemoteCommand.Mute -> {
+                    val newState = if (muteStateBeforeCommand == MUTE_STATE_MUTED) MUTE_STATE_UNMUTED else MUTE_STATE_MUTED
+                    setMuteState(deviceId, newState)
+                    settingsRepository.setMuteState(deviceId, newState)
+                }
                 else -> {}
             }
         }
@@ -334,10 +378,17 @@ class RemoteViewModel @Inject constructor(
             capabilities.contains(com.example.smartclick.app.domain.model.TvCapability.POWER_TOGGLE) && isConnected -> RemoteCommand.Power
             else -> RemoteCommand.PowerOff
         }
+
+        val deviceId = activeTvSession.currentController.value?.device?.id
+        if (deviceId != null) {
+            reconnectWatcher.setIntentionalPowerOff(deviceId, true)
+        }
+
         sendCommand(command)
     }
 
     private companion object {
+        const val UNLOCK_HOLD_DELAY_MS = 1000L
         const val NO_ACTIVE_DEVICE_KEY = ""
         const val MUTE_STATE_UNKNOWN = -1
         const val MUTE_STATE_UNMUTED = 0

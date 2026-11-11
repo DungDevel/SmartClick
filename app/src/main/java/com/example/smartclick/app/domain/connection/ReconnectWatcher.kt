@@ -29,6 +29,7 @@ class ReconnectWatcher @Inject constructor(
     private val reconnectGeneration = AtomicLong(0L)
     @Volatile private var reconnectDeviceId: String? = null
     private val mutex = Mutex()
+    private val intentionalPowerOffDevices = mutableSetOf<String>()
 
     private val FAILURE_THRESHOLD = 2
     private val MAX_ATTEMPTS = 5
@@ -37,6 +38,21 @@ class ReconnectWatcher @Inject constructor(
     private val BACKOFF_MULTIPLIER = 2.0
 
     fun isReconnectingForDevice(deviceId: String): Boolean = reconnectDeviceId == deviceId
+
+    fun setIntentionalPowerOff(deviceId: String, isOff: Boolean) {
+        scope.launch {
+            mutex.withLock {
+                if (isOff) {
+                    intentionalPowerOffDevices.add(deviceId)
+                    if (reconnectDeviceId == deviceId) {
+                        cancelReconnect()
+                    }
+                } else {
+                    intentionalPowerOffDevices.remove(deviceId)
+                }
+            }
+        }
+    }
 
     fun onCommandResult(success: Boolean) {
         if (success) reconnectGeneration.incrementAndGet()
@@ -133,7 +149,8 @@ class ReconnectWatcher @Inject constructor(
                 }
 
                 val mayConnect = mutex.withLock {
-                    isCurrentReconnectLocked(generation, device.id)
+                    isCurrentReconnectLocked(generation, device.id) &&
+                    !intentionalPowerOffDevices.contains(device.id)
                 }
                 if (!mayConnect) {
                     mutex.withLock { clearStaleReconnectLocked(generation) }

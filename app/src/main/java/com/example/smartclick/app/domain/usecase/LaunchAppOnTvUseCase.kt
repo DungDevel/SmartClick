@@ -11,15 +11,13 @@ import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 class LaunchAppOnTvUseCase @Inject constructor(
-    private val activeTvSession: IActiveTvSession,
-    private val featureGate: FeatureGate,
-    private val subscriptionRepository: ISubscriptionRepository
+    private val activeTvSession: IActiveTvSession
 ) {
     suspend operator fun invoke(appConfig: AppLaunchConfig): Result<Unit> {
         val idToLaunch = appConfig.packageName ?: appConfig.appId
-        return this.invoke(idToLaunch) 
+        return this.invoke(idToLaunch)
     }
-    
+
     suspend operator fun invoke(appId: String): Result<Unit> {
         val controller = activeTvSession.currentController.value ?: return Result.failure(Exception("No TV connected"))
 

@@ -180,5 +180,15 @@ protobuf {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:tv-api"))
-    implementation(project(":tv:runtime"))
+    implementation(project(":tv:core"))
+    implementation(project(":tv:samsung"))
+    implementation(project(":tv:androidtv"))
+    implementation(project(":tv:lg"))
+    implementation(project(":tv:roku"))
+    implementation(project(":tv:sony"))
+    implementation(project(":tv:vizio"))
+    implementation(project(":tv:firetv"))
+    implementation(project(":tv:dial"))
+    implementation(project(":tv:cast"))
+    implementation(project(":tv:vidaa"))
 }

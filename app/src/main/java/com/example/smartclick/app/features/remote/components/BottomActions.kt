@@ -37,60 +37,9 @@ fun BottomActions(
 ) {
     val colors = SmartClickThemeTokens.colors
 
-
-    // Delete / Shot / Config (thẻ không viền, chỉ có bóng nhẹ)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .raisedCard()
-            .padding(vertical = 12.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        val context = LocalContext.current
-        listOf(
-            stringResource(R.string.delete) to R.drawable.trash,
-            stringResource(R.string.shot) to R.drawable.camera,
-            stringResource(R.string.config) to R.drawable.settings
-        ).forEach { (label, iconRes) ->
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(10.dp))
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        Toast.makeText(context, context.getString(R.string.feature_coming_soon, label), Toast.LENGTH_SHORT).show()
-                    },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = label,
-                    tint = colors.tx2,
-                    modifier = Modifier.size(25.dp)
-                )
-                Text(
-                    text = label,
-                    color = colors.tx2,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-    }
-    Spacer(modifier = Modifier.height(16.dp))
-
-    val isListening = speechState is SpeechState.Listening || speechState is SpeechState.Processing
-    val voiceTextStr = when (speechState) {
-        is SpeechState.Idle -> stringResource(R.string.voice_search)
-        is SpeechState.Listening -> stringResource(R.string.voice_listening)
-        is SpeechState.Processing -> stringResource(R.string.voice_processing, speechState.partialText)
-        is SpeechState.Result -> stringResource(R.string.voice_result, speechState.text)
-        is SpeechState.Error -> stringResource(R.string.voice_error_display, speechState.message)
-    }
+    // Trạng thái nghe giờ hiện trong bảng VoiceSearchSheet, nút chỉ đóng vai trò mở bảng đó
+    val isListening = false
+    val voiceTextStr = stringResource(R.string.voice_action)
 
     val boxColor = if (isListening) colors.acc.copy(alpha = 0.25f) else colors.acc.copy(alpha = 0.12f)
 
@@ -102,20 +51,14 @@ fun BottomActions(
             .background(boxColor)
             .border(1.dp, colors.acc.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
             .pointerInput(Unit) {
-                detectTapGestures(
-                    onPress = {
-                        onStartVoice()
-                        tryAwaitRelease()
-                        onStopVoice()
-                    }
-                )
+                detectTapGestures(onTap = { onStartVoice() })
             },
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             painter = painterResource(id = R.drawable.microphone),
-            contentDescription = stringResource(R.string.voice_search),
+            contentDescription = stringResource(R.string.voice_action),
             tint = colors.acc,
             modifier = Modifier.size(24.dp)
         )

@@ -40,6 +40,16 @@
     <string name="choose_language_desc">Chọn ngôn ngữ ưa thích của bạn</string>
 
     <!-- Scanning & Connection -->
+    <string name="device_management">Quản lý thiết bị</string>
+    <string name="connected_tv">TV đang kết nối</string>
+    <string name="saved_tvs">TV đã lưu</string>
+    <string name="network_tvs">Tìm thấy trên mạng</string>
+    <string name="pair">Ghép nối</string>
+    <string name="no_connected_tv">Không có TV nào đang kết nối</string>
+    <string name="no_saved_tv">Chưa có TV nào được lưu</string>
+    <string name="no_network_tv">Không tìm thấy TV mới trên mạng</string>
+    <string name="manual_ip_title">Nhập địa chỉ IP</string>
+    <string name="manual_ip_hint">vd: 192.168.1.50</string>
     <string name="scanning_network">Đang quét mạng...</string>
     <string name="looking_for_tvs">Đang tìm TV trên mạng Wi-Fi của bạn</string>
     <string name="tv_not_found_try_manually">Không tìm thấy TV? Hãy thử thêm thủ công.</string>
@@ -286,4 +296,11 @@ một cách dễ dàng</string>
     <string name="voice_error_no_speech">Không nghe thấy giọng nói. Hãy thử lại.</string>
     <string name="voice_error_busy">Dịch vụ nhận dạng giọng nói đang bận. Hãy thử lại.</string>
     <string name="voice_error_generic">Không thể nhận dạng giọng nói. Hãy thử lại.</string>
+    <string name="voice_sheet_say_command">Hãy nói một lệnh</string>
+    <string name="voice_sheet_processing">Đang xử lý...</string>
+    <string name="voice_sheet_please_wait">Vui lòng chờ...</string>
+    <string name="voice_sheet_done">Đã nhận lệnh</string>
+    <string name="voice_sheet_try_again">Thử lại</string>
+    <string name="voice_action">Điều khiển bằng giọng nói</string>
+    <string name="remote_headphone_not_supported">Chưa hỗ trợ</string>
 </resources>

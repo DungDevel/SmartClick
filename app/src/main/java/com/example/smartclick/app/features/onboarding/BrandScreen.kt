@@ -63,7 +63,7 @@ private fun brandLogo(brandId: String): Int = when (brandId.lowercase()) {
     "appletv" -> R.drawable.appletvlogo
     "amazon" -> R.drawable.amazon_logo
     "chromecast" -> R.drawable.chromecastlogo
-    else -> R.drawable.podcast
+    else -> R.drawable.star
 }
 
 @Composable

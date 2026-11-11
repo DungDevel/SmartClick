@@ -125,6 +125,11 @@ class CastViewModel @Inject constructor(
     val uiState: StateFlow<CastUiState> = combine(
         mediaSelectionState, _requestState, activeDevice, playbackState
     ) { selection, request, device, playback ->
+        val currentRequestState = when {
+            playback == CastPlaybackState.PLAYING -> CastRequestState.SENT
+            playback == CastPlaybackState.ERROR -> CastRequestState.ERROR
+            else -> request
+        }
         CastUiState(
             mediaItems = selection.first,
             selectedMediaIds = selection.second,
@@ -132,7 +137,7 @@ class CastViewModel @Inject constructor(
             activeTvName = device?.name,
             playbackState = playback,
             sessionInfo = CastSessionInfo(),
-            requestState = if (playback == CastPlaybackState.PLAYING) CastRequestState.SENT else request
+            requestState = currentRequestState
         )
     }.combine(sessionInfo) { state, session -> state.copy(sessionInfo = session) }.stateIn(
         scope = viewModelScope,

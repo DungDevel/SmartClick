@@ -77,10 +77,10 @@ class ConnectToTvUseCaseTest {
 
     @Test
     fun `connect fails when free user already has another paired TV`() = runTest {
-        val pairedTv = TvDevice("oldId", "Old TV", "ip", "mac", isPaired = true)
+        val pairedTv = TvDevice("oldId", "Old TV", "192.168.1.10", "mac", isPaired = true)
         every { tvDeviceRepository.getPairedDevices() } returns flowOf(listOf(pairedTv))
 
-        val newTv = TvDevice("newId", "New TV", "ip2", "mac2")
+        val newTv = TvDevice("newId", "New TV", "192.168.1.11", "mac2")
 
         val result = useCase(newTv)
 
@@ -89,7 +89,7 @@ class ConnectToTvUseCaseTest {
 
     @Test
     fun `connect succeeds when free user reconnects to same paired TV`() = runTest {
-        val pairedTv = TvDevice("oldId", "Old TV", "ip", "mac", isPaired = true)
+        val pairedTv = TvDevice("oldId", "Old TV", "192.168.1.10", "mac", isPaired = true)
         every { tvDeviceRepository.getPairedDevices() } returns flowOf(listOf(pairedTv))
 
         coEvery { mockController.connect(any()) } returns Result.success(Unit)
@@ -103,12 +103,12 @@ class ConnectToTvUseCaseTest {
     @Test
     fun `connect succeeds for premium user with multiple TVs`() = runTest {
         every { subscriptionRepository.currentPlan } returns flowOf(SubscriptionPlan.PREMIUM)
-        val pairedTv = TvDevice("oldId", "Old TV", "ip", "mac", isPaired = true)
+        val pairedTv = TvDevice("oldId", "Old TV", "192.168.1.10", "mac", isPaired = true)
         every { tvDeviceRepository.getPairedDevices() } returns flowOf(listOf(pairedTv))
 
         coEvery { mockController.connect(any()) } returns Result.success(Unit)
 
-        val newTv = TvDevice("newId", "New TV", "ip2", "mac2")
+        val newTv = TvDevice("newId", "New TV", "192.168.1.11", "mac2")
 
         val result = useCase(newTv)
 
@@ -118,7 +118,7 @@ class ConnectToTvUseCaseTest {
 
     @Test
     fun `connect returns failure when creating pinned controller throws`() = runTest {
-        val pairedTv = TvDevice("oldId", "Old TV", "ip", "mac", isPaired = true)
+        val pairedTv = TvDevice("oldId", "Old TV", "192.168.1.10", "mac", isPaired = true)
         every { tvDeviceRepository.getPairedDevices() } returns flowOf(listOf(pairedTv))
         every { mockDriver.createController(any(), any()) } throws IllegalStateException("pinned setup failed")
 
@@ -130,7 +130,7 @@ class ConnectToTvUseCaseTest {
 
     @Test
     fun `late successful connect after cancellation disconnects and does not save device`() = runTest {
-        val device = TvDevice("tv-a", "TV A", "ip", "mac", isPaired = true, lastConnectedAt = 10L)
+        val device = TvDevice("tv-a", "TV A", "192.168.1.10", "mac", isPaired = true, lastConnectedAt = 10L)
         val started = CompletableDeferred<Unit>()
         val finishConnect = CompletableDeferred<Unit>()
         coEvery { mockController.connect(device) } coAnswers {
@@ -162,7 +162,7 @@ class ConnectToTvUseCaseTest {
 
     @Test
     fun `late successful connect after cancellation does not clear another active controller`() = runTest {
-        val device = TvDevice("tv-a", "TV A", "ip", "mac", isPaired = true)
+        val device = TvDevice("tv-a", "TV A", "192.168.1.10", "mac", isPaired = true)
         val controllerB = mockk<ITvController>(relaxed = true)
         val started = CompletableDeferred<Unit>()
         val finishConnect = CompletableDeferred<Unit>()
@@ -193,7 +193,7 @@ class ConnectToTvUseCaseTest {
 
     @Test
     fun `connect success saves paired device and last connected time`() = runTest {
-        val device = TvDevice("tv-a", "TV A", "ip", "mac", isPaired = false)
+        val device = TvDevice("tv-a", "TV A", "192.168.1.10", "mac", isPaired = false)
         every { subscriptionRepository.currentPlan } returns flowOf(SubscriptionPlan.PREMIUM)
         every { tvDeviceRepository.getPairedDevices() } returns flowOf(emptyList())
         coEvery { mockController.connect(device) } returns Result.success(Unit)
@@ -211,7 +211,7 @@ class ConnectToTvUseCaseTest {
 
     @Test
     fun `failed connect does not clear a different active controller`() = runTest {
-        val device = TvDevice("tv-a", "TV A", "ip", "mac", isPaired = true)
+        val device = TvDevice("tv-a", "TV A", "192.168.1.10", "mac", isPaired = true)
         val controllerB = mockk<ITvController>(relaxed = true)
         coEvery { mockController.connect(device) } coAnswers {
             activeTvSession.setActiveController(controllerB)
@@ -224,5 +224,15 @@ class ConnectToTvUseCaseTest {
         assertSame(controllerB, currentControllerFlow.value)
         coVerify(exactly = 0) { activeTvSession.setActiveController(null) }
         coVerify(exactly = 0) { tvDeviceRepository.saveDevice(any()) }
+    }
+
+    @Test
+    fun `connect fails when device has public IP address`() = runTest {
+        val device = TvDevice("tv-public", "Public IP TV", "8.8.8.8", "mac", isPaired = true)
+
+        val result = useCase(device)
+
+        assertTrue(result is ConnectOutcome.Failed)
+        coVerify(exactly = 0) { mockDriver.createController(any(), any()) }
     }
 }

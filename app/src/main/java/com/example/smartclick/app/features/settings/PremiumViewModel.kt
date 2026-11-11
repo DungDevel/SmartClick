@@ -28,6 +28,7 @@ class PremiumViewModel @Inject constructor(
     val uiState: StateFlow<PremiumUiState> = _uiState.asStateFlow()
 
     val billingMessages: Flow<String> = subscriptionRepository.billingMessages
+    val isPremium: Flow<Boolean> = subscriptionRepository.isPremium
 
     init {
         loadPlans()

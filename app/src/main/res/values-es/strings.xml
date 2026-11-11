@@ -30,6 +30,16 @@
     <string name="connect_tv">Conectar TV</string>
     <string name="choose_language">Elegir idioma</string>
     <string name="choose_language_desc">Selecciona tu idioma preferido</string>
+    <string name="device_management">Gestión de dispositivos</string>
+    <string name="connected_tv">TV conectado</string>
+    <string name="saved_tvs">TVs guardados</string>
+    <string name="network_tvs">Encontrados en la red</string>
+    <string name="pair">Vincular</string>
+    <string name="no_connected_tv">Ningún TV conectado actualmente</string>
+    <string name="no_saved_tv">No hay TVs guardados</string>
+    <string name="no_network_tv">No se encontraron nuevos TVs en la red</string>
+    <string name="manual_ip_title">Introducir dirección IP</string>
+    <string name="manual_ip_hint">ej. 192.168.1.50</string>
     <string name="scanning_network">Analizando la red…</string>
     <string name="looking_for_tvs">Buscando TV en tu Wi-Fi</string>
     <string name="tv_not_found_try_manually">¿No encuentras tu TV? Intenta añadirla manualmente.</string>
@@ -251,4 +261,11 @@
     <string name="voice_error_no_speech">No se detectó voz. Inténtalo de nuevo.</string>
     <string name="voice_error_busy">El servicio de reconocimiento de voz está ocupado. Inténtalo de nuevo.</string>
     <string name="voice_error_generic">No se pudo reconocer la voz. Inténtalo de nuevo.</string>
+    <string name="voice_sheet_say_command">Di un comando</string>
+    <string name="voice_sheet_processing">Procesando...</string>
+    <string name="voice_sheet_please_wait">Espera un momento...</string>
+    <string name="voice_sheet_done">Comando reconocido</string>
+    <string name="voice_sheet_try_again">Intentar de nuevo</string>
+    <string name="voice_action">Control por voz</string>
+    <string name="remote_headphone_not_supported">No compatible</string>
 </resources>

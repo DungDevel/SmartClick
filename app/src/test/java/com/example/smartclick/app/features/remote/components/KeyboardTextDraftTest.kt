@@ -24,4 +24,14 @@ class KeyboardTextDraftTest {
         KeyboardTextDraft().submit { command -> commands.add(command) }
         assertEquals(emptyList<RemoteCommand>(), commands)
     }
+
+    @Test
+    fun `submitting draft and resetting clears text`() {
+        var draft = KeyboardTextDraft("hello")
+        val commands = mutableListOf<RemoteCommand>()
+        draft.submit { commands.add(it) }
+        draft = KeyboardTextDraft()
+        assertEquals("", draft.text)
+        assertEquals(listOf(RemoteCommand.Text("hello")), commands)
+    }
 }

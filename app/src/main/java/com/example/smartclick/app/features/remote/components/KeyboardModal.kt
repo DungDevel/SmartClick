@@ -32,8 +32,11 @@ fun KeyboardModal(
     LaunchedEffect(dictatedText) { if (dictatedText.isNotEmpty()) draft = draft.edit(dictatedText) }
 
     fun submitDraft() {
-        draft.submit(onSendText)
-        draft = KeyboardTextDraft()
+        if (draft.text.isNotEmpty()) {
+            draft.submit(onSendText)
+            draft = KeyboardTextDraft()
+            onDismissRequest()
+        }
     }
 
     LaunchedEffect(Unit) {
