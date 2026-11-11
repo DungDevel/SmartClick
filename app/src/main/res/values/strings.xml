@@ -180,7 +180,7 @@
     <string name="submit">Submit</string>
     <string name="keyboard">Keyboard</string>
     <string name="dictate_text">Dictate text</string>
-    <string name="headphone">Headphone</string>
+    <string name="search">Search</string>
     <string name="confirm_on_tv_title">Confirm on TV</string>
     <string name="confirm_on_tv_message">Please accept the connection request on your TV screen.</string>
     <string name="pairing_rejected">Connection rejected on TV.</string>
@@ -305,5 +305,5 @@ Effortlessly
     <string name="voice_sheet_try_again">Try again</string>
     <string name="voice_sheet_quote" translatable="false">“%1$s”</string>
     <string name="voice_action">Voice Control</string>
-    <string name="remote_headphone_not_supported">Not supported</string>
+    <string name="remote_search_not_supported">TV does not support search yet</string>
 </resources>

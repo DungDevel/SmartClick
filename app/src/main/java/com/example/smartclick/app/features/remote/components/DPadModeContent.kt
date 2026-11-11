@@ -37,8 +37,7 @@ fun DPadModeContent(
     onKeyboard: () -> Unit = {},
     onDictate: () -> Unit = {},
     showKeyboard: Boolean = false,
-    showDictation: Boolean = false,
-    showHeadphone: Boolean = false
+    showDictation: Boolean = false
 ) {
     val colors = SmartClickThemeTokens.colors
 
@@ -170,20 +169,25 @@ fun DPadModeContent(
     }
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Keyboard / Headphone / Dictate: ba nút nổi riêng, không có thẻ bao ngoài
+    // Keyboard / Search / Dictate: ba nút nổi riêng, không có thẻ bao ngoài
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
         val canInput = capabilities.contains(TvCapability.KEYBOARD_TEXT)
+        val hasSearchUi = capabilities.contains(TvCapability.OPEN_SEARCH_UI)
         val context = LocalContext.current
-        val notSupportedMsg = stringResource(R.string.remote_headphone_not_supported)
+        val searchNotSupportedMsg = stringResource(R.string.remote_search_not_supported)
 
         val extraButtons = listOf(
             Triple(R.drawable.keyboard, stringResource(R.string.keyboard), canInput to onKeyboard),
-            Triple(R.drawable.headphone, stringResource(R.string.headphone), true to {
-                android.widget.Toast.makeText(context, notSupportedMsg, android.widget.Toast.LENGTH_SHORT).show()
+            Triple(R.drawable.search, stringResource(R.string.search), true to {
+                if (hasSearchUi) {
+                    dispatchCommand(RemoteCommand.OpenSearchUi)
+                } else {
+                    android.widget.Toast.makeText(context, searchNotSupportedMsg, android.widget.Toast.LENGTH_SHORT).show()
+                }
             }),
             Triple(R.drawable.microphone, stringResource(R.string.dictate_text), canInput to onDictate)
         )
