@@ -86,8 +86,9 @@ fun RemoteScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            viewModel.startListening()
+            viewModel.startListeningAfterPermission()
         } else {
+            viewModel.cancelDictationSession()
             android.widget.Toast.makeText(context, context.getString(R.string.voice_error_permission_denied), android.widget.Toast.LENGTH_SHORT).show()
         }
     }
@@ -631,7 +632,10 @@ fun RemoteScreen(
 
                         if (showKeyboard && TvCapability.KEYBOARD_TEXT in capabilities) {
                             KeyboardModal(
-                                onDismissRequest = { showKeyboard = false },
+                                onDismissRequest = {
+                                    showKeyboard = false
+                                    viewModel.cancelDictationSession()
+                                },
                                 onSendText = { command -> dispatchCommand(command) },
                                 dictatedText = dictatedText,
                                 onDictate = {

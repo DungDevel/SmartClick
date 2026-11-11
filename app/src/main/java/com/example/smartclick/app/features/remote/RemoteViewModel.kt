@@ -225,6 +225,7 @@ class RemoteViewModel @Inject constructor(
                         _dictationResults.tryEmit(state.text)
                     } else processVoiceResult(state.text)
                     is SpeechState.Error -> {
+                        dictationSession = false
                         _uiEvents.tryEmit(RemoteUiEvent.VoiceError(state.message))
                     }
                     else -> {}
@@ -237,6 +238,14 @@ class RemoteViewModel @Inject constructor(
     fun startListening() {
         viewModelScope.launch {
             startListeningIfAllowed()
+        }
+    }
+
+    fun startListeningAfterPermission() {
+        if (dictationSession) {
+            speechToTextEngine.startListening()
+        } else {
+            startListening()
         }
     }
 
@@ -256,8 +265,13 @@ class RemoteViewModel @Inject constructor(
     fun prepareDictation(hasRecordAudioPermission: Boolean) {
         if (!dictationAvailable) return
         dictationSession = true
-        if (hasRecordAudioPermission) speechToTextEngine.startListening()
-        else _uiEvents.tryEmit(RemoteUiEvent.RequestVoicePermission)
+        viewModelScope.launch {
+            if (hasRecordAudioPermission) {
+                speechToTextEngine.startListening()
+            } else {
+                _uiEvents.emit(RemoteUiEvent.RequestVoicePermission)
+            }
+        }
     }
 
     private suspend fun startListeningIfAllowed() {
@@ -275,6 +289,12 @@ class RemoteViewModel @Inject constructor(
     }
 
     fun cancelVoiceSession() {
+        dictationSession = false
+        speechToTextEngine.destroy()
+    }
+
+    fun cancelDictationSession() {
+        dictationSession = false
         speechToTextEngine.destroy()
     }
 
