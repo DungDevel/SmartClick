@@ -115,7 +115,10 @@ class AndroidSpeechToText @Inject constructor(
         }
 
         override fun onBeginningOfSpeech() {
-            if (active()) _state.value = SpeechState.Processing("")
+            // Keep state as Listening when speech starts; avoid premature Processing("") before partial text arrives.
+            if (active()) {
+                _state.value = SpeechState.Listening
+            }
         }
 
         override fun onRmsChanged(rmsdB: Float) = Unit
