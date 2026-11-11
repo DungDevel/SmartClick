@@ -621,7 +621,6 @@ fun RemoteScreen(
                                 controlsEnabled = !isLocked,
                                 showKeyboard = hasKeyboard,
                                 showDictation = canDictate,
-                                showHeadphone = secondaryActions.headphone,
                                 onKeyboard = { showKeyboard = true },
                                 onDictate = {
                                     showKeyboard = true

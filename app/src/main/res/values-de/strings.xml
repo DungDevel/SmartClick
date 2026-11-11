@@ -155,7 +155,7 @@
     <string name="submit">Absenden</string>
     <string name="keyboard">Tastatur</string>
     <string name="dictate_text">Text diktieren</string>
-    <string name="headphone">Kopfhörer</string>
+    <string name="search">Suchen</string>
     <string name="confirm_on_tv_title">Auf dem TV bestätigen</string>
     <string name="confirm_on_tv_message">Akzeptiere die Verbindungsanfrage auf deinem TV-Bildschirm.</string>
     <string name="pairing_rejected">Verbindung auf dem TV abgelehnt.</string>
@@ -266,5 +266,5 @@
     <string name="voice_sheet_done">Befehl erkannt</string>
     <string name="voice_sheet_try_again">Erneut versuchen</string>
     <string name="voice_action">Sprachsteuerung</string>
-    <string name="remote_headphone_not_supported">Nicht unterstützt</string>
+    <string name="remote_search_not_supported">Dieser Fernseher unterstützt noch keine Suche</string>
 </resources>

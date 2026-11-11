@@ -156,7 +156,7 @@
     <string name="submit">Enviar</string>
     <string name="keyboard">Teclado</string>
     <string name="dictate_text">Ditado de texto</string>
-    <string name="headphone">Fones de ouvido</string>
+    <string name="search">Pesquisar</string>
     <string name="confirm_on_tv_title">Confirmar na TV</string>
     <string name="confirm_on_tv_message">Aceite a solicitação de conexão na tela da sua TV.</string>
     <string name="pairing_rejected">A conexão foi rejeitada na TV.</string>
@@ -267,5 +267,5 @@
     <string name="voice_sheet_done">Comando reconhecido</string>
     <string name="voice_sheet_try_again">Tentar novamente</string>
     <string name="voice_action">Controle por voz</string>
-    <string name="remote_headphone_not_supported">Não suportado</string>
+    <string name="remote_search_not_supported">Esta TV ainda não suporta pesquisa</string>
 </resources>
