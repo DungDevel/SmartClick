@@ -1,7 +1,7 @@
 # Báo cáo Xác minh Chức năng Thiếu (Missing Features Verification)
 
 ## 1. Phạm vi và nguồn
-- **Mục đích**: Đối chiếu chi tiết phần 2 (Bảng chi tiết đối chiếu chức năng) của `docs/missing-features-report.md` (lập ngày 21/10/2026) với mã nguồn HIỆN TẠI của dự án SmartClick trên nhánh `premium-test`.
+- **Mục đích**: Đối chiếu chi tiết phần 2 (Bảng chi tiết đối chiếu chức năng) của `docs/missing-features-report.md` (lập ngày 21/10/2026) với mã nguồn HIỆN TẠI của dự án SmartClick trên nhánh `premium-test` (Đối chiếu ngày 2026-11-11, commit daf0ae7fbe4f2cf748fed2ee8f6404d8e083457d).
 - **Tài liệu tham khảo**:
   - `docs/missing-features-report.md`
   - `docs/tasks/RESULT-B.md`
@@ -38,10 +38,10 @@
 | `F-REM-08` | Chế độ Touchpad | ✅ | ✅ HOÀN THÀNH | `app/.../features/remote/components/TouchPad.kt`<br>Test: `RemoteTouchpadTest.kt` | Touchpad hoạt động mượt mà với `SwipeToDpadMapper`. |
 | `F-REM-09` | Chế độ Numpad & Backspace capability | ✅ | ✅ HOÀN THÀNH | `app/.../features/remote/components/Numpad.kt` | Phím số và phím DEL phản hồi theo capability của TV. |
 | `F-REM-10` | Bàn phím chữ (`KeyboardModal`) gửi & reset | 🟠 | ✅ HOÀN THÀNH (LỆCH) | `app/.../features/remote/components/KeyboardModal.kt`<br>Test: `KeyboardTextDraftTest.kt` (`submitting draft and resetting clears text`) | Đã cấu hình reset draft và đóng modal sau khi submit để hỗ trợ bộ gõ tiếng Việt. |
-| `F-REM-12` | Hàng 3 nút phụ mới (Keyboard, Mic, Headphone) | 🔴 | ✅ HOÀN THÀNH (LỆCH) | `app/.../features/remote/components/DPadModeContent.kt`<br>Test: `RemoteSecondaryActionsTest.kt` | Đã thay thế hoàn toàn khối cũ bằng 3 nút phụ mới (Keyboard, Mic, Headphone với Toast thông báo). |
-| `F-REM-13` | Nhập chữ bằng giọng nói (Mic) | 🔴 | 🟠 MỘT PHẦN | `app/.../features/remote/VoiceSearchSheet.kt`<br>`app/.../domain/voice/` | Khung `AndroidSpeechToText` đã có nhưng chưa tích hợp đầy đủ luồng thực tế và chưa kiểm tra quyền mic runtime đầy đủ. |
-| `F-REM-14` | Mở thanh tìm kiếm | 🟠 | ĐÃ CODE, CHƯA THỬ TRÊN TV THẬT | Android TV, Samsung Tizen, Roku | `app/.../features/remote/components/DPadModeContent.kt`<br>Drivers: Android TV, Samsung Tizen, Roku | Hỗ trợ mở thanh tìm kiếm trên Android TV (`KEYCODE_SEARCH`), Samsung (`KEY_SEARCH`), và Roku (`Search`) khi TV có capability `OPEN_SEARCH_UI`, kèm Toast thông báo nếu chưa hỗ trợ. |
-| `F-DRV-01`..`04`| Driver Roku, AndroidTV, Samsung, LG | 🟠 | 🟠 HOÀN THÀNH (CHƯA TEST MÁY) | `tv/roku/`, `tv/androidtv/`, `tv/samsung/`, `tv/lg/`<br>Test: `AbstractDriverContractTest.kt` và các driver test | Code và test hợp đồng đạt 100% (294 test), nhưng **chưa có biên bản nghiệm thu phần cứng thật**. |
+| `F-REM-12` | Hàng 3 nút phụ mới (Keyboard, Search, Dictate) | 🔴 | ✅ HOÀN THÀNH (LỆCH) | `app/.../features/remote/components/DPadModeContent.kt` (183-193)<br>Test: `RemoteSecondaryActionsTest.kt` | Đã thay thế hoàn toàn khối cũ bằng 3 nút phụ mới (Keyboard, Search, Dictate). |
+| `F-REM-13` | Nhập chữ bằng giọng nói (Mic) | 🔴 | 🟠 MỘT PHẦN | `app/.../features/remote/VoiceSearchSheet.kt`<br>`app/.../domain/voice/` | Đã bỏ chặn Premium cho Free và nối xin quyền RECORD_AUDIO, onBeginningOfSpeech giữ Listening, sheet đóng khi từ chối quyền; chưa có test tự động cho hai bản sửa sau; CHƯA thử lại trên điện thoại thật. |
+| `F-REM-14` | Mở thanh tìm kiếm | 🟠 | ĐÃ CODE, CHƯA THỬ TRÊN TV THẬT | `app/.../features/remote/components/DPadModeContent.kt`<br>Drivers: Android TV, Samsung Tizen, Roku | Chỉ Android TV, Samsung Tizen, Roku khai báo OPEN_SEARCH_UI; driver khác hiện Toast "chưa hỗ trợ"; CHƯA thử trên TV thật; Roku chưa có mapper test riêng; contract test hiện chỉ kiểm tra yếu và chưa chứng minh ánh xạ phím đúng (xem mục "Chưa xác minh"). Tính năng đã đổi từ Headphone sang Mở thanh tìm kiếm. |
+| `F-DRV-01`..`04`| Driver Roku, AndroidTV, Samsung, LG | 🟠 | 🟠 HOÀN THÀNH (CHƯA TEST MÁY) | `tv/roku/`, `tv/androidtv/`, `tv/samsung/`, `tv/lg/`<br>Test: `AbstractDriverContractTest.kt` và các driver test | Code và test hợp đồng đạt 100% (294 test), nhưng **chưa có biên bản nghiệm thu phần cứng thật**. (Số test chưa chạy lại ở lần cập nhật docs này; báo cáo gần nhất: tv/* 300, chưa kiểm XML. Contract test chỉ chạy cho 6 driver: Samsung, Roku, Fake, Dial, Android TV, LG; Sony, Vizio, Fire TV, Vidaa, Cast chưa có contract test.) |
 | `F-PRE-01`..`05`| Premium & Google Play Billing (weekly, annual) | 🟠 | 🟠 MỘT PHẦN | `app/.../data/repository/PlayBillingRepository.kt`<br>`UpdateToPremiumScreen.kt` | Billing 7.0.0 hỗ trợ subscription weekly/annual; còn thiếu gói lifetime (`INAPP`); màn hình còn một số chuỗi cứng tiếng Việt. |
 | `F-PRE-06` | FeatureGate & PairingLimitPolicy | 🟠 | ✅ HOÀN THÀNH | `app/.../domain/policy/FeatureGate.kt`<br>`PairingLimitPolicy.kt`<br>Test: `FeatureGateTest.kt`, `PairingLimitPolicyTest.kt` | Giới hạn 1 TV cho Free hoạt động hoàn hảo; Channels đã được mở tự do (`isChannelsFeatureFree = true`). |
 | `F-CHN-01`..`03`| Channels (Khôi phục `channels.json` & UseCase) | 🔴 | ✅ HOÀN THÀNH (LỆCH) | `app/src/main/assets/channels.json`<br>`GetInstalledChannelsUseCase.kt`<br>Test: `GetInstalledChannelsUseCaseTest.kt`, `ChannelCatalogTest.kt` | Đã khôi phục file `channels.json`, gỡ bỏ tham số thừa trong `LaunchAppOnTvUseCase`. |
@@ -57,7 +57,7 @@ Báo cáo cũ (21/10/2026) được lập trước khi Luồng B (Stream B) hoà
 1. **`F-REM-03` (Nút cam & WoL):** Báo cáo cũ ghi nhận bị kẹt lớp phủ `fillMaxSize` và thiếu trì hoãn; hiện tại code đã gỡ lớp phủ, thêm 250ms delay và tích hợp WakeOnLan.
 2. **`F-REM-04` (Nút Mute):** Báo cáo cũ ghi nhận chưa lưu trạng thái theo thiết bị; hiện tại đã có `MuteStateStore` lưu trữ qua `intPreferencesKey("mute_$deviceId")`.
 3. **`F-REM-06` (Nút Khoá & Hold-to-unlock):** Báo cáo cũ ghi nhận thời gian giữ phụ thuộc hệ thống và thiếu bản dịch; hiện tại đã cài đặt cố định `UNLOCK_HOLD_DELAY_MS = 1000L` kèm test và bản dịch tiếng Việt.
-4. **`F-REM-07` & `F-REM-12` (Hàng 3 nút phụ mới):** Báo cáo cũ ghi nhận khối 8 nút phụ cũ còn tồn tại; hiện tại đã thay thế hoàn toàn bằng hàng 3 nút (Keyboard, Mic, Headphone).
+4. **`F-REM-07` & `F-REM-12` (Hàng 3 nút phụ mới):** Báo cáo cũ ghi nhận khối 8 nút phụ cũ còn tồn tại; hiện tại đã thay thế hoàn toàn bằng hàng 3 nút (Keyboard, Search, Dictate).
 5. **`F-REM-10` (Bàn phím chữ):** Báo cáo cũ ghi nhận gửi ký tự ngay lập tức làm hỏng bộ gõ tiếng Việt; hiện tại đã sửa thành cơ chế soạn thảo draft và bấm "Gửi" (`submitDraft`).
 6. **`F-DEV-02` & `F-DEV-03` (`RemoveDeviceUseCase`, `ReconnectWatcher`):** Báo cáo cũ ghi nhận chưa nối UI và cần tinh chỉnh ReconnectWatcher; hiện tại các UseCase đã được tích hợp vào `DevicesViewModel` và watcher đã xử lý đúng vòng lặp.
 7. **`F-CHN-01`..`03` (Channels):** Báo cáo cũ ghi nhận thiếu `channels.json` và dùng NoOp; hiện tại đã khôi phục catalog asset và hoàn thiện các usecase test liên quan.
@@ -98,7 +98,7 @@ Báo cáo cũ (21/10/2026) được lập trước khi Luồng B (Stream B) hoà
 ---
 
 ## 5. Các khoảng trống test (Test Gaps)
-Mặc dù toàn bộ 294 test ở `tv/*` và 216 test ở `:app` đều chạy thành công 100%, một số khu vực vẫn tồn tại khoảng trống test tự động (chủ yếu là UI/Compose interactions và phần cứng):
+Mặc dù ở lần chạy trước, 294 test ở `tv/*` và 216 test ở `:app` đều thành công (số liệu này chưa được chạy lại ở lần cập nhật docs này; báo cáo gần nhất ghi `:app` 219 và `tv/*` 300, chưa kiểm XML), một số khu vực vẫn tồn tại khoảng trống test tự động (chủ yếu là UI/Compose interactions và phần cứng):
 1. **UI Compose Tests:** Các màn hình phức tạp như `DeviceListScreen`, `CastScreen`, và `VoiceSearchSheet` hiện chủ yếu test qua ViewModel unit tests (`DevicesViewModelTest`, `CastViewModelTest`), thiếu instrumented Compose UI tests chạy trên emulator.
 2. **Device Discovery & SSDP Parser:** Các lớp phân tích gói tin mạng (SSDP/mDNS) chưa có mock integration tests kiểm tra phản hồi mạng thực tế.
 3. **Billing Integration:** Luồng Google Play Billing chưa thể test tự động hoàn toàn bằng unit tests mà phải qua Billing Library testing library / Play Console test accounts.
@@ -109,3 +109,10 @@ Mặc dù toàn bộ 294 test ở `tv/*` và 216 test ở `:app` đều chạy t
 1. **Chuỗi mồ côi (Orphan strings):** Một số chuỗi thông báo cũ trong `strings.xml` liên quan đến tính năng thử nghiệm hoặc thông báo debug cũ cần được rà soát và loại bỏ khi release.
 2. **TODO comments:** Còn một số ghi chú `TODO` nhỏ trong code UI cũ (ví dụ ở `ChannelsViewModel`) có thể dọn sạch trong đợt refactor cuối.
 3. **Git tracking:** Đã loại bỏ hoàn toàn các file patch rác và tệp sao lưu `.orig` khỏi git tracking (`git ls-files` không còn ghi nhận file rác).
+
+---
+
+## 7. Chưa xác minh
+- **Nhãn ✅ nhưng thiếu bằng chứng (test/file:dòng):** `F-BASE-02`, `F-BASE-03`, `F-BASE-04`, `F-BASE-07`, `F-BASE-09`, `F-BASE-10`, `F-DEV-02`, `F-REM-09` (nhãn dựa trên đọc code, chưa có test tự động).
+- **Sử dụng chung một bằng chứng cho cả nhóm:** `F-ONB-01..10`, `F-CST-01..06`, `F-VOI-01..12`, `F-PRE-01..05` (chưa kiểm từng dòng con).
+- **Contract test `controller open search ui respects declared capability`:** Nhánh có capability luôn đúng (điều kiện isSuccess hoặc có exception luôn thỏa), nhánh không khai báo chỉ kiểm tra có lỗi; chưa chứng minh ánh xạ phím. Cần sửa test.
