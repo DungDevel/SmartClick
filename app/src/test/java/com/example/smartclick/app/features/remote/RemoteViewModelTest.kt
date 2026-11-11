@@ -429,4 +429,45 @@ class RemoteViewModelTest {
         coVerify(exactly = 1) { sendCommandUseCase(RemoteCommand.PowerOff) }
         coVerify(exactly = 0) { sendCommandUseCase(RemoteCommand.Power) }
     }
+
+    @Test
+    fun `free plan dictation with permission starts listening without premium check`() = runTest {
+        every { subscriptionRepository.currentPlan } returns MutableStateFlow(SubscriptionPlan.FREE)
+        viewModel.prepareDictation(hasRecordAudioPermission = true)
+        advanceUntilIdle()
+        io.mockk.verify(exactly = 1) { speechToTextEngine.startListening() }
+    }
+
+    @Test
+    fun `free plan dictation without permission requests permission and start after permission starts listening`() = runTest {
+        every { subscriptionRepository.currentPlan } returns MutableStateFlow(SubscriptionPlan.FREE)
+        val events = mutableListOf<RemoteUiEvent>()
+        val job = launch { viewModel.uiEvents.collect { events += it } }
+
+        viewModel.prepareDictation(hasRecordAudioPermission = false)
+        advanceUntilIdle()
+
+        assertEquals(listOf(RemoteUiEvent.RequestVoicePermission), events)
+        io.mockk.verify(exactly = 0) { speechToTextEngine.startListening() }
+
+        viewModel.startListeningAfterPermission()
+        advanceUntilIdle()
+
+        io.mockk.verify(exactly = 1) { speechToTextEngine.startListening() }
+        job.cancel()
+    }
+
+    @Test
+    fun `dictation session reset on error prevents voice result going to dictation results`() = runTest {
+        val dictationResults = mutableListOf<String>()
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.dictationResults.collect { dictationResults.add(it) } }
+
+        viewModel.prepareDictation(hasRecordAudioPermission = true)
+        viewModel.cancelDictationSession()
+        speechStateFlow.value = SpeechState.Result("voice command search")
+        advanceUntilIdle()
+
+        assertTrue(dictationResults.isEmpty())
+        job.cancel()
+    }
 }
