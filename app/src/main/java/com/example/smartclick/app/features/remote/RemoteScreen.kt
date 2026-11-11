@@ -82,6 +82,9 @@ fun RemoteScreen(
     val context = androidx.compose.ui.platform.LocalContext.current
     val isLocked by viewModel.isLocked.collectAsState()
 
+    var showPowerOffDialog by remember { mutableStateOf(false) }
+    var showVoiceSheet by remember { mutableStateOf(false) }
+
     val recordAudioPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -89,6 +92,7 @@ fun RemoteScreen(
             viewModel.startListeningAfterPermission()
         } else {
             viewModel.cancelDictationSession()
+            showVoiceSheet = false
             android.widget.Toast.makeText(context, context.getString(R.string.voice_error_permission_denied), android.widget.Toast.LENGTH_SHORT).show()
         }
     }
@@ -96,9 +100,6 @@ fun RemoteScreen(
     DisposableEffect(viewModel) {
         onDispose { viewModel.cancelVoiceSession() }
     }
-
-    var showPowerOffDialog by remember { mutableStateOf(false) }
-    var showVoiceSheet by remember { mutableStateOf(false) }
     val currentOnNavigateToPremium by rememberUpdatedState(onNavigateToPremium)
 
     LaunchedEffect(viewModel) {
