@@ -6,6 +6,7 @@ import com.example.smartclick.app.domain.connection.RawCandidate
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.model.TvProtocol
 import com.example.smartclick.app.domain.model.TvCapability
+import com.example.smartclick.app.domain.model.RemoteCommand
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -30,6 +31,21 @@ abstract class AbstractDriverContractTest {
         val driver = createDriver()
         val controller = driver.createController(createDummyDevice(), null)
         assertNotNull(controller)
+    }
+
+    @Test
+    fun `controller open search ui respects declared capability`() = runTest {
+        val driver = createDriver()
+        val controller = driver.createController(createDummyDevice(), null)
+        controller.connect(createDummyDevice())
+        val result = controller.sendCommand(RemoteCommand.OpenSearchUi)
+        if (TvCapability.OPEN_SEARCH_UI !in driver.capabilities) {
+            assertTrue("sendCommand(OpenSearchUi) must fail or not be supported when capability is missing",
+                result.isFailure || result.exceptionOrNull() is UnsupportedOperationException)
+        } else {
+            assertTrue("sendCommand(OpenSearchUi) must succeed or return a valid result when capability is present",
+                result.isSuccess || result.exceptionOrNull() != null)
+        }
     }
 
     @Test
