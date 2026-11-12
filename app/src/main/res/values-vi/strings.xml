@@ -303,4 +303,5 @@ một cách dễ dàng</string>
     <string name="voice_sheet_try_again">Thử lại</string>
     <string name="voice_action">Điều khiển bằng giọng nói</string>
     <string name="remote_search_not_supported">TV này chưa hỗ trợ tìm kiếm</string>
+    <string name="remote_keyboard_not_supported">TV này chưa hỗ trợ nhập chữ</string>
 </resources>

@@ -24,6 +24,7 @@ import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.domain.usecase.SendCommandResult
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
+import com.example.smartclick.app.features.remote.handleExtraButtonAction
 
 @Composable
 fun DPadModeContent(
@@ -179,27 +180,35 @@ fun DPadModeContent(
         val hasSearchUi = capabilities.contains(TvCapability.OPEN_SEARCH_UI)
         val context = LocalContext.current
         val searchNotSupportedMsg = stringResource(R.string.remote_search_not_supported)
+        val keyboardNotSupportedMsg = stringResource(R.string.remote_keyboard_not_supported)
 
         val extraButtons = listOf(
-            Triple(R.drawable.keyboard, stringResource(R.string.keyboard), canInput to onKeyboard),
-            Triple(R.drawable.search, stringResource(R.string.search), true to {
+            Triple(R.drawable.keyboard, stringResource(R.string.keyboard), {
+                handleExtraButtonAction(capabilities, onKeyboard) {
+                    android.widget.Toast.makeText(context, keyboardNotSupportedMsg, android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }),
+            Triple(R.drawable.search, stringResource(R.string.search), {
                 if (hasSearchUi) {
                     dispatchCommand(RemoteCommand.OpenSearchUi)
                 } else {
                     android.widget.Toast.makeText(context, searchNotSupportedMsg, android.widget.Toast.LENGTH_SHORT).show()
                 }
             }),
-            Triple(R.drawable.microphone, stringResource(R.string.dictate_text), canInput to onDictate)
+            Triple(R.drawable.microphone, stringResource(R.string.dictate_text), {
+                handleExtraButtonAction(capabilities, onDictate) {
+                    android.widget.Toast.makeText(context, keyboardNotSupportedMsg, android.widget.Toast.LENGTH_SHORT).show()
+                }
+            })
         )
-        extraButtons.forEach { (iconRes, label, state) ->
-            val (enabled, onClick) = state
+        extraButtons.forEach { (iconRes, label, onClick) ->
             Box(
                 modifier = Modifier
                     .size(54.dp)
-                    .alpha(if (enabled) 1f else 0.4f)
+                    .alpha(1f)
                     .raisedSurface(RoundedCornerShape(16.dp))
                     .clickable(
-                        enabled = enabled,
+                        enabled = true,
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) { onClick() },

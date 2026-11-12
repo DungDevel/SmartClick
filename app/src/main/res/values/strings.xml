@@ -306,4 +306,5 @@ Effortlessly
     <string name="voice_sheet_quote" translatable="false">“%1$s”</string>
     <string name="voice_action">Voice Control</string>
     <string name="remote_search_not_supported">TV does not support search yet</string>
+    <string name="remote_keyboard_not_supported">This TV does not support text input yet</string>
 </resources>
