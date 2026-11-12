@@ -30,12 +30,21 @@ class IntentParserTest {
     }
 
     @Test
-    fun `parse TurnOff with negation returns unrecognized or not turnoff`() {
-        val result1 = parser.parse("đừng tắt TV")
-        assertTrue(result1 !is VoiceIntent.TurnOff)
+    fun `parse short keyword negative tests`() {
+        assertTrue(parser.parse("momo") is VoiceIntent.Unrecognized)
+        assertTrue(parser.parse("battery") is VoiceIntent.Unrecognized)
+        assertTrue(parser.parse("time") is VoiceIntent.Unrecognized)
+        assertTrue(parser.parse("to lenh") is VoiceIntent.Unrecognized)
+    }
 
-        val result2 = parser.parse("không tắt TV")
-        assertTrue(result2 !is VoiceIntent.TurnOff)
+    @Test
+    fun `parse negation tests`() {
+        assertTrue(parser.parse("khong tat tivi") !is VoiceIntent.TurnOff)
+        assertTrue(parser.parse("dung tat tivi") !is VoiceIntent.TurnOff)
+        assertTrue(parser.parse("tat tivi dung") !is VoiceIntent.TurnOff)
+        assertTrue(parser.parse("don't turn off the tv") !is VoiceIntent.TurnOff)
+        assertTrue(parser.parse("turn off the tv") is VoiceIntent.TurnOff)
+        assertTrue(parser.parse("tat tivi") is VoiceIntent.TurnOff)
     }
 
     @Test
@@ -70,6 +79,19 @@ class IntentParserTest {
         val result = parser.parse("Bật netflix xem phim")
         assertTrue(result is VoiceIntent.OpenApp)
         assertEquals(AppSymbol.NETFLIX, (result as VoiceIntent.OpenApp).app)
+    }
+
+    @Test
+    fun `parse multiple apps in one sentence`() {
+        val result = parser.parse("mo youtube de xem netflix")
+        assertTrue(result is VoiceIntent.OpenApp)
+        assertEquals(AppSymbol.YOUTUBE, (result as VoiceIntent.OpenApp).app)
+    }
+
+    @Test
+    fun `parse power and app combined behavior`() {
+        val result = parser.parse("mo youtube roi tat tivi")
+        assertTrue(result is VoiceIntent.TurnOff)
     }
 
     @Test

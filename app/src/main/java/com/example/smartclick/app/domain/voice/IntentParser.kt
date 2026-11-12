@@ -29,13 +29,55 @@ class IntentParser @Inject constructor(
             ?: VoiceIntent.Unrecognized(rawText)
     }
 
+    private fun String.hasWord(word: String): Boolean {
+        val escaped = Regex.escape(word)
+        return Regex("\\b$escaped\\b").containsMatchIn(this)
+    }
+
+    private fun findWordIndex(text: String, keyword: String): Int {
+        val escaped = Regex.escape(keyword)
+        val match = Regex("\\b$escaped\\b").find(text)
+        return match?.range?.first ?: -1
+    }
+
+    private fun isNegatedAround(normalized: String, keyword: String): Boolean {
+        val tokens = normalized.split(Regex("\\s+"))
+        val keywordTokens = keyword.split(Regex("\\s+"))
+
+        var matchIdx = -1
+        for (i in 0..tokens.size - keywordTokens.size) {
+            var matches = true
+            for (j in keywordTokens.indices) {
+                if (tokens[i + j] != keywordTokens[j]) {
+                    matches = false
+                    break
+                }
+            }
+            if (matches) {
+                matchIdx = i
+                break
+            }
+        }
+        if (matchIdx == -1) return false
+
+        val negationWords = listOf("khong", "dung", "chua", "dont", "don't", "do not", "never", "not")
+        val windowSize = 3
+        val startToken = (matchIdx - windowSize).coerceAtLeast(0)
+        val endToken = (matchIdx + keywordTokens.size + windowSize).coerceAtMost(tokens.size - 1)
+
+        for (i in startToken..endToken) {
+            if (tokens[i] in negationWords) return true
+            if (i < tokens.size - 1 && "${tokens[i]} ${tokens[i+1]}" in negationWords) return true
+        }
+        return false
+    }
+
     private fun parsePower(normalized: String, rawText: String): VoiceIntent? {
         val offKeywords = listOf("tat tivi", "tat tv", "turn off", "power off")
         for (keyword in offKeywords) {
-            val idx = normalized.indexOf(keyword)
+            val idx = findWordIndex(normalized, keyword)
             if (idx != -1) {
-                val prefix = normalized.substring(0, idx)
-                if (prefix.contains("khong") || prefix.contains("dung") || prefix.contains("chua")) {
+                if (isNegatedAround(normalized, keyword)) {
                     continue
                 }
                 return VoiceIntent.TurnOff(rawText)
@@ -44,10 +86,9 @@ class IntentParser @Inject constructor(
 
         val onKeywords = listOf("mo tivi", "mo tv", "bat tivi", "bat tv", "turn on", "power on", "wake up")
         for (keyword in onKeywords) {
-            val idx = normalized.indexOf(keyword)
+            val idx = findWordIndex(normalized, keyword)
             if (idx != -1) {
-                val prefix = normalized.substring(0, idx)
-                if (prefix.contains("khong") || prefix.contains("dung")) {
+                if (isNegatedAround(normalized, keyword)) {
                     continue
                 }
                 return VoiceIntent.TurnOn(rawText)
@@ -57,24 +98,30 @@ class IntentParser @Inject constructor(
     }
 
     private fun parseMute(normalized: String, rawText: String): VoiceIntent? {
-        if (normalized.matches(".*(tat tieng|im lang|mute|unmute|mat tieng).*".toRegex())) {
-            return VoiceIntent.MuteToggle(rawText)
+        val muteKeywords = listOf("tat tieng", "im lang", "mute", "unmute", "mat tieng")
+        for (keyword in muteKeywords) {
+            if (normalized.hasWord(keyword)) {
+                return VoiceIntent.MuteToggle(rawText)
+            }
         }
         return null
     }
 
     private fun parseVolume(normalized: String, rawText: String): VoiceIntent? {
-        val upRegex = ".*(tang am|to len|volume up).*".toRegex()
-        val downRegex = ".*(giam am|nho xuong|nho lai|volume down).*".toRegex()
-
-        if (normalized.matches(upRegex)) {
-            val steps = extractNumber(normalized) ?: 1
-            return VoiceIntent.VolumeUp(rawText, steps)
+        val upKeywords = listOf("tang am", "to len", "volume up")
+        for (keyword in upKeywords) {
+            if (normalized.hasWord(keyword)) {
+                val steps = extractNumber(normalized) ?: 1
+                return VoiceIntent.VolumeUp(rawText, steps)
+            }
         }
 
-        if (normalized.matches(downRegex)) {
-            val steps = extractNumber(normalized) ?: 1
-            return VoiceIntent.VolumeDown(rawText, steps)
+        val downKeywords = listOf("giam am", "nho xuong", "nho lai", "volume down")
+        for (keyword in downKeywords) {
+            if (normalized.hasWord(keyword)) {
+                val steps = extractNumber(normalized) ?: 1
+                return VoiceIntent.VolumeDown(rawText, steps)
+            }
         }
 
         return null
@@ -86,48 +133,77 @@ class IntentParser @Inject constructor(
     }
 
     private fun parseAppLaunch(normalized: String, rawText: String): VoiceIntent? {
-        if (!normalized.contains("mo") && !normalized.contains("open") && !normalized.contains("launch") && !normalized.contains("bat")) {
+        val openKeywords = listOf("mo", "open", "launch", "bat")
+        var earliestOpenIdx = Int.MAX_VALUE
+        for (keyword in openKeywords) {
+            val idx = findWordIndex(normalized, keyword)
+            if (idx != -1 && idx < earliestOpenIdx) {
+                earliestOpenIdx = idx
+            }
+        }
+        if (earliestOpenIdx == Int.MAX_VALUE) {
             return null // Must have an open keyword
         }
 
-        val app = when {
-            normalized.contains("youtube") -> AppSymbol.YOUTUBE
-            normalized.contains("netflix") -> AppSymbol.NETFLIX
-            normalized.contains("prime") || normalized.contains("amazon prime") -> AppSymbol.PRIME_VIDEO
-            normalized.contains("hulu") -> AppSymbol.HULU
-            normalized.contains("disney") -> AppSymbol.DISNEY_PLUS
-            normalized.contains("spotify") -> AppSymbol.SPOTIFY
-            normalized.contains("apple tv") -> AppSymbol.APPLE_TV
-            normalized.contains("hbo") -> AppSymbol.HBO_MAX
-            normalized.contains("chrome") || normalized.contains("trinh duyet") || normalized.contains("browser") -> AppSymbol.BROWSER
-            else -> return null
+        val appEntries = listOf(
+            AppSymbol.YOUTUBE to listOf("youtube"),
+            AppSymbol.NETFLIX to listOf("netflix"),
+            AppSymbol.PRIME_VIDEO to listOf("amazon prime", "prime"),
+            AppSymbol.HULU to listOf("hulu"),
+            AppSymbol.DISNEY_PLUS to listOf("disney"),
+            AppSymbol.SPOTIFY to listOf("spotify"),
+            AppSymbol.APPLE_TV to listOf("apple tv"),
+            AppSymbol.HBO_MAX to listOf("hbo"),
+            AppSymbol.BROWSER to listOf("chrome", "trinh duyet", "browser")
+        )
+
+        var bestApp: AppSymbol? = null
+        var minAppIdx = Int.MAX_VALUE
+
+        for ((symbol, aliases) in appEntries) {
+            for (alias in aliases) {
+                val appIdx = findWordIndex(normalized, alias)
+                if (appIdx != -1 && appIdx > earliestOpenIdx) {
+                    if (appIdx < minAppIdx) {
+                        minAppIdx = appIdx
+                        bestApp = symbol
+                    } else if (appIdx == minAppIdx && bestApp != symbol) {
+                        bestApp = null
+                    }
+                }
+            }
         }
 
-        return VoiceIntent.OpenApp(app, rawText)
+        return if (bestApp != null) VoiceIntent.OpenApp(bestApp, rawText) else null
     }
 
     private fun parseNavigation(normalized: String, rawText: String): VoiceIntent? {
-        val cmd = when {
-            normalized.matches(".*(len|up).*".toRegex()) -> RemoteCommand.DPadUp
-            normalized.matches(".*(xuong|down).*".toRegex()) -> RemoteCommand.DPadDown
-            normalized.matches(".*(trai|left).*".toRegex()) -> RemoteCommand.DPadLeft
-            normalized.matches(".*(phai|right).*".toRegex()) -> RemoteCommand.DPadRight
-            normalized.matches(".*(chon|ok|enter|select).*".toRegex()) -> RemoteCommand.Ok
-            normalized.matches(".*(ve|back|quay lai|tro lai).*".toRegex()) -> RemoteCommand.Back
-            normalized.matches(".*(trang chu|home).*".toRegex()) -> RemoteCommand.Home
-            else -> null
-        }
+        val navMappings = listOf(
+            listOf("len", "up") to RemoteCommand.DPadUp,
+            listOf("xuong", "down") to RemoteCommand.DPadDown,
+            listOf("trai", "left") to RemoteCommand.DPadLeft,
+            listOf("phai", "right") to RemoteCommand.DPadRight,
+            listOf("chon", "ok", "enter", "select") to RemoteCommand.Ok,
+            listOf("ve", "back", "quay lai", "tro lai") to RemoteCommand.Back,
+            listOf("trang chu", "home") to RemoteCommand.Home
+        )
 
-        return if (cmd != null) VoiceIntent.Navigation(cmd, rawText) else null
+        for ((keywords, cmd) in navMappings) {
+            for (keyword in keywords) {
+                if (normalized.hasWord(keyword)) {
+                    return VoiceIntent.Navigation(cmd, rawText)
+                }
+            }
+        }
+        return null
     }
 
     private fun parseSearch(normalized: String, rawText: String): VoiceIntent? {
         val searchPrefixes = listOf("tim kiem", "search", "tim")
         for (prefix in searchPrefixes) {
-            val index = normalized.indexOf(prefix)
-            if (index != -1) {
-                // Ignore if it's just the prefix with nothing after it
-                val query = normalized.substring(index + prefix.length).trim()
+            val idx = findWordIndex(normalized, prefix)
+            if (idx != -1) {
+                val query = normalized.substring(idx + prefix.length).trim()
                 if (query.isNotEmpty()) {
                     return VoiceIntent.SearchContent(query, rawText)
                 }
