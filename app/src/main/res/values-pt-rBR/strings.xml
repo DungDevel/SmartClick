@@ -269,4 +269,5 @@
     <string name="voice_action">Controle por voz</string>
     <string name="remote_search_not_supported">Esta TV ainda não suporta pesquisa</string>
     <string name="remote_keyboard_not_supported">Esta TV ainda não suporta entrada de texto</string>
+    <string name="language_french">Français</string>
 </resources>

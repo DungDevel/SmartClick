@@ -268,4 +268,5 @@
     <string name="voice_action">Sprachsteuerung</string>
     <string name="remote_search_not_supported">Dieser Fernseher unterstützt noch keine Suche</string>
     <string name="remote_keyboard_not_supported">Dieser Fernseher unterstützt noch keine Texteingabe</string>
+    <string name="language_french">Français</string>
 </resources>
