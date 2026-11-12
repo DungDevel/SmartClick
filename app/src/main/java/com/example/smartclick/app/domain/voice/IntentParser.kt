@@ -20,6 +20,10 @@ class IntentParser @Inject constructor(
             return VoiceIntent.Unrecognized(rawText)
         }
 
+        if (hasPowerKeyword(normalized) && hasOtherCommandKeyword(normalized)) {
+            return VoiceIntent.Unrecognized(rawText)
+        }
+
         return parsePower(normalized, rawText)
             ?: parseMute(normalized, rawText)
             ?: parseVolume(normalized, rawText)
@@ -70,6 +74,31 @@ class IntentParser @Inject constructor(
             if (i < tokens.size - 1 && "${tokens[i]} ${tokens[i+1]}" in negationWords) return true
         }
         return false
+    }
+
+    private fun hasPowerKeyword(normalized: String): Boolean {
+        val allPowerKeywords = listOf("tat tivi", "tat tv", "turn off", "power off", "mo tivi", "mo tv", "bat tivi", "bat tv", "turn on", "power on", "wake up")
+        return allPowerKeywords.any { normalized.hasWord(it) }
+    }
+
+    private fun hasOtherCommandKeyword(normalized: String): Boolean {
+        val openKeywords = listOf("mo", "open", "launch", "bat")
+        val hasOpen = openKeywords.any { ok ->
+            if (ok == "bat") {
+                normalized.hasWord("bat") && !normalized.hasWord("bat tivi") && !normalized.hasWord("bat tv")
+            } else if (ok == "mo") {
+                normalized.hasWord("mo") && !normalized.hasWord("mo tivi") && !normalized.hasWord("mo tv")
+            } else {
+                normalized.hasWord(ok)
+            }
+        }
+        val appNames = listOf("youtube", "netflix", "prime", "hulu", "disney", "spotify", "apple tv", "hbo", "chrome")
+        val hasApp = appNames.any { normalized.hasWord(it) }
+        val hasVolume = listOf("tang am", "giam am", "to len", "nho xuong", "volume up", "volume down").any { normalized.hasWord(it) }
+        val hasNav = listOf("len tren", "xuong duoi", "sang trai", "sang phai", "trang chu", "quay lai", "tro lai").any { normalized.hasWord(it) }
+        val hasSearch = listOf("tim kiem", "search", "tim").any { normalized.hasWord(it) }
+
+        return (hasOpen && hasApp) || hasVolume || hasNav || hasSearch
     }
 
     private fun parsePower(normalized: String, rawText: String): VoiceIntent? {
@@ -180,7 +209,8 @@ class IntentParser @Inject constructor(
     private fun parseNavigation(normalized: String, rawText: String): VoiceIntent? {
         val navMappings = listOf(
             listOf("len", "up") to RemoteCommand.DPadUp,
-            listOf("xuong", "down") to RemoteCommand.DPadDown,
+            listOf("xuong", "down")
+            to RemoteCommand.DPadDown,
             listOf("trai", "left") to RemoteCommand.DPadLeft,
             listOf("phai", "right") to RemoteCommand.DPadRight,
             listOf("chon", "ok", "enter", "select") to RemoteCommand.Ok,

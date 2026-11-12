@@ -89,9 +89,9 @@ class IntentParserTest {
     }
 
     @Test
-    fun `parse power and app combined behavior`() {
+    fun `parse power and app combined returns unrecognized`() {
         val result = parser.parse("mo youtube roi tat tivi")
-        assertTrue(result is VoiceIntent.TurnOff)
+        assertTrue(result is VoiceIntent.Unrecognized)
     }
 
     @Test
