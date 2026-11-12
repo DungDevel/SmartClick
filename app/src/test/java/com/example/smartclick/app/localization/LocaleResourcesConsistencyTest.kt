@@ -24,6 +24,9 @@ class LocaleResourcesConsistencyTest {
     @Test
     fun `german resources match the default resource set`() = assertLocale("de")
 
+    @Test
+    fun `french resources match the default resource set`() = assertLocale("fr")
+
     private fun assertLocale(languageTag: String) {
         val resRoot = File("src/main/res")
         assertTrue("Expected test working directory to contain src/main/res", resRoot.isDirectory)
@@ -55,7 +58,7 @@ class LocaleResourcesConsistencyTest {
             val localized = translated[key]
             assertTrue("Missing original-language legal resource $key in $languageTag", localized != null)
             assertEquals("Legal text should remain in its source language for $languageTag: $key", source.values, localized!!.values)
-            if (languageTag in setOf("es", "pt-BR", "de")) {
+            if (languageTag in setOf("es", "pt-BR", "de", "fr")) {
                 assertEquals("tools:ignore must be local to legal resource $key", "MissingTranslation", localized.toolsIgnore)
             }
         }
@@ -82,7 +85,7 @@ class LocaleResourcesConsistencyTest {
         }
 
         val requiredPluralQuantities = when (languageTag) {
-            "es", "pt-BR" -> setOf("one", "many", "other")
+            "es", "pt-BR", "fr" -> setOf("one", "many", "other")
             "de" -> setOf("one", "other")
             else -> setOf("one", "other")
         }
