@@ -65,14 +65,24 @@ class IntentParser @Inject constructor(
         if (matchIdx == -1) return false
 
         val negationWords = listOf("khong", "dung", "chua", "dont", "don't", "do not", "never", "not")
-        val windowSize = 3
-        val startToken = (matchIdx - windowSize).coerceAtLeast(0)
-        val endToken = (matchIdx + keywordTokens.size + windowSize).coerceAtMost(tokens.size - 1)
+        val bufferWords = listOf("hay", "the")
 
-        for (i in startToken..endToken) {
-            if (tokens[i] in negationWords) return true
-            if (i < tokens.size - 1 && "${tokens[i]} ${tokens[i+1]}" in negationWords) return true
+        // Check immediately after: matchIdx + keywordTokens.size
+        val afterIdx = matchIdx + keywordTokens.size
+        if (afterIdx < tokens.size && tokens[afterIdx] in negationWords) {
+            return true
         }
+
+        // Check immediately before: matchIdx - 1
+        if (matchIdx - 1 >= 0 && tokens[matchIdx - 1] in negationWords) {
+            return true
+        }
+
+        // Check 2 tokens before with 1 buffer word: matchIdx - 2 is negation, matchIdx - 1 is buffer
+        if (matchIdx - 2 >= 0 && tokens[matchIdx - 2] in negationWords && tokens[matchIdx - 1] in bufferWords) {
+            return true
+        }
+
         return false
     }
 
@@ -209,8 +219,7 @@ class IntentParser @Inject constructor(
     private fun parseNavigation(normalized: String, rawText: String): VoiceIntent? {
         val navMappings = listOf(
             listOf("len", "up") to RemoteCommand.DPadUp,
-            listOf("xuong", "down")
-            to RemoteCommand.DPadDown,
+            listOf("xuong", "down") to RemoteCommand.DPadDown,
             listOf("trai", "left") to RemoteCommand.DPadLeft,
             listOf("phai", "right") to RemoteCommand.DPadRight,
             listOf("chon", "ok", "enter", "select") to RemoteCommand.Ok,

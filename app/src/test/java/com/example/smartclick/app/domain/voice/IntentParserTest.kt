@@ -38,13 +38,33 @@ class IntentParserTest {
     }
 
     @Test
-    fun `parse negation tests`() {
-        assertTrue(parser.parse("khong tat tivi") !is VoiceIntent.TurnOff)
-        assertTrue(parser.parse("dung tat tivi") !is VoiceIntent.TurnOff)
-        assertTrue(parser.parse("tat tivi dung") !is VoiceIntent.TurnOff)
-        assertTrue(parser.parse("don't turn off the tv") !is VoiceIntent.TurnOff)
-        assertTrue(parser.parse("turn off the tv") is VoiceIntent.TurnOff)
-        assertTrue(parser.parse("tat tivi") is VoiceIntent.TurnOff)
+    fun `parse negative clause does not block TurnOff`() {
+        val result = parser.parse("tat tivi di toi khong xem nua")
+        assertTrue(result is VoiceIntent.TurnOff)
+    }
+
+    @Test
+    fun `parse negation prefix khong tat tivi`() {
+        val result = parser.parse("khong tat tivi")
+        assertTrue(result is VoiceIntent.Unrecognized)
+    }
+
+    @Test
+    fun `parse negation prefix dung tat tivi`() {
+        val result = parser.parse("dung tat tivi")
+        assertTrue(result is VoiceIntent.Unrecognized)
+    }
+
+    @Test
+    fun `parse negation suffix tat tivi dung`() {
+        val result = parser.parse("tat tivi dung")
+        assertTrue(result is VoiceIntent.Unrecognized)
+    }
+
+    @Test
+    fun `parse english negation dont turn off the tv`() {
+        val result = parser.parse("don't turn off the tv")
+        assertTrue(result is VoiceIntent.Unrecognized)
     }
 
     @Test
