@@ -2,6 +2,7 @@ package com.example.smartclick.app.domain.usecase
 
 import com.example.smartclick.app.domain.connection.IActiveTvSession
 import com.example.smartclick.app.domain.connection.ITvController
+import com.example.smartclick.app.domain.model.RemoteCommand
 import com.example.smartclick.app.domain.model.TvCapability
 import com.example.smartclick.app.domain.model.TvProtocol
 import com.example.smartclick.app.domain.model.voice.AppSymbol
@@ -88,5 +89,19 @@ class ProcessVoiceCommandUseCaseTest {
         assertEquals(VoiceCommandResult.SUCCESS, result)
 
         coVerify(exactly = 1) { launchAppOnTvUseCase("youtube.logan") }
+    }
+
+    @Test
+    fun `VolumeUp exceeding max steps is clamped to 10 and delayed`() = runTest {
+        controllerFlow.value = controller
+        coEvery { sendCommandUseCase(RemoteCommand.VolumeUp) } returns SendCommandResult.SUCCESS
+
+        val startTime = testScheduler.currentTime
+        val result = useCase(VoiceIntent.VolumeUp("tang am luong len 15", steps = 15))
+        val endTime = testScheduler.currentTime
+
+        assertEquals(VoiceCommandResult.SUCCESS, result)
+        assertEquals(1350L, endTime - startTime)
+        coVerify(exactly = 10) { sendCommandUseCase(RemoteCommand.VolumeUp) }
     }
 }

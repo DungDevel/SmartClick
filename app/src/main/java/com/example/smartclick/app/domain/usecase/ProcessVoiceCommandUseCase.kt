@@ -41,8 +41,12 @@ class ProcessVoiceCommandUseCase @Inject constructor(
             }
 
             is VoiceIntent.VolumeUp -> {
+                val clampedSteps = intent.steps.coerceAtMost(MAX_VOLUME_STEPS)
                 var success = true
-                for (i in 0 until intent.steps) {
+                for (i in 0 until clampedSteps) {
+                    if (i > 0) {
+                        kotlinx.coroutines.delay(VOLUME_STEP_DELAY_MS)
+                    }
                     val r = sendCommandUseCase(RemoteCommand.VolumeUp)
                     if (r == SendCommandResult.NOT_SUPPORTED) return VoiceCommandResult.NOT_SUPPORTED
                     if (r != SendCommandResult.SUCCESS) success = false
@@ -51,8 +55,12 @@ class ProcessVoiceCommandUseCase @Inject constructor(
             }
 
             is VoiceIntent.VolumeDown -> {
+                val clampedSteps = intent.steps.coerceAtMost(MAX_VOLUME_STEPS)
                 var success = true
-                for (i in 0 until intent.steps) {
+                for (i in 0 until clampedSteps) {
+                    if (i > 0) {
+                        kotlinx.coroutines.delay(VOLUME_STEP_DELAY_MS)
+                    }
                     val r = sendCommandUseCase(RemoteCommand.VolumeDown)
                     if (r == SendCommandResult.NOT_SUPPORTED) return VoiceCommandResult.NOT_SUPPORTED
                     if (r != SendCommandResult.SUCCESS) success = false
@@ -94,5 +102,10 @@ class ProcessVoiceCommandUseCase @Inject constructor(
             SendCommandResult.NOT_SUPPORTED -> VoiceCommandResult.NOT_SUPPORTED
             SendCommandResult.NOT_CONNECTED -> VoiceCommandResult.NOT_CONNECTED
         }
+    }
+
+    companion object {
+        const val MAX_VOLUME_STEPS = 10
+        const val VOLUME_STEP_DELAY_MS = 150L
     }
 }
