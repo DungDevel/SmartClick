@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="command_failed">คำสั่งล้มเหลว</string>
+    <string name="wol_unavailable">ไม่มีที่อยู่ MAC ที่ใช้ได้ ทีวีนี้อาจไม่รองรับการเปิดเครื่องระยะไกล</string>
+    <string name="wol_failed_retry">Wake-on-LAN ล้มเหลว ตรวจสอบเครือข่ายแล้วลองอีกครั้ง</string>
+</resources>

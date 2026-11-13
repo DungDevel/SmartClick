@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="command_failed">コマンド失敗</string>
+    <string name="wol_unavailable">有効なMACアドレスがありません。このテレビはリモート電源オンをサポートしていない可能性があります。</string>
+    <string name="wol_failed_retry">Wake-on-LANの送信に失敗しました。ネットワークを確認して再試行してください。</string>
+</resources>
