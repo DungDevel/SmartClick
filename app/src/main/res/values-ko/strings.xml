@@ -288,4 +288,9 @@
     <string name="remote_keyboard_not_supported">이 TV에서는 텍스트 입력을 지원하지 않습니다.</string>
     <string name="language_french">Français</string>
     <string name="language_korean">한국어</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_turkish">Türkçe</string>
+    <string name="language_dutch">Nederlands</string>
+    <string name="language_polish">Polski</string>
 </resources>

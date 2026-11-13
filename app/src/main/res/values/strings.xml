@@ -309,4 +309,9 @@ Effortlessly
     <string name="remote_keyboard_not_supported">This TV does not support text input yet</string>
     <string name="language_french">Français</string>
     <string name="language_korean">한국어</string>
+    <string name="language_italian">Italiano</string>
+    <string name="language_russian">Русский</string>
+    <string name="language_turkish">Türkçe</string>
+    <string name="language_dutch">Nederlands</string>
+    <string name="language_polish">Polski</string>
 </resources>
