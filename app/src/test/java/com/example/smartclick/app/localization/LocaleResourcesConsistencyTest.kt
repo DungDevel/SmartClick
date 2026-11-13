@@ -1,4 +1,4 @@
-﻿package com.example.smartclick.app.localization
+package com.example.smartclick.app.localization
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -205,4 +205,3 @@ class LocaleResourcesConsistencyTest {
         isNamespaceAware = true
     }.newDocumentBuilder().parse(file)
 }
-
