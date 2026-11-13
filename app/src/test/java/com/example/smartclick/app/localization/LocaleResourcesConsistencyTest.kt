@@ -30,6 +30,18 @@ class LocaleResourcesConsistencyTest {
     @Test
     fun `korean resources match the default resource set`() = assertLocale("ko")
 
+    @Test
+    fun `japanese resources match the default resource set`() = assertLocale("ja")
+
+    @Test
+    fun `thai resources match the default resource set`() = assertLocale("th")
+
+    @Test
+    fun `indonesian resources match the default resource set`() = assertLocale("in")
+
+    @Test
+    fun `chinese simplified resources match the default resource set`() = assertLocale("zh-CN")
+
     private fun assertLocale(languageTag: String) {
         val resRoot = File("src/main/res")
         assertTrue("Expected test working directory to contain src/main/res", resRoot.isDirectory)
@@ -40,6 +52,7 @@ class LocaleResourcesConsistencyTest {
         val qualifier = when (languageTag) {
             "en" -> "values"
             "pt-BR" -> "values-pt-rBR"
+            "zh-CN" -> "values-zh-rCN"
             else -> "values-$languageTag"
         }
         val localeDirectory = File(resRoot, qualifier)
@@ -90,7 +103,7 @@ class LocaleResourcesConsistencyTest {
         val requiredPluralQuantities = when (languageTag) {
             "es", "pt-BR", "fr" -> setOf("one", "many", "other")
             "de" -> setOf("one", "other")
-            "ko" -> setOf("other")
+            "ko", "ja", "th", "in", "zh-CN" -> setOf("other")
             else -> setOf("one", "other")
         }
         base.filterValues { it.type == "plurals" }.forEach { (key, _) ->
