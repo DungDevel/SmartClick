@@ -9,9 +9,21 @@ internal data class RemoteSecondaryActions(
 ) {
     companion object {
         fun forCapabilities(capabilities: Set<TvCapability>, speechAvailable: Boolean) = RemoteSecondaryActions(
-            keyboard = TvCapability.KEYBOARD_TEXT in capabilities,
-            dictation = TvCapability.KEYBOARD_TEXT in capabilities && speechAvailable,
+            keyboard = true,
+            dictation = true,
             search = true
         )
+    }
+}
+
+internal fun handleExtraButtonAction(
+    capabilities: Set<TvCapability>,
+    onAction: () -> Unit,
+    onNotSupported: () -> Unit
+) {
+    if (TvCapability.KEYBOARD_TEXT in capabilities) {
+        onAction()
+    } else {
+        onNotSupported()
     }
 }

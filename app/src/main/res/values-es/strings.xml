@@ -268,4 +268,6 @@
     <string name="voice_sheet_try_again">Intentar de nuevo</string>
     <string name="voice_action">Control por voz</string>
     <string name="remote_search_not_supported">Este televisor no soporta búsqueda</string>
+    <string name="remote_keyboard_not_supported">Este televisor aún no admite entrada de texto</string>
+    <string name="language_french">Français</string>
 </resources>

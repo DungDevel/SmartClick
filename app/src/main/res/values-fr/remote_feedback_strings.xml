@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="command_failed">Commande échouée</string>
+    <string name="wol_unavailable">Aucune adresse MAC valide ; le téléviseur ne prend peut-être pas en charge l allumage à distance.</string>
+    <string name="wol_failed_retry">Échec de l envoi de Wake-on-LAN. Vérifiez le réseau et réessayez.</string>
+</resources>
