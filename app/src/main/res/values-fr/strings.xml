@@ -290,4 +290,5 @@ Facilement
     <string name="remote_search_not_supported">Le téléviseur ne prend pas en charge la recherche</string>
     <string name="remote_keyboard_not_supported">Ce téléviseur ne prend pas en charge la saisie</string>
     <string name="language_french">Français</string>
+    <string name="language_korean">한국어</string>
 </resources>
