@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="command_failed">Opdracht mislukt</string>
+    <string name="wol_unavailable">Geen geldig MAC-adres; deze tv ondersteunt mogelijk geen inschakeling op afstand.</string>
+    <string name="wol_failed_retry">Wake-on-LAN mislukt. Controleer het netwerk en probeer het opnieuw.</string>
+</resources>

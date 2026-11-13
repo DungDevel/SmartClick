@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="command_failed">Не удалось выполнить команду</string>
+    <string name="wol_unavailable">Нет действительного MAC-адреса; возможно, этот телевизор не поддерживает удалённое включение.</string>
+    <string name="wol_failed_retry">Не удалось выполнить Wake-on-LAN. Проверьте сеть и повторите попытку.</string>
+</resources>

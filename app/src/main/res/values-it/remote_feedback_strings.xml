@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="command_failed">Comando non riuscito</string>
+    <string name="wol_unavailable">Nessun indirizzo MAC valido; questo televisore potrebbe non supportare l\'accensione da remoto.</string>
+    <string name="wol_failed_retry">Wake-on-LAN non riuscito. Controlli la rete e riprovi.</string>
+</resources>

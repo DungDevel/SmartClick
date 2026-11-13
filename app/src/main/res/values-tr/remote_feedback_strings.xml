@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="command_failed">Komut başarısız oldu</string>
+    <string name="wol_unavailable">Geçerli bir MAC adresi yok; bu televizyon uzaktan açmayı desteklemiyor olabilir.</string>
+    <string name="wol_failed_retry">Wake-on-LAN başarısız oldu. Lütfen ağı kontrol edip tekrar deneyin.</string>
+</resources>

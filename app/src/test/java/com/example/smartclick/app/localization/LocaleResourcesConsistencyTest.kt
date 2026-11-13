@@ -31,6 +31,21 @@ class LocaleResourcesConsistencyTest {
     fun `korean resources match the default resource set`() = assertLocale("ko")
 
     @Test
+    fun `italian resources match the default resource set`() = assertLocale("it")
+
+    @Test
+    fun `russian resources match the default resource set`() = assertLocale("ru")
+
+    @Test
+    fun `turkish resources match the default resource set`() = assertLocale("tr")
+
+    @Test
+    fun `dutch resources match the default resource set`() = assertLocale("nl")
+
+    @Test
+    fun `polish resources match the default resource set`() = assertLocale("pl")
+
+    @Test
     fun `japanese resources match the default resource set`() = assertLocale("ja")
 
     @Test
@@ -74,7 +89,7 @@ class LocaleResourcesConsistencyTest {
             val localized = translated[key]
             assertTrue("Missing original-language legal resource $key in $languageTag", localized != null)
             assertEquals("Legal text should remain in its source language for $languageTag: $key", source.values, localized!!.values)
-            if (languageTag in setOf("es", "pt-BR", "de", "fr")) {
+            if (languageTag in setOf("es", "pt-BR", "de", "fr", "it", "ru", "tr", "nl", "pl", "ja", "th", "in", "zh-CN")) {
                 assertEquals("tools:ignore must be local to legal resource $key", "MissingTranslation", localized.toolsIgnore)
             }
         }
@@ -104,6 +119,9 @@ class LocaleResourcesConsistencyTest {
             "es", "pt-BR", "fr" -> setOf("one", "many", "other")
             "de" -> setOf("one", "other")
             "ko", "ja", "th", "in", "zh-CN" -> setOf("other")
+            "it" -> setOf("one", "many", "other")
+            "ru", "pl" -> setOf("one", "few", "many", "other")
+            "tr", "nl" -> setOf("one", "other")
             else -> setOf("one", "other")
         }
         base.filterValues { it.type == "plurals" }.forEach { (key, _) ->
