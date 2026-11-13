@@ -12,6 +12,7 @@ class SpeechLocaleSelectorTest {
         assertEquals("pt-BR", SpeechLocaleSelector.forLanguageTag("pt-BR"))
         assertEquals("de-DE", SpeechLocaleSelector.forLanguageTag("de-AT"))
         assertEquals("en-US", SpeechLocaleSelector.forLanguageTag("fr"))
+        assertEquals("en-US", SpeechLocaleSelector.forLanguageTag("ko"))
         assertEquals("en-US", SpeechLocaleSelector.forLanguageTag("xx-ZZ"))
     }
 }

@@ -27,6 +27,9 @@ class LocaleResourcesConsistencyTest {
     @Test
     fun `french resources match the default resource set`() = assertLocale("fr")
 
+    @Test
+    fun `korean resources match the default resource set`() = assertLocale("ko")
+
     private fun assertLocale(languageTag: String) {
         val resRoot = File("src/main/res")
         assertTrue("Expected test working directory to contain src/main/res", resRoot.isDirectory)
@@ -87,6 +90,7 @@ class LocaleResourcesConsistencyTest {
         val requiredPluralQuantities = when (languageTag) {
             "es", "pt-BR", "fr" -> setOf("one", "many", "other")
             "de" -> setOf("one", "other")
+            "ko" -> setOf("other")
             else -> setOf("one", "other")
         }
         base.filterValues { it.type == "plurals" }.forEach { (key, _) ->
