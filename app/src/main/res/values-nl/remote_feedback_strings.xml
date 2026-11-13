@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="remote_feedback_title">Feedback over afstandsbediening verzenden</string>
-    <string name="remote_feedback_prompt">Werkt de afstandsbediening naar behoren?</string>
-    <string name="remote_feedback_thank_you">Bedankt voor uw feedback!</string>
+    <string name="command_failed">Opdracht mislukt</string>
+    <string name="wol_unavailable">Geen geldig MAC-adres; deze tv ondersteunt mogelijk geen inschakeling op afstand.</string>
+    <string name="wol_failed_retry">Wake-on-LAN mislukt. Controleer het netwerk en probeer het opnieuw.</string>
 </resources>

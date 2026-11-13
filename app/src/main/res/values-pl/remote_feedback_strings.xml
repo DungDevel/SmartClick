@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="remote_feedback_title">Wyślij opinię o pilocie</string>
-    <string name="remote_feedback_prompt">Czy pilot działał poprawnie?</string>
-    <string name="remote_feedback_thank_you">Dziękujemy za opinię!</string>
+    <string name="command_failed">Polecenie nie powiodło się</string>
+    <string name="wol_unavailable">Brak prawidłowego adresu MAC; ten telewizor może nie obsługiwać zdalnego włączania.</string>
+    <string name="wol_failed_retry">Wake-on-LAN nie powiodło się. Sprawdź sieć i spróbuj ponownie.</string>
 </resources>
