@@ -13,6 +13,11 @@ class SpeechLocaleSelectorTest {
         assertEquals("de-DE", SpeechLocaleSelector.forLanguageTag("de-AT"))
         assertEquals("en-US", SpeechLocaleSelector.forLanguageTag("fr"))
         assertEquals("en-US", SpeechLocaleSelector.forLanguageTag("ko"))
+        assertEquals("en-US", SpeechLocaleSelector.forLanguageTag("it"))
+        assertEquals("en-US", SpeechLocaleSelector.forLanguageTag("ru"))
+        assertEquals("en-US", SpeechLocaleSelector.forLanguageTag("tr"))
+        assertEquals("en-US", SpeechLocaleSelector.forLanguageTag("nl"))
+        assertEquals("en-US", SpeechLocaleSelector.forLanguageTag("pl"))
         assertEquals("en-US", SpeechLocaleSelector.forLanguageTag("xx-ZZ"))
     }
 }
