@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="command_failed">Perintah gagal</string>
+    <string name="wol_unavailable">Tidak ada alamat MAC yang valid; TV ini mungkin tidak mendukung dinyalakan dari jarak jauh.</string>
+    <string name="wol_failed_retry">Wake-on-LAN gagal. Periksa jaringan dan coba lagi.</string>
+</resources>

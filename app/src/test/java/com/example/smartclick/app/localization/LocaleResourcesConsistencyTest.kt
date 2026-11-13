@@ -1,4 +1,4 @@
-package com.example.smartclick.app.localization
+﻿package com.example.smartclick.app.localization
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -45,6 +45,18 @@ class LocaleResourcesConsistencyTest {
     @Test
     fun `polish resources match the default resource set`() = assertLocale("pl")
 
+    @Test
+    fun `japanese resources match the default resource set`() = assertLocale("ja")
+
+    @Test
+    fun `thai resources match the default resource set`() = assertLocale("th")
+
+    @Test
+    fun `indonesian resources match the default resource set`() = assertLocale("in")
+
+    @Test
+    fun `chinese simplified resources match the default resource set`() = assertLocale("zh-CN")
+
     private fun assertLocale(languageTag: String) {
         val resRoot = File("src/main/res")
         assertTrue("Expected test working directory to contain src/main/res", resRoot.isDirectory)
@@ -55,6 +67,7 @@ class LocaleResourcesConsistencyTest {
         val qualifier = when (languageTag) {
             "en" -> "values"
             "pt-BR" -> "values-pt-rBR"
+            "zh-CN" -> "values-zh-rCN"
             else -> "values-$languageTag"
         }
         val localeDirectory = File(resRoot, qualifier)
@@ -76,7 +89,7 @@ class LocaleResourcesConsistencyTest {
             val localized = translated[key]
             assertTrue("Missing original-language legal resource $key in $languageTag", localized != null)
             assertEquals("Legal text should remain in its source language for $languageTag: $key", source.values, localized!!.values)
-            if (languageTag in setOf("es", "pt-BR", "de", "fr", "it", "ru", "tr", "nl", "pl")) {
+            if (languageTag in setOf("es", "pt-BR", "de", "fr", "it", "ru", "tr", "nl", "pl", "ja", "th", "in", "zh-CN")) {
                 assertEquals("tools:ignore must be local to legal resource $key", "MissingTranslation", localized.toolsIgnore)
             }
         }
@@ -105,7 +118,7 @@ class LocaleResourcesConsistencyTest {
         val requiredPluralQuantities = when (languageTag) {
             "es", "pt-BR", "fr" -> setOf("one", "many", "other")
             "de" -> setOf("one", "other")
-            "ko" -> setOf("other")
+            "ko", "ja", "th", "in", "zh-CN" -> setOf("other")
             "it" -> setOf("one", "many", "other")
             "ru", "pl" -> setOf("one", "few", "many", "other")
             "tr", "nl" -> setOf("one", "other")
@@ -192,3 +205,4 @@ class LocaleResourcesConsistencyTest {
         isNamespaceAware = true
     }.newDocumentBuilder().parse(file)
 }
+

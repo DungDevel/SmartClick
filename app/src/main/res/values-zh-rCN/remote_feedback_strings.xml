@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="command_failed">指令失败</string>
+    <string name="wol_unavailable">没有有效的MAC地址；此电视可能不支持远程开机。</string>
+    <string name="wol_failed_retry">Wake-on-LAN失败。请检查网络并重试。</string>
+</resources>
