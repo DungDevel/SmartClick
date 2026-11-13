@@ -49,7 +49,12 @@ val LANGUAGES = listOf(
     LanguageItem("pt-BR", R.string.language_portuguese_brazil, "🇧🇷"),
     LanguageItem("de", R.string.language_german, "🇩🇪"),
     LanguageItem("fr", R.string.language_french, "🇫🇷"),
-    LanguageItem("ko", R.string.language_korean, "🇰🇷")
+    LanguageItem("ko", R.string.language_korean, "🇰🇷"),
+    LanguageItem("it", R.string.language_italian, "🇮🇹"),
+    LanguageItem("ru", R.string.language_russian, "🇷🇺"),
+    LanguageItem("tr", R.string.language_turkish, "🇹🇷"),
+    LanguageItem("nl", R.string.language_dutch, "🇳🇱"),
+    LanguageItem("pl", R.string.language_polish, "🇵🇱")
 )
 
 @Composable
