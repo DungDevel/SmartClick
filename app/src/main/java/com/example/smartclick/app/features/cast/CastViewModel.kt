@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 import com.example.smartclick.app.domain.model.CastPlaylist
+import com.example.smartclick.app.domain.model.PlaylistStatus
 import com.example.smartclick.app.domain.usecase.PlaylistController
 
 data class CastUiState(
