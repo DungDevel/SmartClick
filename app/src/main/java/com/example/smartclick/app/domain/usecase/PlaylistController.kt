@@ -128,14 +128,32 @@ class PlaylistController @Inject constructor(
             val isVideo = item.mimeType.startsWith("video/")
             if (isVideo) {
                 val controller = castMediaUseCase.activeCastController.value
+                if (controller == null) {
+                    handleItemError("No active cast controller")
+                    return@launch
+                }
                 val timeoutMs = 2 * 60 * 60 * 1000L
                 try {
+                    var sawActivePlayback = false
                     withTimeoutOrNull(timeoutMs) {
-                        controller?.castPlaybackState?.first {
-                            it == CastPlaybackState.IDLE || it == CastPlaybackState.ERROR
+                        controller.castPlaybackState.collect { state ->
+                            if (state == CastPlaybackState.PLAYING || state == CastPlaybackState.BUFFERING) {
+                                sawActivePlayback = true
+                            } else if (sawActivePlayback && (state == CastPlaybackState.IDLE || state == CastPlaybackState.COMPLETED || state == CastPlaybackState.ERROR)) {
+                                throw CancellationException("Video ended")
+                            }
                         }
                     }
-                } catch (_: Exception) {}
+                    if (!sawActivePlayback) {
+                        handleItemError("Video did not enter playing state")
+                        return@launch
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    handleItemError(e.message ?: "Video playback error")
+                    return@launch
+                }
                 if (isActive) {
                     next()
                 }
