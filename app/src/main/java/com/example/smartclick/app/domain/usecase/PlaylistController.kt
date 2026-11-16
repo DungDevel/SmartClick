@@ -127,20 +127,15 @@ class PlaylistController @Inject constructor(
 
             val isVideo = item.mimeType.startsWith("video/")
             if (isVideo) {
-                // Wait for video completion signal from controller or timeout safety
                 val controller = castMediaUseCase.activeCastController.value
-                val startTime = System.currentTimeMillis()
-                val timeoutMs = 2 * 60 * 60 * 1000L // 2 hours max safety timeout
-                while (isActive) {
-                    val playbackState = controller?.castPlaybackState?.value ?: CastPlaybackState.IDLE
-                    if (playbackState == CastPlaybackState.IDLE || playbackState == CastPlaybackState.ERROR) {
-                        break
+                val timeoutMs = 2 * 60 * 60 * 1000L
+                try {
+                    withTimeoutOrNull(timeoutMs) {
+                        controller?.castPlaybackState?.first {
+                            it == CastPlaybackState.IDLE || it == CastPlaybackState.ERROR
+                        }
                     }
-                    if (System.currentTimeMillis() - startTime > timeoutMs) {
-                        break
-                    }
-                    delay(1000L)
-                }
+                } catch (_: Exception) {}
                 if (isActive) {
                     next()
                 }

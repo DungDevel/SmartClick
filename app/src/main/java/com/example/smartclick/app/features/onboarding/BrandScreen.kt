@@ -60,7 +60,7 @@ private fun brandLogo(brandId: String): Int = when (brandId.lowercase()) {
     "toshiba" -> R.drawable.toshibalogo
     "xiaomi" -> R.drawable.xiaomilogo
     "roku" -> R.drawable.rokulogo
-    "appletv" -> R.drawable.appletvlogo
+    "appletv" -> R.drawable.appleetvlogo
     "amazon" -> R.drawable.amazon_logo
     "chromecast" -> R.drawable.chromecastlogo
     else -> R.drawable.star

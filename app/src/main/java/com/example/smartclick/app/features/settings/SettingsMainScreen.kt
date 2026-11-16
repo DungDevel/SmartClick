@@ -23,7 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -123,42 +126,42 @@ fun SettingsMainScreen(
                 .clip(RoundedCornerShape(16.dp))
         ) {
             SettingsRowItem(
-                icon = Icons.Default.Info,
+                icon = rememberVectorPainter(Icons.Default.Info),
                 label = stringResource(R.string.account_information),
                 sub = stringResource(R.string.manage_your_profile),
                 onClick = { onNavigate("account") }
             )
             HorizontalDivider(color = colors.bord, modifier = Modifier.padding(start = 64.dp))
             SettingsRowItem(
-                icon = Icons.Default.Place,
+                icon = painterResource(R.drawable.language),
                 label = stringResource(R.string.language),
                 sub = settings?.languageTag ?: stringResource(R.string.system_default),
                 onClick = { onNavigate("language") }
             )
             HorizontalDivider(color = colors.bord, modifier = Modifier.padding(start = 64.dp))
             SettingsRowItem(
-                icon = Icons.Default.Lock,
+                icon = rememberVectorPainter(Icons.Default.Lock),
                 label = stringResource(R.string.privacy_policy),
                 sub = stringResource(R.string.data_and_privacy),
                 onClick = { onNavigate("privacy") }
             )
             HorizontalDivider(color = colors.bord, modifier = Modifier.padding(start = 64.dp))
             SettingsRowItem(
-                icon = Icons.Default.Info,
+                icon = rememberVectorPainter(Icons.Default.Info),
                 label = stringResource(R.string.terms_and_conditions),
                 sub = stringResource(R.string.legal_information),
                 onClick = { onNavigate("terms") }
             )
             HorizontalDivider(color = colors.bord, modifier = Modifier.padding(start = 64.dp))
             SettingsRowItem(
-                icon = Icons.Rounded.Settings,
+                icon = rememberVectorPainter(Icons.Rounded.Settings),
                 label = stringResource(R.string.appearance),
                 sub = settings?.themeMode?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: stringResource(R.string.system),
                 onClick = { onNavigate("appearance") }
             )
             HorizontalDivider(color = colors.bord, modifier = Modifier.padding(start = 64.dp))
             SettingsRowItem(
-                icon = Icons.Rounded.Favorite,
+                icon = rememberVectorPainter(Icons.Rounded.Favorite),
                 label = stringResource(R.string.haptic_feedback),
                 sub = if (settings?.hapticEnabled == true) stringResource(R.string.on_text) else stringResource(R.string.off_text),
                 onClick = { onNavigate("haptic") }
@@ -205,7 +208,7 @@ fun SettingsMainScreen(
 
 @Composable
 fun SettingsRowItem(
-    icon: ImageVector,
+    icon: Painter,
     label: String,
     sub: String? = null,
     badge: String? = null,
@@ -226,7 +229,7 @@ fun SettingsRowItem(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                painter = icon,
                 contentDescription = label,
                 tint = colors.tx2,
                 modifier = Modifier.size(20.dp)
