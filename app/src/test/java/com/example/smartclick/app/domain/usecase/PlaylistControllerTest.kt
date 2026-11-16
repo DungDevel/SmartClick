@@ -97,4 +97,39 @@ class PlaylistControllerTest {
         assertEquals(PlaylistStatus.ERROR, state.status)
         assertTrue(state.errorCount >= 3)
     }
+
+    @Test
+    fun `rapid next and prev calls do not overlap`() = runTest(testDispatcher) {
+        playlistController.bindScope(this)
+        playlistController.start(listOf(photo1, photo2, video1))
+        playlistController.next()
+        playlistController.next()
+        playlistController.prev()
+        assertEquals(1, playlistController.playlistState.value.currentIndex)
+    }
+
+    @Test
+    fun `loop enabled loops back to start when reaching end`() = runTest(testDispatcher) {
+        playlistController.bindScope(this)
+        playlistController.start(listOf(photo1, photo2), loop = true)
+        playlistController.moveToIndex(1)
+        playlistController.next()
+        assertEquals(0, playlistController.playlistState.value.currentIndex)
+    }
+
+    @Test
+    fun `prev at first item stays at index 0`() = runTest(testDispatcher) {
+        playlistController.bindScope(this)
+        playlistController.start(listOf(photo1, photo2))
+        playlistController.prev()
+        assertEquals(0, playlistController.playlistState.value.currentIndex)
+    }
+
+    @Test
+    fun `change imageDuration while playing updates state`() = runTest(testDispatcher) {
+        playlistController.bindScope(this)
+        playlistController.start(listOf(photo1, photo2), imageDurationSeconds = 5)
+        playlistController.setImageDuration(10)
+        assertEquals(10, playlistController.playlistState.value.imageDurationSeconds)
+    }
 }
