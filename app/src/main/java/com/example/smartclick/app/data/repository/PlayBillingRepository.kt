@@ -200,7 +200,7 @@ class PlayBillingRepository @Inject constructor(
             )
             val params = QueryProductDetailsParams.newBuilder().setProductList(productList).build()
             billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && productDetailsList != null) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     val newPlanPrices = mutableMapOf<String, PlanPrice>()
                     val newRawMap = mutableMapOf<String, ProductDetails>()
                     (productDetailsList as List<*>).forEach { details ->
