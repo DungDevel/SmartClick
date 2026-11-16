@@ -132,10 +132,10 @@ class PlaylistController @Inject constructor(
                     handleItemError("No active cast controller")
                     return@launch
                 }
-                val timeoutMs = 2 * 60 * 60 * 1000L
+                val timeoutMs = 5000L
                 try {
                     var sawActivePlayback = false
-                    withTimeoutOrNull(timeoutMs) {
+                    val finished = withTimeoutOrNull(timeoutMs) {
                         controller.castPlaybackState.collect { state ->
                             if (state == CastPlaybackState.PLAYING || state == CastPlaybackState.BUFFERING) {
                                 sawActivePlayback = true
@@ -143,8 +143,9 @@ class PlaylistController @Inject constructor(
                                 throw CancellationException("Video ended")
                             }
                         }
+                        true
                     }
-                    if (!sawActivePlayback) {
+                    if (finished == null || !sawActivePlayback) {
                         handleItemError("Video did not enter playing state")
                         return@launch
                     }

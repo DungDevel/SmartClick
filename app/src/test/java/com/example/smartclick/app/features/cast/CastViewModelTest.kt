@@ -430,12 +430,14 @@ class CastViewModelTest {
         val photo = MediaItem("p1", "Photo", "content://photo", "image/jpeg")
         val video = MediaItem("v1", "Video", "content://video", "video/mp4")
         every { mediaRepository.getLocalMedia() } returns MutableStateFlow(listOf(photo, video))
-        viewModel.toggleSelection(photo.id)
-        viewModel.toggleSelection(video.id)
 
-        viewModel.startPlaylist()
+        val testViewModel = CastViewModel(mediaRepository, activeTvSession, castMediaUseCase, featureGate, subscriptionRepository, playlistController)
+        testViewModel.toggleSelection(photo.id)
+        testViewModel.toggleSelection(video.id)
 
-        assertEquals(1, playlistController.playlistState.value.items.size)
-        assertEquals(photo, playlistController.playlistState.value.items.first())
+        testViewModel.startPlaylist()
+        runCurrent()
+
+        coVerify { playlistController.start(match { it.size == 1 && it.first() == photo }) }
     }
 }

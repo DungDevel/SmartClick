@@ -200,6 +200,7 @@ class PlaylistControllerTest {
         playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
         playlistController.bindScope(this)
         playlistController.start(listOf(video1))
+        advanceTimeBy(5001)
         runCurrent()
         assertEquals(PlaylistStatus.ERROR, playlistController.playlistState.value.status)
         playlistController.stop()
