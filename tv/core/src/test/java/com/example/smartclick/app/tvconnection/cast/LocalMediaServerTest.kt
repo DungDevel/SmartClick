@@ -174,6 +174,15 @@ class LocalMediaServerTest {
     }
 
     @Test
+    fun `stop releases server port and isRunning becomes false`() = runTest {
+        server.start().getOrThrow()
+        assertTrue(server.isRunning)
+        server.stop()
+        assertFalse(server.isRunning)
+        assertEquals(0, server.port)
+    }
+
+    @Test
     fun `content resolver URIs are required and repeated start reuses one listener`() = runTest {
         val fileUri = mockk<Uri>(relaxed = true)
         every { fileUri.scheme } returns "file"
