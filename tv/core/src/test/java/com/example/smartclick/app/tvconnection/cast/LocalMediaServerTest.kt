@@ -398,4 +398,17 @@ class LocalMediaServerTest {
         assertFalse(server.isRunning)
         assertNull(server.baseUrl)
     }
+
+    @Test
+    fun `reading unreadable URI stream throws exception resulting in 500 internal error`() = runTest {
+        val uri = mockk<Uri>(relaxed = true)
+        every { uri.scheme } returns "content"
+        every { uri.toString() } returns "content://media/external/video/error"
+        val session = server.registerMedia(uri, "video/mp4")
+        every { contentResolver.openInputStream(uri) } throws SecurityException("permission revoked")
+
+        val conn = URL(session.mediaUrl).openConnection() as HttpURLConnection
+        assertEquals(500, conn.responseCode)
+        server.stop()
+    }
 }
