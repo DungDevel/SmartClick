@@ -53,7 +53,7 @@ fun CastScreen(
         contract = ActivityResultContracts.PickMultipleVisualMedia(30)
     ) { uris -> if (uris.isNotEmpty()) viewModel.onMediaPickedList(uris) }
 
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, viewModel) {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) {
