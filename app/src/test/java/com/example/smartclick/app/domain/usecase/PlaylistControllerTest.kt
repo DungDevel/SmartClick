@@ -35,17 +35,18 @@ class PlaylistControllerTest {
         every { castController.castPlaybackState } returns MutableStateFlow(CastPlaybackState.IDLE)
         every { castMediaUseCase.activeCastController } returns MutableStateFlow(castController)
         coEvery { castMediaUseCase(any()) } returns Result.success(Unit)
-
-        playlistController = PlaylistController(castMediaUseCase, testDispatcher)
     }
 
     @After
     fun tearDown() {
-        playlistController.stop()
+        if (::playlistController.isInitialized) {
+            playlistController.stop()
+        }
     }
 
     @Test
-    fun `start playlist sets initial state and plays first item`() = runTest(testDispatcher) {
+    fun `start playlist sets initial state and plays first item`() = runTest {
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
         playlistController.bindScope(this)
         playlistController.start(listOf(photo1, photo2), imageDurationSeconds = 3, loop = false)
         runCurrent()
@@ -56,10 +57,12 @@ class PlaylistControllerTest {
         assertEquals(photo1, state.currentItem)
         assertEquals(3, state.imageDurationSeconds)
         assertEquals(false, state.loop)
+        playlistController.stop()
     }
 
     @Test
-    fun `pause and resume updates status correctly`() = runTest(testDispatcher) {
+    fun `pause and resume updates status correctly`() = runTest {
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
         playlistController.bindScope(this)
         playlistController.start(listOf(photo1, photo2))
         runCurrent()
@@ -69,10 +72,12 @@ class PlaylistControllerTest {
 
         playlistController.resume()
         assertEquals(PlaylistStatus.PLAYING, playlistController.playlistState.value.status)
+        playlistController.stop()
     }
 
     @Test
-    fun `next and prev navigate playlist correctly`() = runTest(testDispatcher) {
+    fun `next and prev navigate playlist correctly`() = runTest {
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
         playlistController.bindScope(this)
         playlistController.start(listOf(photo1, photo2, video1))
 
@@ -83,10 +88,12 @@ class PlaylistControllerTest {
         playlistController.prev()
         assertEquals(0, playlistController.playlistState.value.currentIndex)
         assertEquals(photo1, playlistController.playlistState.value.currentItem)
+        playlistController.stop()
     }
 
     @Test
-    fun `consecutive errors transition to Error status after threshold`() = runTest(testDispatcher) {
+    fun `consecutive errors transition to Error status after threshold`() = runTest {
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
         playlistController.bindScope(this)
         coEvery { castMediaUseCase(any()) } returns Result.failure(Exception("Failed"))
 
@@ -96,40 +103,82 @@ class PlaylistControllerTest {
         val state = playlistController.playlistState.value
         assertEquals(PlaylistStatus.ERROR, state.status)
         assertTrue(state.errorCount >= 3)
+        playlistController.stop()
     }
 
     @Test
-    fun `rapid next and prev calls do not overlap`() = runTest(testDispatcher) {
+    fun `rapid next and prev calls do not overlap`() = runTest {
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
         playlistController.bindScope(this)
         playlistController.start(listOf(photo1, photo2, video1))
         playlistController.next()
         playlistController.next()
         playlistController.prev()
         assertEquals(1, playlistController.playlistState.value.currentIndex)
+        playlistController.stop()
     }
 
     @Test
-    fun `loop enabled loops back to start when reaching end`() = runTest(testDispatcher) {
+    fun `loop enabled loops back to start when reaching end`() = runTest {
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
         playlistController.bindScope(this)
         playlistController.start(listOf(photo1, photo2), loop = true)
         playlistController.moveToIndex(1)
         playlistController.next()
         assertEquals(0, playlistController.playlistState.value.currentIndex)
+        playlistController.stop()
     }
 
     @Test
-    fun `prev at first item stays at index 0`() = runTest(testDispatcher) {
+    fun `prev at first item stays at index 0`() = runTest {
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
         playlistController.bindScope(this)
         playlistController.start(listOf(photo1, photo2))
         playlistController.prev()
         assertEquals(0, playlistController.playlistState.value.currentIndex)
+        playlistController.stop()
     }
 
     @Test
-    fun `change imageDuration while playing updates state`() = runTest(testDispatcher) {
+    fun `change imageDuration while playing updates state`() = runTest {
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
         playlistController.bindScope(this)
         playlistController.start(listOf(photo1, photo2), imageDurationSeconds = 5)
         playlistController.setImageDuration(10)
         assertEquals(10, playlistController.playlistState.value.imageDurationSeconds)
+        playlistController.stop()
+    }
+
+    @Test
+    fun `loop disabled transitions to finished at end of playlist`() = runTest {
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
+        playlistController.bindScope(this)
+        playlistController.start(listOf(photo1, photo2), loop = false)
+        playlistController.moveToIndex(1)
+        playlistController.next()
+        assertEquals(PlaylistStatus.FINISHED, playlistController.playlistState.value.status)
+        playlistController.stop()
+    }
+
+    @Test
+    fun `item error skips to next item`() = runTest {
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
+        playlistController.bindScope(this)
+        coEvery { castMediaUseCase(photo1) } returns Result.failure(Exception("Error"))
+        coEvery { castMediaUseCase(photo2) } returns Result.success(Unit)
+        playlistController.start(listOf(photo1, photo2), imageDurationSeconds = 1)
+        runCurrent()
+        assertEquals(1, playlistController.playlistState.value.currentIndex)
+        playlistController.stop()
+    }
+
+    @Test
+    fun `last item next transitions to finished when loop is false`() = runTest {
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
+        playlistController.bindScope(this)
+        playlistController.start(listOf(photo1), loop = false)
+        playlistController.next()
+        assertEquals(PlaylistStatus.FINISHED, playlistController.playlistState.value.status)
+        playlistController.stop()
     }
 }

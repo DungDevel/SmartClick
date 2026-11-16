@@ -7,3 +7,9 @@ plugins {
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.compose.compiler) apply false
 }
+
+subprojects {
+    tasks.withType<Test> {
+        maxHeapSize = "2048m"
+    }
+}
