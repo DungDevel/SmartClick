@@ -48,6 +48,7 @@ class PlaylistControllerTest {
     fun `start playlist sets initial state and plays first item`() = runTest(testDispatcher) {
         playlistController.bindScope(this)
         playlistController.start(listOf(photo1, photo2), imageDurationSeconds = 3, loop = false)
+        runCurrent()
 
         val state = playlistController.playlistState.value
         assertEquals(PlaylistStatus.PLAYING, state.status)
@@ -61,6 +62,7 @@ class PlaylistControllerTest {
     fun `pause and resume updates status correctly`() = runTest(testDispatcher) {
         playlistController.bindScope(this)
         playlistController.start(listOf(photo1, photo2))
+        runCurrent()
 
         playlistController.pause()
         assertEquals(PlaylistStatus.PAUSED, playlistController.playlistState.value.status)
