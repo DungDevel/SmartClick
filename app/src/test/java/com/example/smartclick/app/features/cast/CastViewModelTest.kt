@@ -421,4 +421,21 @@ class CastViewModelTest {
         assertTrue(events.contains(CastUiEvent.PlaylistNotSupported))
         job.cancel()
     }
+
+    @Test
+    fun `video is excluded from playlist when casting to Roku Samsung or LG driver without reliable end signal`() = runTest {
+        val rokuTv = tv.copy(protocol = TvProtocol.ROKU_ECP, capabilities = setOf(TvCapability.CAST_IMAGE, TvCapability.CAST_PLAYLIST))
+        every { tvController.device } returns rokuTv
+        every { tvController.connectionState } returns MutableStateFlow(TvConnectionState.Connected(rokuTv))
+        val photo = MediaItem("p1", "Photo", "content://photo", "image/jpeg")
+        val video = MediaItem("v1", "Video", "content://video", "video/mp4")
+        every { mediaRepository.getLocalMedia() } returns MutableStateFlow(listOf(photo, video))
+        viewModel.toggleSelection(photo.id)
+        viewModel.toggleSelection(video.id)
+
+        viewModel.startPlaylist()
+
+        assertEquals(1, playlistController.playlistState.value.items.size)
+        assertEquals(photo, playlistController.playlistState.value.items.first())
+    }
 }

@@ -181,4 +181,27 @@ class PlaylistControllerTest {
         assertEquals(PlaylistStatus.FINISHED, playlistController.playlistState.value.status)
         playlistController.stop()
     }
+
+    @Test
+    fun `null controller handles item error gracefully`() = runTest {
+        every { castMediaUseCase.activeCastController } returns MutableStateFlow(null)
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
+        playlistController.bindScope(this)
+        playlistController.start(listOf(video1))
+        runCurrent()
+        assertEquals(PlaylistStatus.ERROR, playlistController.playlistState.value.status)
+        playlistController.stop()
+    }
+
+    @Test
+    fun `initial IDLE state without playing is not counted as video finished`() = runTest {
+        val stateFlow = MutableStateFlow(CastPlaybackState.IDLE)
+        every { castController.castPlaybackState } returns stateFlow
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler))
+        playlistController.bindScope(this)
+        playlistController.start(listOf(video1))
+        runCurrent()
+        assertEquals(PlaylistStatus.ERROR, playlistController.playlistState.value.status)
+        playlistController.stop()
+    }
 }
