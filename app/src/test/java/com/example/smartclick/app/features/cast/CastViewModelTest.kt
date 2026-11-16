@@ -45,6 +45,7 @@ class CastViewModelTest {
     private lateinit var castMediaUseCase: CastMediaUseCase
     private lateinit var featureGate: FeatureGate
     private lateinit var subscriptionRepository: ISubscriptionRepository
+    private lateinit var playlistController: PlaylistController
     private lateinit var controller: ICastController
     private lateinit var tvController: ITvController
     private lateinit var tv: TvDevice
@@ -66,6 +67,8 @@ class CastViewModelTest {
         every { castMediaUseCase.activeCastController } returns castControllerFlow
         featureGate = mockk(relaxed = true)
         subscriptionRepository = mockk(relaxed = true)
+        playlistController = mockk(relaxed = true)
+        every { playlistController.playlistState } returns MutableStateFlow(com.example.smartclick.app.domain.model.CastPlaylist())
         controller = mockk(relaxed = true)
         tvController = mockk(relaxed = true)
         tv = TvDevice("tv", "TV", "192.168.1.2", "", protocol = TvProtocol.ROKU_ECP,
@@ -81,7 +84,7 @@ class CastViewModelTest {
         every { subscriptionRepository.currentPlan } returns MutableStateFlow(SubscriptionPlan.PREMIUM)
         every { featureGate.isFeatureAllowed(PremiumFeature.CAST, SubscriptionPlan.PREMIUM) } returns true
         coEvery { mediaRepository.verifyReadable(any()) } returns Result.success(Unit)
-        viewModel = CastViewModel(mediaRepository, activeTvSession, castMediaUseCase, featureGate, subscriptionRepository)
+        viewModel = CastViewModel(mediaRepository, activeTvSession, castMediaUseCase, featureGate, subscriptionRepository, playlistController)
     }
 
     @After
