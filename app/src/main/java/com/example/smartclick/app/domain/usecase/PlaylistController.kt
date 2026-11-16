@@ -18,6 +18,18 @@ class PlaylistController @Inject constructor(
     private val castMediaUseCase: CastMediaUseCase,
     @IoDispatcher private val defaultDispatcher: CoroutineDispatcher
 ) {
+    private var startTimeoutMs: Long = 15_000L
+    private var completionTimeoutMs: Long = 2 * 60 * 60 * 1000L
+
+    constructor(
+        castMediaUseCase: CastMediaUseCase,
+        defaultDispatcher: CoroutineDispatcher,
+        startTimeoutMs: Long = 15_000L,
+        completionTimeoutMs: Long = 2 * 60 * 60 * 1000L
+    ) : this(castMediaUseCase, defaultDispatcher) {
+        this.startTimeoutMs = startTimeoutMs
+        this.completionTimeoutMs = completionTimeoutMs
+    }
     private val _playlistState = MutableStateFlow(CastPlaylist())
     val playlistState: StateFlow<CastPlaylist> = _playlistState.asStateFlow()
 
@@ -132,29 +144,46 @@ class PlaylistController @Inject constructor(
                     handleItemError("No active cast controller")
                     return@launch
                 }
-                val timeoutMs = 5000L
+                // Phase 1: Wait for PLAYING or BUFFERING (startTimeoutMs)
                 try {
-                    var sawActivePlayback = false
-                    val finished = withTimeoutOrNull(timeoutMs) {
-                        controller.castPlaybackState.collect { state ->
-                            if (state == CastPlaybackState.PLAYING || state == CastPlaybackState.BUFFERING) {
-                                sawActivePlayback = true
-                            } else if (sawActivePlayback && (state == CastPlaybackState.IDLE || state == CastPlaybackState.COMPLETED || state == CastPlaybackState.ERROR)) {
-                                throw CancellationException("Video ended")
-                            }
+                    val started = withTimeoutOrNull(startTimeoutMs) {
+                        controller.castPlaybackState.first {
+                            it == CastPlaybackState.PLAYING || it == CastPlaybackState.BUFFERING || it == CastPlaybackState.ERROR || it == CastPlaybackState.COMPLETED
                         }
-                        true
                     }
-                    if (finished == null || !sawActivePlayback) {
-                        handleItemError("Video did not enter playing state")
+                    if (started == null || started == CastPlaybackState.ERROR) {
+                        handleItemError("Video failed to start playing")
+                        return@launch
+                    }
+                    if (started == CastPlaybackState.COMPLETED) {
+                        if (isActive) next()
                         return@launch
                     }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    handleItemError(e.message ?: "Video playback error")
+                    handleItemError(e.message ?: "Video start error")
                     return@launch
                 }
+
+                // Phase 2: Wait for video completion (completionTimeoutMs)
+                try {
+                    val ended = withTimeoutOrNull(completionTimeoutMs) {
+                        controller.castPlaybackState.first {
+                            it == CastPlaybackState.IDLE || it == CastPlaybackState.COMPLETED || it == CastPlaybackState.ERROR
+                        }
+                    }
+                    if (ended == null) {
+                        handleItemError("Video playback timed out")
+                        return@launch
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    handleItemError(e.message ?: "Video completion error")
+                    return@launch
+                }
+
                 if (isActive) {
                     next()
                 }
