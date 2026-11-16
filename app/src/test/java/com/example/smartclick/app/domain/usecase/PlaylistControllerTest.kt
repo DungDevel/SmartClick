@@ -5,6 +5,7 @@ import com.example.smartclick.app.domain.connection.ICastController
 import com.example.smartclick.app.domain.model.MediaItem
 import com.example.smartclick.app.domain.model.PlaylistStatus
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -22,11 +24,11 @@ class PlaylistControllerTest {
     private lateinit var castMediaUseCase: CastMediaUseCase
     private lateinit var castController: ICastController
     private lateinit var playlistController: PlaylistController
-    private val testDispatcher = StandardTestDispatcher()
 
     private val photo1 = MediaItem("1", "Photo 1", "content://photo1", "image/jpeg")
     private val photo2 = MediaItem("2", "Photo 2", "content://photo2", "image/jpeg")
     private val video1 = MediaItem("3", "Video 1", "content://video1", "video/mp4")
+    private val video2 = MediaItem("4", "Video 2", "content://video2", "video/mp4")
 
     @Before
     fun setup() {
@@ -194,25 +196,11 @@ class PlaylistControllerTest {
     }
 
     @Test
-    fun `initial IDLE state without playing is not counted as video finished`() = runTest {
-        val stateFlow = MutableStateFlow(CastPlaybackState.IDLE)
-        every { castController.castPlaybackState } returns stateFlow
-        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler), startTimeoutMs = 1000L)
-        playlistController.bindScope(this)
-        playlistController.start(listOf(video1))
-        advanceTimeBy(1001)
-        runCurrent()
-        assertEquals(PlaylistStatus.ERROR, playlistController.playlistState.value.status)
-        playlistController.stop()
-    }
-
-    @Test
     fun `video playing for 60 seconds completes normally and auto next`() = runTest {
         val stateFlow = MutableStateFlow(CastPlaybackState.IDLE)
         every { castController.castPlaybackState } returns stateFlow
         playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler), startTimeoutMs = 5000L, completionTimeoutMs = 120000L)
         playlistController.bindScope(this)
-        val video2 = MediaItem("v2", "Video 2", "content://v2", "video/mp4")
         playlistController.start(listOf(video1, video2))
         runCurrent()
 
@@ -220,16 +208,22 @@ class PlaylistControllerTest {
         advanceTimeBy(1000)
         runCurrent()
 
+        assertEquals(0, playlistController.playlistState.value.currentIndex)
+        assertEquals(PlaylistStatus.PLAYING, playlistController.playlistState.value.status)
+        assertEquals(0, playlistController.playlistState.value.errorCount)
+
         advanceTimeBy(60000)
         stateFlow.value = CastPlaybackState.COMPLETED
         runCurrent()
 
         assertEquals(1, playlistController.playlistState.value.currentIndex)
+        assertNotEquals(PlaylistStatus.ERROR, playlistController.playlistState.value.status)
+        assertEquals(0, playlistController.playlistState.value.errorCount)
         playlistController.stop()
     }
 
     @Test
-    fun `video not entering PLAYING within startTimeout results in item error`() = runTest {
+    fun `video not entering PLAYING within startTimeout and idle state results in item error`() = runTest {
         val stateFlow = MutableStateFlow(CastPlaybackState.IDLE)
         every { castController.castPlaybackState } returns stateFlow
         playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler), startTimeoutMs = 1000L)
@@ -242,22 +236,106 @@ class PlaylistControllerTest {
     }
 
     @Test
-    fun `cancellation while waiting for video does not cause overlapping playback`() = runTest {
+    fun `stale completed state from previous item does not skip new item`() = runTest {
+        val stateFlow = MutableStateFlow(CastPlaybackState.COMPLETED)
+        every { castController.castPlaybackState } returns stateFlow
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler), startTimeoutMs = 1000L)
+        playlistController.bindScope(this)
+        playlistController.start(listOf(video1))
+        advanceTimeBy(1001)
+        runCurrent()
+        // Should not treat stale COMPLETED as success, but timeout because it never played
+        assertEquals(PlaylistStatus.ERROR, playlistController.playlistState.value.status)
+        playlistController.stop()
+    }
+
+    @Test
+    fun `error state before playing results in item error`() = runTest {
         val stateFlow = MutableStateFlow(CastPlaybackState.IDLE)
         every { castController.castPlaybackState } returns stateFlow
         playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler), startTimeoutMs = 5000L)
         playlistController.bindScope(this)
-        val video2 = MediaItem("v2", "Video 2", "content://v2", "video/mp4")
+        playlistController.start(listOf(video1))
+        runCurrent()
+
+        stateFlow.value = CastPlaybackState.ERROR
+        runCurrent()
+
+        assertEquals(PlaylistStatus.ERROR, playlistController.playlistState.value.status)
+        playlistController.stop()
+    }
+
+    @Test
+    fun `completed state before playing results in item error`() = runTest {
+        val stateFlow = MutableStateFlow(CastPlaybackState.IDLE)
+        every { castController.castPlaybackState } returns stateFlow
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler), startTimeoutMs = 5000L)
+        playlistController.bindScope(this)
+        playlistController.start(listOf(video1))
+        runCurrent()
+
+        stateFlow.value = CastPlaybackState.COMPLETED
+        runCurrent()
+
+        assertEquals(PlaylistStatus.ERROR, playlistController.playlistState.value.status)
+        playlistController.stop()
+    }
+
+    @Test
+    fun `error state during playback results in item error`() = runTest {
+        val stateFlow = MutableStateFlow(CastPlaybackState.IDLE)
+        every { castController.castPlaybackState } returns stateFlow
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler), startTimeoutMs = 5000L, completionTimeoutMs = 10000L)
+        playlistController.bindScope(this)
         playlistController.start(listOf(video1, video2))
         runCurrent()
 
         stateFlow.value = CastPlaybackState.PLAYING
         runCurrent()
 
-        playlistController.next()
+        stateFlow.value = CastPlaybackState.ERROR
         runCurrent()
 
         assertEquals(1, playlistController.playlistState.value.currentIndex)
+        playlistController.stop()
+    }
+
+    @Test
+    fun `completion timeout advances to next item without increasing error count`() = runTest {
+        val stateFlow = MutableStateFlow(CastPlaybackState.IDLE)
+        every { castController.castPlaybackState } returns stateFlow
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler), startTimeoutMs = 5000L, completionTimeoutMs = 1000L)
+        playlistController.bindScope(this)
+        playlistController.start(listOf(video1, video2))
+        runCurrent()
+
+        stateFlow.value = CastPlaybackState.PLAYING
+        runCurrent()
+
+        advanceTimeBy(1001)
+        runCurrent()
+
+        assertEquals(1, playlistController.playlistState.value.currentIndex)
+        assertEquals(0, playlistController.playlistState.value.errorCount)
+        playlistController.stop()
+    }
+
+    @Test
+    fun `cancellation while waiting does not cause overlapping playback`() = runTest {
+        val stateFlow = MutableStateFlow(CastPlaybackState.IDLE)
+        every { castController.castPlaybackState } returns stateFlow
+        playlistController = PlaylistController(castMediaUseCase, StandardTestDispatcher(testScheduler), startTimeoutMs = 5000L)
+        playlistController.bindScope(this)
+        playlistController.start(listOf(video1, video2))
+        runCurrent()
+
+        stateFlow.value = CastPlaybackState.PLAYING
+        runCurrent()
+
+        stateFlow.value = CastPlaybackState.COMPLETED
+        runCurrent()
+
+        coVerify(exactly = 1) { castMediaUseCase(video1) }
         playlistController.stop()
     }
 }

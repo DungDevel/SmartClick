@@ -1,35 +1,39 @@
 package com.example.smartclick.app.domain.usecase
 
+import android.util.Log
 import com.example.smartclick.app.domain.cast.CastCommand
 import com.example.smartclick.app.domain.cast.CastPlaybackState
 import com.example.smartclick.app.domain.connection.ICastController
-import com.example.smartclick.app.domain.model.CastMediaType
 import com.example.smartclick.app.domain.model.CastPlaylist
 import com.example.smartclick.app.domain.model.MediaItem
 import com.example.smartclick.app.domain.model.PlaylistStatus
 import com.example.smartclick.app.di.IoDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
-import javax.inject.Singleton
 
-class PlaylistController @Inject constructor(
+class PlaylistController(
     private val castMediaUseCase: CastMediaUseCase,
-    @IoDispatcher private val defaultDispatcher: CoroutineDispatcher
+    private val defaultDispatcher: CoroutineDispatcher,
+    val startTimeoutMs: Long = DEFAULT_START_TIMEOUT_MS,
+    val completionTimeoutMs: Long = DEFAULT_COMPLETION_TIMEOUT_MS
 ) {
-    private var startTimeoutMs: Long = 15_000L
-    private var completionTimeoutMs: Long = 2 * 60 * 60 * 1000L
-
+    @Inject
     constructor(
         castMediaUseCase: CastMediaUseCase,
-        defaultDispatcher: CoroutineDispatcher,
-        startTimeoutMs: Long = 15_000L,
-        completionTimeoutMs: Long = 2 * 60 * 60 * 1000L
-    ) : this(castMediaUseCase, defaultDispatcher) {
-        this.startTimeoutMs = startTimeoutMs
-        this.completionTimeoutMs = completionTimeoutMs
+        @IoDispatcher defaultDispatcher: CoroutineDispatcher
+    ) : this(
+        castMediaUseCase,
+        defaultDispatcher,
+        DEFAULT_START_TIMEOUT_MS,
+        DEFAULT_COMPLETION_TIMEOUT_MS
+    )
+
+    private companion object {
+        const val DEFAULT_START_TIMEOUT_MS = 15_000L
+        const val DEFAULT_COMPLETION_TIMEOUT_MS = 2 * 60 * 60 * 1000L
     }
+
     private val _playlistState = MutableStateFlow(CastPlaylist())
     val playlistState: StateFlow<CastPlaylist> = _playlistState.asStateFlow()
 
@@ -121,6 +125,11 @@ class PlaylistController @Inject constructor(
         _playlistState.value = _playlistState.value.copy(loop = loop)
     }
 
+    /** Logging must never affect playback flow (android.util.Log is not mocked in JVM unit tests). */
+    private fun logWarn(message: String) {
+        runCatching { Log.w("PlaylistController", message) }
+    }
+
     private fun playCurrentItem(resume: Boolean = false) {
         val scope = scope ?: return
         playbackJob?.cancel()
@@ -144,20 +153,24 @@ class PlaylistController @Inject constructor(
                     handleItemError("No active cast controller")
                     return@launch
                 }
-                // Phase 1: Wait for PLAYING or BUFFERING (startTimeoutMs)
-                try {
-                    val started = withTimeoutOrNull(startTimeoutMs) {
-                        controller.castPlaybackState.first {
-                            it == CastPlaybackState.PLAYING || it == CastPlaybackState.BUFFERING || it == CastPlaybackState.ERROR || it == CastPlaybackState.COMPLETED
-                        }
-                    }
-                    if (started == null || started == CastPlaybackState.ERROR) {
-                        handleItemError("Video failed to start playing")
-                        return@launch
-                    }
-                    if (started == CastPlaybackState.COMPLETED) {
-                        if (isActive) next()
-                        return@launch
+
+                val initialState = controller.castPlaybackState.value
+
+                // Phase 1: wait for PLAYING or BUFFERING (startTimeoutMs).
+                // ERROR, COMPLETED-before-playing and timeout are item errors.
+                val started: CastPlaybackState? = try {
+                    withTimeoutOrNull(startTimeoutMs) {
+                        controller.castPlaybackState
+                            .dropWhile {
+                                it == initialState &&
+                                    (it == CastPlaybackState.COMPLETED || it == CastPlaybackState.ERROR)
+                            }
+                            .first {
+                                it == CastPlaybackState.PLAYING ||
+                                    it == CastPlaybackState.BUFFERING ||
+                                    it == CastPlaybackState.ERROR ||
+                                    it == CastPlaybackState.COMPLETED
+                            }
                     }
                 } catch (e: CancellationException) {
                     throw e
@@ -166,21 +179,42 @@ class PlaylistController @Inject constructor(
                     return@launch
                 }
 
-                // Phase 2: Wait for video completion (completionTimeoutMs)
-                try {
-                    val ended = withTimeoutOrNull(completionTimeoutMs) {
+                if (started == null || started == CastPlaybackState.ERROR) {
+                    handleItemError("Video failed to start playing")
+                    return@launch
+                }
+                if (started == CastPlaybackState.COMPLETED) {
+                    logWarn("Video completed before playing")
+                    handleItemError("Video completed before playing")
+                    return@launch
+                }
+
+                // Phase 2: wait for video completion (completionTimeoutMs).
+                // IDLE/COMPLETED -> next(). ERROR -> handleItemError.
+                // Timeout -> log a warning and advance via next() WITHOUT incrementing
+                // the consecutive error count.
+                val ended: CastPlaybackState? = try {
+                    withTimeoutOrNull(completionTimeoutMs) {
                         controller.castPlaybackState.first {
-                            it == CastPlaybackState.IDLE || it == CastPlaybackState.COMPLETED || it == CastPlaybackState.ERROR
+                            it == CastPlaybackState.IDLE ||
+                                it == CastPlaybackState.COMPLETED ||
+                                it == CastPlaybackState.ERROR
                         }
-                    }
-                    if (ended == null) {
-                        handleItemError("Video playback timed out")
-                        return@launch
                     }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     handleItemError(e.message ?: "Video completion error")
+                    return@launch
+                }
+
+                if (ended == null) {
+                    logWarn("Video playback timed out after ${completionTimeoutMs}ms; advancing playlist")
+                    if (isActive) next()
+                    return@launch
+                }
+                if (ended == CastPlaybackState.ERROR) {
+                    handleItemError("Video playback error state")
                     return@launch
                 }
 
