@@ -7,6 +7,7 @@ import com.example.smartclick.app.domain.model.CastMediaType
 import com.example.smartclick.app.domain.model.CastPlaylist
 import com.example.smartclick.app.domain.model.MediaItem
 import com.example.smartclick.app.domain.model.PlaylistStatus
+import com.example.smartclick.app.di.IoDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -15,7 +16,7 @@ import javax.inject.Singleton
 
 class PlaylistController @Inject constructor(
     private val castMediaUseCase: CastMediaUseCase,
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.IO
+    @IoDispatcher private val defaultDispatcher: CoroutineDispatcher
 ) {
     private val _playlistState = MutableStateFlow(CastPlaylist())
     val playlistState: StateFlow<CastPlaylist> = _playlistState.asStateFlow()
