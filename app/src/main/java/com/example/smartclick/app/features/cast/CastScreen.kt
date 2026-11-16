@@ -50,8 +50,8 @@ fun CastScreen(
     val context = LocalContext.current
     var errorAction by remember { mutableStateOf<CastErrorAction?>(null) }
     val pickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri -> uri?.let(viewModel::onMediaPicked) }
+        contract = ActivityResultContracts.PickMultipleVisualMedia(30)
+    ) { uris -> if (uris.isNotEmpty()) viewModel.onMediaPickedList(uris) }
 
     DisposableEffect(viewModel) {
         onDispose { viewModel.stopCasting() }

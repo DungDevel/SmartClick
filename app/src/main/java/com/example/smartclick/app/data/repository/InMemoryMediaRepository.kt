@@ -50,6 +50,10 @@ class InMemoryMediaRepository @Inject constructor(
         selectedMedia.value = listOf(media)
     }
 
+    override suspend fun selectMediaItems(items: List<MediaItem>) {
+        selectedMedia.value = items
+    }
+
     override suspend fun clearSelectedMedia() {
         selectedMedia.value = emptyList()
     }

@@ -187,6 +187,29 @@ class CastViewModel @Inject constructor(
         }
     }
 
+    fun onMediaPickedList(uris: List<Uri>) {
+        viewModelScope.launch {
+            val preparedItems = mutableListOf<MediaItem>()
+            for (uri in uris) {
+                val prepared = mediaRepository.prepareMedia(uri)
+                val item = prepared.getOrNull() ?: continue
+                val mediaType = item.toCastMediaTypeOrNull()
+                if (mediaType != null) {
+                    val gate = checkAccess(mediaType)
+                    if (gate == null) {
+                        preparedItems.add(item)
+                    }
+                }
+            }
+            if (preparedItems.isEmpty()) {
+                _uiEvents.emit(CastUiEvent.UnsupportedFormat)
+                return@launch
+            }
+            mediaRepository.selectMediaItems(preparedItems)
+            _selectedMediaIds.value = preparedItems.map { it.id }.toSet()
+        }
+    }
+
     fun startCasting() {
         val selectedIds = _selectedMediaIds.value
         if (selectedIds.isNotEmpty()) {
