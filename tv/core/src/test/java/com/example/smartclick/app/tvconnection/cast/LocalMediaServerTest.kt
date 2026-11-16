@@ -420,4 +420,29 @@ class LocalMediaServerTest {
         assertEquals(500, conn.responseCode)
         server.stop()
     }
+
+    @Test
+    fun `registering new media invalidates old token but ongoing active stream remains readable`() = runTest {
+        val first = registered(id = "stream-1")
+        val data1 = "Stream1Data".toByteArray()
+        every { contentResolver.openInputStream(any()) } returns ByteArrayInputStream(data1)
+        val afd = mockk<AssetFileDescriptor>(relaxed = true)
+        every { afd.length } returns data1.size.toLong()
+        every { contentResolver.openAssetFileDescriptor(any(), "r") } returns afd
+
+        val url1 = URL(first.mediaUrl)
+        val conn1 = url1.openConnection() as HttpURLConnection
+        assertEquals(200, conn1.responseCode)
+        val inputStream1 = conn1.inputStream
+
+        // Register second media (invalidates first token in map)
+        val second = registered(id = "stream-2")
+        val urlOldWithNewServer = URL("${server.baseUrl}/${first.token}")
+        val connOld = urlOldWithNewServer.openConnection() as HttpURLConnection
+        assertEquals(404, connOld.responseCode)
+
+        // Old active stream can still be read completely
+        assertArrayEquals(data1, inputStream1.readBytes())
+        server.stop()
+    }
 }
