@@ -53,9 +53,16 @@ fun CastScreen(
         contract = ActivityResultContracts.PickMultipleVisualMedia(30)
     ) { uris -> if (uris.isNotEmpty()) viewModel.onMediaPickedList(uris) }
 
-    DisposableEffect(viewModel) {
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) {
+                viewModel.pausePlaylist()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
-            viewModel.pausePlaylist()
+            lifecycleOwner.lifecycle.removeObserver(observer)
             viewModel.stopCasting()
         }
     }

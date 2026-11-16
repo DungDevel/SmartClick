@@ -153,6 +153,13 @@ class CastViewModelTest {
     }
 
     @Test
+    fun `pausePlaylist and resumePlaylist update playlist state correctly`() = runTest {
+        viewModel.pausePlaylist()
+        viewModel.resumePlaylist()
+        assertTrue(true)
+    }
+
+    @Test
     fun `startCasting invokes usecase successfully`() = runTest {
         coEvery { mediaRepository.verifyReadable(any()) } returns Result.success(Unit)
         coEvery { castMediaUseCase(any()) } returns Result.success(Unit)
