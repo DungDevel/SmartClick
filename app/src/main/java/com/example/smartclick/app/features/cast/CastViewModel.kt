@@ -26,6 +26,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.example.smartclick.app.domain.model.CastPlaylist
+import com.example.smartclick.app.domain.usecase.PlaylistController
+
 data class CastUiState(
     val mediaItems: List<MediaItem> = emptyList(),
     val selectedMediaIds: Set<String> = emptySet(),
@@ -33,7 +36,8 @@ data class CastUiState(
     val activeTvName: String? = null,
     val playbackState: CastPlaybackState = CastPlaybackState.IDLE,
     val sessionInfo: CastSessionInfo = CastSessionInfo(),
-    val requestState: CastRequestState = CastRequestState.IDLE
+    val requestState: CastRequestState = CastRequestState.IDLE,
+    val playlist: CastPlaylist = CastPlaylist()
 )
 
 enum class CastRequestState { IDLE, PREPARING, SENT, ERROR }
@@ -56,7 +60,8 @@ class CastViewModel @Inject constructor(
     private val activeTvSession: IActiveTvSession,
     private val castMediaUseCase: CastMediaUseCase,
     private val featureGate: FeatureGate,
-    private val subscriptionRepository: ISubscriptionRepository
+    private val subscriptionRepository: ISubscriptionRepository,
+    private val playlistController: PlaylistController
 ) : ViewModel() {
 
     private val _selectedMediaIds = MutableStateFlow<Set<String>>(emptySet())
@@ -66,12 +71,14 @@ class CastViewModel @Inject constructor(
     val uiEvents = _uiEvents.asSharedFlow()
 
     init {
+        playlistController.bindScope(viewModelScope)
         viewModelScope.launch {
             var previous: com.example.smartclick.app.domain.connection.ITvController? = null
             var initialized = false
             activeTvSession.currentController.collect { next ->
                 if (initialized && previous !== next) {
                     castMediaUseCase.teardown()
+                    playlistController.stop()
                     mediaRepository.clearSelectedMedia()
                     _selectedMediaIds.value = emptySet()
                     _isCasting.value = false
@@ -123,27 +130,68 @@ class CastViewModel @Inject constructor(
     ) { media, selected, casting -> Triple(media, selected, casting) }
 
     val uiState: StateFlow<CastUiState> = combine(
-        mediaSelectionState, _requestState, activeDevice, playbackState
-    ) { selection, request, device, playback ->
+        mediaSelectionState, _requestState, activeDevice, playbackState, playlistController.playlistState
+    ) { selection, request, device, playback, playlist ->
         val currentRequestState = when {
             playback == CastPlaybackState.PLAYING -> CastRequestState.SENT
             playback == CastPlaybackState.ERROR -> CastRequestState.ERROR
+            playlist.status == PlaylistStatus.PLAYING -> CastRequestState.SENT
+            playlist.status == PlaylistStatus.ERROR -> CastRequestState.ERROR
             else -> request
         }
         CastUiState(
             mediaItems = selection.first,
             selectedMediaIds = selection.second,
-            isCasting = selection.third,
+            isCasting = selection.third || playlist.status == PlaylistStatus.PLAYING || playlist.status == PlaylistStatus.PAUSED,
             activeTvName = device?.name,
             playbackState = playback,
             sessionInfo = CastSessionInfo(),
-            requestState = currentRequestState
+            requestState = currentRequestState,
+            playlist = playlist
         )
     }.combine(sessionInfo) { state, session -> state.copy(sessionInfo = session) }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
         initialValue = CastUiState()
     )
+
+    fun startPlaylist() {
+        val selectedIds = _selectedMediaIds.value
+        val items = uiState.value.mediaItems.filter { selectedIds.contains(it.id) }
+        if (items.isNotEmpty()) {
+            _isCasting.value = true
+            playlistController.start(items)
+        }
+    }
+
+    fun pausePlaylist() {
+        playlistController.pause()
+    }
+
+    fun resumePlaylist() {
+        playlistController.resume()
+    }
+
+    fun nextPlaylist() {
+        playlistController.next()
+    }
+
+    fun prevPlaylist() {
+        playlistController.prev()
+    }
+
+    fun stopPlaylist() {
+        _isCasting.value = false
+        playlistController.stop()
+    }
+
+    fun setImageDuration(seconds: Int) {
+        playlistController.setImageDuration(seconds)
+    }
+
+    fun setLoop(loop: Boolean) {
+        playlistController.setLoop(loop)
+    }
 
     fun toggleSelection(mediaId: String) {
         val current = _selectedMediaIds.value

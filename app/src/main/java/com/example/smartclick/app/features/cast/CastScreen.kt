@@ -54,7 +54,10 @@ fun CastScreen(
     ) { uris -> if (uris.isNotEmpty()) viewModel.onMediaPickedList(uris) }
 
     DisposableEffect(viewModel) {
-        onDispose { viewModel.stopCasting() }
+        onDispose {
+            viewModel.pausePlaylist()
+            viewModel.stopCasting()
+        }
     }
 
     LaunchedEffect(viewModel) {
@@ -121,6 +124,30 @@ fun CastScreen(
             )
             Button(onClick = viewModel::requestMediaPicker) {
                 Text(stringResource(R.string.cast_pick_media))
+            }
+            if (uiState.mediaItems.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(
+                        onClick = viewModel::startPlaylist,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = colors.acc)
+                    ) {
+                        Text("▶ Slideshow (${uiState.selectedMediaIds.size.let { if (it > 0) it else uiState.mediaItems.size }})")
+                    }
+                    if (uiState.isCasting || uiState.playlist.status != com.example.smartclick.app.domain.model.PlaylistStatus.IDLE) {
+                        Button(
+                            onClick = viewModel::stopPlaylist,
+                            colors = ButtonDefaults.buttonColors(containerColor = colors.red)
+                        ) {
+                            Text("⏹ " + stringResource(R.string.stop))
+                        }
+                    }
+                }
             }
         }
 
