@@ -18,6 +18,8 @@ import com.example.smartclick.app.domain.connection.ITvController
 import com.example.smartclick.app.domain.connection.TvConnectionState
 import com.example.smartclick.app.domain.connection.CastError
 import com.example.smartclick.app.domain.usecase.CastMediaUseCase
+import com.example.smartclick.app.domain.usecase.PlaylistController
+import com.example.smartclick.app.domain.model.CastPlaylist
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -68,7 +70,7 @@ class CastViewModelTest {
         featureGate = mockk(relaxed = true)
         subscriptionRepository = mockk(relaxed = true)
         playlistController = mockk(relaxed = true)
-        every { playlistController.playlistState } returns MutableStateFlow(com.example.smartclick.app.domain.model.CastPlaylist())
+        every { playlistController.playlistState } returns MutableStateFlow(CastPlaylist())
         controller = mockk(relaxed = true)
         tvController = mockk(relaxed = true)
         tv = TvDevice("tv", "TV", "192.168.1.2", "", protocol = TvProtocol.ROKU_ECP,
