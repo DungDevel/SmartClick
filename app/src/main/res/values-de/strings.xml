@@ -100,6 +100,7 @@
     <string name="cast_not_connected">Verbinde dich vor dem Streamen mit dem ausgewählten Fernseher.</string>
     <string name="cast_no_visual_capability">Der ausgewählte Fernseher unterstützt keine Fotos oder Videos.</string>
     <string name="cast_capability_missing">Der ausgewählte Fernseher unterstützt diesen Medientyp nicht.</string>
+    <string name="cast_playlist_not_supported">Wiedergabelisten-Casting wird auf diesem TV nicht unterstützt.</string>
     <string name="cast_state_idle">Bereit</string><string name="cast_state_preparing">Wird vorbereitet</string><string name="cast_state_sent">An Fernseher gesendet</string><string name="cast_state_playing">Wird wiedergegeben</string><string name="cast_state_error">Fehler</string>
     <string name="cast_error_no_lan">Keine private WLAN-Adresse verfügbar, um dieses Medium freizugeben.</string>
     <string name="cast_action_retry">Erneut versuchen</string><string name="cast_action_repair">Fernseher entfernen und neu koppeln</string><string name="cast_action_choose">Medium auswählen</string>

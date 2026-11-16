@@ -100,6 +100,7 @@
     <string name="cast_not_connected">Sambungkan ke TV yang dipilih sebelum mengirim.</string>
     <string name="cast_no_visual_capability">TV yang dipilih tidak dapat menerima foto atau video.</string>
     <string name="cast_capability_missing">TV yang dipilih tidak dapat menerima jenis media ini.</string>
+    <string name="cast_playlist_not_supported">Pemutaran daftar putar tidak didukung di TV ini.</string>
     <string name="cast_state_idle">Siap</string>
     <string name="cast_state_preparing">Menyiapkan</string>
     <string name="cast_state_sent">Terkirim ke TV</string>

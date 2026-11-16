@@ -100,6 +100,7 @@
     <string name="cast_not_connected">Yayın yapmadan önce seçilen TV\'ye bağlanın.</string>
     <string name="cast_no_visual_capability">Seçilen TV fotoğraf veya video alamaz.</string>
     <string name="cast_capability_missing">Seçilen TV bu medya türünü alamaz.</string>
+    <string name="cast_playlist_not_supported">Bu TV\'de oynatma listesi desteklenmiyor.</string>
     <string name="cast_state_idle">Hazır</string>
     <string name="cast_state_preparing">Hazırlanıyor</string>
     <string name="cast_state_sent">TV\'ye Gönderildi</string>

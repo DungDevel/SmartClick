@@ -100,6 +100,7 @@
     <string name="cast_not_connected">เชื่อมต่อกับทีวีที่เลือกก่อนแคสต์</string>
     <string name="cast_no_visual_capability">ทีวีที่เลือกไม่สามารถรับรูปภาพหรือวิดีโอได้</string>
     <string name="cast_capability_missing">ทีวีที่เลือกไม่สามารถรับสื่อประเภทนี้ได้</string>
+    <string name="cast_playlist_not_supported">ไม่รองรับการเล่นเพลย์ลิสต์บนทีวีนี้</string>
     <string name="cast_state_idle">พร้อม</string>
     <string name="cast_state_preparing">กำลังเตรียม</string>
     <string name="cast_state_sent">ส่งไปยังทีวีแล้ว</string>

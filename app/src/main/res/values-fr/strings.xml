@@ -100,6 +100,7 @@
     <string name="cast_not_connected">Connect to the selected TV before casting.</string>
     <string name="cast_no_visual_capability">The selected TV cannot receive photos or videos.</string>
     <string name="cast_capability_missing">The selected TV cannot receive this media type.</string>
+    <string name="cast_playlist_not_supported">La lecture de listes de lecture n\'est pas prise en charge sur ce téléviseur.</string>
     <string name="cast_state_idle">Prêt</string>
     <string name="cast_state_preparing">Preparing</string>
     <string name="cast_state_sent">Sent to TV</string>

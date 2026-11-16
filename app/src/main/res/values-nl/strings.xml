@@ -100,6 +100,7 @@
     <string name="cast_not_connected">Maak verbinding met de geselecteerde tv voordat u cast.</string>
     <string name="cast_no_visual_capability">De geselecteerde tv kan geen foto\'s of video\'s ontvangen.</string>
     <string name="cast_capability_missing">De geselecteerde tv kan dit mediatype niet ontvangen.</string>
+    <string name="cast_playlist_not_supported">Afspeellijsten worden niet ondersteund op deze tv.</string>
     <string name="cast_state_idle">Gereed</string>
     <string name="cast_state_preparing">Voorbereiden</string>
     <string name="cast_state_sent">Verzonden naar tv</string>

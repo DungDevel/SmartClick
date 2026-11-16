@@ -100,6 +100,7 @@
     <string name="cast_not_connected">投屏前请连接到所选电视。</string>
     <string name="cast_no_visual_capability">所选电视无法接收照片或视频。</string>
     <string name="cast_capability_missing">所选电视无法接收此媒体类型。</string>
+    <string name="cast_playlist_not_supported">此电视不支持播放列表投屏。</string>
     <string name="cast_state_idle">就绪</string>
     <string name="cast_state_preparing">准备中</string>
     <string name="cast_state_sent">已发送到电视</string>

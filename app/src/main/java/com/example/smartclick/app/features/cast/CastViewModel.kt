@@ -52,6 +52,7 @@ sealed class CastUiEvent {
     data object CapabilityMissing : CastUiEvent()
     data object UnsupportedFormat : CastUiEvent()
     data object MediaUnavailable : CastUiEvent()
+    data object PlaylistNotSupported : CastUiEvent()
     data class CastFailed(val presentation: CastErrorPresentation) : CastUiEvent()
 }
 
@@ -160,8 +161,30 @@ class CastViewModel @Inject constructor(
         val selectedIds = _selectedMediaIds.value
         val items = uiState.value.mediaItems.filter { selectedIds.contains(it.id) }
         if (items.isNotEmpty()) {
+            val device = activeDevice.value
+            val supportsPlaylist = device?.capabilities?.contains(TvCapability.CAST_PLAYLIST) ?: true
+            if (!supportsPlaylist && items.size > 1) {
+                viewModelScope.launch {
+                    _uiEvents.emit(CastUiEvent.PlaylistNotSupported)
+                }
+                _selectedMediaIds.value = setOf(items.first().id)
+                startCasting()
+                return
+            }
+            val reliableEnd = device?.capabilities?.contains(TvCapability.CAST_PLAYBACK) ?: true
+            val filteredItems = if (!reliableEnd) {
+                items.filter { !it.mimeType.startsWith("video/") }
+            } else {
+                items
+            }
+            if (filteredItems.isEmpty()) {
+                viewModelScope.launch {
+                    _uiEvents.emit(CastUiEvent.PlaylistNotSupported)
+                }
+                return
+            }
             _isCasting.value = true
-            playlistController.start(items)
+            playlistController.start(filteredItems)
         }
     }
 

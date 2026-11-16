@@ -78,6 +78,7 @@ fun CastScreen(
                 CastUiEvent.CapabilityMissing -> context.getString(R.string.cast_capability_missing)
                 CastUiEvent.UnsupportedFormat -> context.getString(R.string.cast_unsupported_format)
                 CastUiEvent.MediaUnavailable -> context.getString(R.string.cast_media_unavailable)
+                CastUiEvent.PlaylistNotSupported -> context.getString(R.string.cast_playlist_not_supported)
                 is CastUiEvent.CastFailed -> {
                     errorAction = event.presentation.action
                     context.getString(event.presentation.message.stringRes())

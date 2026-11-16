@@ -116,6 +116,7 @@
     <string name="cast_not_connected">Connect to the selected TV before casting.</string>
     <string name="cast_no_visual_capability">The selected TV cannot receive photos or videos.</string>
     <string name="cast_capability_missing">The selected TV cannot receive this media type.</string>
+    <string name="cast_playlist_not_supported">This TV does not support playlist casting.</string>
     <string name="cast_state_idle">Ready</string><string name="cast_state_preparing">Preparing</string><string name="cast_state_sent">Sent to TV</string><string name="cast_state_playing">Playing</string><string name="cast_state_error">Error</string>
     <string name="cast_error_no_lan">No private Wi-Fi address is available to share this media.</string>
     <string name="cast_action_retry">Retry</string><string name="cast_action_repair">Remove TV and pair again</string><string name="cast_action_choose">Choose media</string>

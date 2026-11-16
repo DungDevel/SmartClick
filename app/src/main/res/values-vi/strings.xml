@@ -120,6 +120,7 @@
     <string name="cast_not_connected">Hãy kết nối với TV đã chọn trước khi truyền.</string>
     <string name="cast_no_visual_capability">TV đã chọn không hỗ trợ nhận ảnh hoặc video.</string>
     <string name="cast_capability_missing">TV đã chọn không hỗ trợ loại nội dung này.</string>
+    <string name="cast_playlist_not_supported">Phát danh sách không được hỗ trợ trên TV này.</string>
     <string name="cast_state_idle">Sẵn sàng</string><string name="cast_state_preparing">Đang chuẩn bị</string><string name="cast_state_sent">Đã gửi tới TV</string><string name="cast_state_playing">Đang phát</string><string name="cast_state_error">Lỗi</string>
     <string name="cast_error_no_lan">Không có địa chỉ mạng Wi-Fi riêng để chia sẻ nội dung này.</string>
     <string name="cast_action_retry">Thử lại</string><string name="cast_action_repair">Gỡ TV và ghép nối lại</string><string name="cast_action_choose">Chọn nội dung</string>

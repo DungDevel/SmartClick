@@ -53,11 +53,6 @@ android {
     buildFeatures {
         compose = true
     }
-    testOptions {
-        unitTests.all {
-            maxHeapSize = "2048m"
-        }
-    }
 }
 
 ksp {

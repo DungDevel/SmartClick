@@ -11,6 +11,7 @@ enum class TvCapability {
     CAST_VIDEO,
     CAST_AUDIO,
     CAST_PLAYBACK,
+    CAST_PLAYLIST,
     CAST_SEEK,
     CAST_VOLUME,
     CHANNEL_CONTROL,

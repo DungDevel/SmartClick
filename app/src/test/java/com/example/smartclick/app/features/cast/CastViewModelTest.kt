@@ -402,4 +402,23 @@ class CastViewModelTest {
 
         coVerify { mockController.controlCast(CastCommand.SeekTo(30000L)) }
     }
+
+    @Test
+    fun `driver without playlist capability emits PlaylistNotSupported and casts single item`() = runTest {
+        val limitedTv = tv.copy(capabilities = setOf(TvCapability.CAST_IMAGE, TvCapability.CAST_VIDEO))
+        every { tvController.device } returns limitedTv
+        every { tvController.connectionState } returns MutableStateFlow(TvConnectionState.Connected(limitedTv))
+        val media2 = MediaItem("2", "Video 2", "content://picker/video2", "video/mp4")
+        every { mediaRepository.getLocalMedia() } returns MutableStateFlow(listOf(media, media2))
+        viewModel.toggleSelection(media.id)
+        viewModel.toggleSelection(media2.id)
+
+        val events = mutableListOf<CastUiEvent>()
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiEvents.collect(events::add) }
+
+        viewModel.startPlaylist()
+
+        assertTrue(events.contains(CastUiEvent.PlaylistNotSupported))
+        job.cancel()
+    }
 }
