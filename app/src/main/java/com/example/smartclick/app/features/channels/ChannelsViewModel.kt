@@ -7,6 +7,7 @@ import com.example.smartclick.app.domain.model.ChannelCategory
 import com.example.smartclick.app.domain.model.TvChannel
 import com.example.smartclick.app.domain.model.TvDevice
 import com.example.smartclick.app.domain.repository.IChannelRegistryRepository
+import com.example.smartclick.app.domain.repository.ISubscriptionRepository
 import com.example.smartclick.app.domain.usecase.InstalledChannelsState
 import com.example.smartclick.app.domain.usecase.LaunchAppOnTvUseCase
 import com.example.smartclick.app.domain.connection.IActiveTvSession
@@ -30,7 +31,8 @@ data class ChannelsUiState(
 class ChannelsViewModel @Inject constructor(
     private val channelRepository: IChannelRegistryRepository,
     private val activeTvSession: IActiveTvSession,
-    private val launchAppOnTvUseCase: LaunchAppOnTvUseCase
+    private val launchAppOnTvUseCase: LaunchAppOnTvUseCase,
+    private val subscriptionRepository: ISubscriptionRepository
 ) : ViewModel() {
 
     private val _selectedTab = MutableStateFlow(ChannelCategory.POPULAR)
@@ -53,6 +55,13 @@ class ChannelsViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
+        )
+
+    val isPremium: StateFlow<Boolean> = subscriptionRepository.isPremium
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -102,5 +111,3 @@ class ChannelsViewModel @Inject constructor(
         // TODO(P8): Map to ITvConnectionManager tuneChannel command
     }
 }
-
-

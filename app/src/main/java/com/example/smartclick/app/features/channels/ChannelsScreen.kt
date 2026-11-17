@@ -1,6 +1,7 @@
 package com.example.smartclick.app.features.channels
 import com.example.smartclick.app.domain.connection.TvConnectionState
 import com.example.smartclick.app.core.ui.components.NoActiveDeviceState
+import com.example.smartclick.app.core.ui.components.ProBadge
 import com.example.smartclick.app.core.ui.components.ReconnectBanner
 
 import androidx.compose.foundation.background
@@ -75,6 +76,7 @@ fun ChannelsScreen(
     val scrollState = rememberScrollState()
     val uiState by viewModel.uiState.collectAsState()
     val connectionState by viewModel.connectionState.collectAsState()
+    val isPremium by viewModel.isPremium.collectAsState()
 
     Column(
         modifier = Modifier
@@ -99,7 +101,10 @@ fun ChannelsScreen(
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 22.sp
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                if (isPremium) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    ProBadge()
+                }
             }
             Text(
                 text = stringResource(R.string.apps_desc),
@@ -115,12 +120,12 @@ fun ChannelsScreen(
 
         ReconnectBanner(isVisible = isReconnecting, attempt = reconnectAttempt)
 
-            // Scrollable Body
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(scrollState)
-            ) {
+        // Scrollable Body
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(scrollState)
+        ) {
             // Your TV Apps Section
             Column(
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp)
@@ -302,7 +307,6 @@ fun ChannelsScreen(
                     }
                 }
             }
+        }
     }
 }
-}
-
