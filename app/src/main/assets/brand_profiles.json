@@ -66,7 +66,7 @@
         { "tier": 1, "protocols": ["ANDROID_TV_V2"], "timeoutMs": 4000 },
         { "tier": 2, "protocols": ["FIRE_TV", "ANDROID_TV_V1"], "timeoutMs": 6000 }
       ] },
-    { "id": "others", "displayName": "Other", "probePlan": "ALL" }
+    { "id": "others", "displayName": "Others", "probePlan": "ALL" }
   ],
   "protocolFlags": {
     "ROKU_ECP": { "enabled": true, "minAppVersion": 1 }

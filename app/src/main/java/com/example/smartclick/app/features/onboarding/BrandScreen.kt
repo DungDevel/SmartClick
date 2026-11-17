@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -80,7 +81,8 @@ private fun brandZoom(brandId: String): Float = when (brandId.lowercase()) {
     "sony" -> 1.2f
     "hisense" -> 1.4f
     "amazon" -> 1.6f
-    "chromecast" -> 1.3f
+    "chromecast" -> 1.2f
+    "other" -> 1.5f
     else -> 1f
 }
 
@@ -185,7 +187,38 @@ fun BrandScreen(
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         val logoRes = brandLogo(brand.id)
-                        if (logoRes != null) {
+                        val isOther = brand.id.lowercase() in setOf("other", "others")
+
+                        if (logoRes != null && isOther) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Image(
+                                    painter = painterResource(id = logoRes),
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth()
+                                        .graphicsLayer {
+                                            scaleX = 1.4f
+                                            scaleY = 1.4f
+                                        }
+                                )
+                                Text(
+                                    text = brand.displayName,
+                                    color = Color(0xFF1B2540),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    maxLines = 1,
+                                    modifier = Modifier.offset(y = (-6).dp)
+                                )
+                            }
+                        } else if (logoRes != null) {
                             Image(
                                 painter = painterResource(id = logoRes),
                                 contentDescription = brand.displayName,
