@@ -145,7 +145,12 @@ fun CastScreen(
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(containerColor = colors.acc)
                     ) {
-                        Text("▶ Slideshow (${uiState.selectedMediaIds.size.let { if (it > 0) it else uiState.mediaItems.size }})")
+                        Text(
+                            stringResource(
+                                R.string.cast_slideshow_count,
+                                uiState.selectedMediaIds.size.let { if (it > 0) it else uiState.mediaItems.size }
+                            )
+                        )
                     }
                     if (uiState.isCasting || uiState.playlist.status != com.example.smartclick.app.domain.model.PlaylistStatus.IDLE) {
                         Button(

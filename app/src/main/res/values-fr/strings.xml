@@ -301,4 +301,5 @@ Facilement
     <string name="language_turkish">Türkçe</string>
     <string name="language_dutch">Nederlands</string>
     <string name="language_polish">Polski</string>
+    <string name="cast_slideshow_count">▶ Diaporama (%1$d)</string>
 </resources>
