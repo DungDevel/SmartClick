@@ -57,7 +57,7 @@ fun WelcomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
-                .padding(top = 40.dp, start = 28.dp, end = 28.dp, bottom = 32.dp)
+                .padding(top = 160.dp, start = 28.dp, end = 28.dp, bottom = 32.dp)
         ) {
             Column(
                 modifier = Modifier.weight(1f),

@@ -57,10 +57,6 @@
       "probePlan": [
         { "tier": 1, "protocols": ["ROKU_ECP"], "timeoutMs": 4000 }
       ] },
-    { "id": "apple_tv", "displayName": "Apple TV",
-      "probePlan": [
-        { "tier": 1, "protocols": ["APPLE_COMPANION"], "timeoutMs": 4000 }
-      ] },
     { "id": "amazon", "displayName": "Amazon",
       "probePlan": [
         { "tier": 1, "protocols": ["FIRE_TV"], "timeoutMs": 4000 }

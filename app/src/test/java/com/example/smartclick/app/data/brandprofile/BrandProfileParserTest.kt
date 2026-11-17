@@ -167,7 +167,7 @@ class BrandProfileParserTest {
         val catalog = BrandProfileParser.parse(assetFile!!.readText())
 
         assertEquals(1, catalog.schemaVersion)
-        assertEquals(16, catalog.brands.size)
+        assertEquals(15, catalog.brands.size)
         assertTrue(catalog.brandById("others")?.probePlan is ProbePlan.All)
 
         catalog.brands.forEach { brand ->
