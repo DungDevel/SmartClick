@@ -75,7 +75,10 @@ private fun brandLogo(brandId: String): Int? = when (brandId.lowercase()) {
 
 /** Extra zoom for logos whose drawable has a lot of empty margin. */
 private fun brandZoom(brandId: String): Float = when (brandId.lowercase()) {
-    "samsung" -> 1.6f
+    "samsung" -> 1.9f
+    "lg" -> 1.4f
+    "sony" -> 1.2f
+    "hisense" -> 1.4f
     "amazon" -> 1.6f
     "chromecast" -> 1.3f
     else -> 1f
