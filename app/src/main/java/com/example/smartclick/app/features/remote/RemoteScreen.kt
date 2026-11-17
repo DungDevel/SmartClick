@@ -53,6 +53,7 @@ import com.example.smartclick.app.domain.usecase.SendCommandResult
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.SolidColor
 import com.example.smartclick.app.core.ui.theme.raisedSurface
+import com.example.smartclick.app.core.ui.components.ProBadge
 
 // TẠM THỜI: true = bỏ qua yêu cầu Premium để test micro. Nhớ đặt lại false trước khi phát hành.
 private const val VOICE_TEST_UNLOCK = false
@@ -84,6 +85,7 @@ fun RemoteScreen(
 
     var showPowerOffDialog by remember { mutableStateOf(false) }
     var showVoiceSheet by remember { mutableStateOf(false) }
+    val isPremium by viewModel.isPremium.collectAsState()
 
     val recordAudioPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -238,10 +240,12 @@ fun RemoteScreen(
             .background(colors.bg)
     ) {
         // Header
+        // Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp, top = 2.dp, bottom = 0.dp),
+                .statusBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -250,6 +254,11 @@ fun RemoteScreen(
                 fontWeight = FontWeight.ExtraBold,
                 fontSize = 25.sp
             )
+
+            if (isPremium) {
+                Spacer(modifier = Modifier.width(8.dp))
+                ProBadge()
+            }
 
             Spacer(modifier = Modifier.weight(1f))
 

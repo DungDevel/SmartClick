@@ -67,6 +67,9 @@ class RemoteViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
+    val isPremium: StateFlow<Boolean> = subscriptionRepository.isPremium
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     private val _uiEvents = MutableSharedFlow<RemoteUiEvent>(
         replay = 0,
         extraBufferCapacity = 64,
