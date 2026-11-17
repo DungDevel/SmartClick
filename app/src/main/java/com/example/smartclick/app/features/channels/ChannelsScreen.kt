@@ -86,7 +86,8 @@ fun ChannelsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(colors.surf)
-                .padding(horizontal = 16.dp, vertical = 14.dp)
+                .statusBarsPadding()
+                .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 14.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

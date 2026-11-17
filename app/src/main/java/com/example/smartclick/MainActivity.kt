@@ -16,6 +16,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.example.smartclick.app.core.ui.theme.SmartClickTheme
 import com.example.smartclick.app.domain.model.ThemeMode
 import com.example.smartclick.app.features.main.AppNavigation
@@ -49,6 +52,8 @@ class MainActivity : AppCompatActivity() {
                     statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { isDarkTheme },
                     navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { isDarkTheme }
                 )
+                // enableEdgeToEdge có thể làm thanh trạng thái hiện lại, nên ẩn lần nữa
+                hideStatusBar()
                 onDispose { }
             }
 
@@ -66,5 +71,21 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Ẩn thanh trạng thái (giờ, wifi, pin) để nội dung sát mép trên.
+     * Vuốt từ cạnh trên xuống sẽ hiện thanh tạm thời rồi tự ẩn lại.
+     */
+    private fun hideStatusBar() {
+        val controller = WindowCompat.getInsetsController(window, window.decorView)
+        controller.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        controller.hide(WindowInsetsCompat.Type.statusBars())
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) hideStatusBar()
     }
 }

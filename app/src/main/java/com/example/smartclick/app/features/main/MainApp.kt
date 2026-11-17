@@ -56,7 +56,8 @@ fun MainAppScreen(onNavigateToPremium: () -> Unit = {}) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(colors.bg)
-                .statusBarsPadding()
+                //.statusBarsPadding()
+                //.padding(top = 16.dp)
         ) {
             // Content Area
             Box(
